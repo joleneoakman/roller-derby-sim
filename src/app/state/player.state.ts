@@ -112,8 +112,8 @@ export class PlayerState {
     const jx = j * nx;
     const jy = j * ny;
 
-    const newV1 = Velocity.ofXY(v1.x + (jx / m1), v1.y + (jy / m1));
-    const newV2 = Velocity.ofXY(v2.x - (jx / m2), v2.y - (jy / m2));
+    const newV1 = Velocity.ofVector(v1.x + (jx / m1), v1.y + (jy / m1));
+    const newV2 = Velocity.ofVector(v2.x - (jx / m2), v2.y - (jy / m2));
 
     // Calculate new positions to ensure minimum distance between players
     const overlap = player1.radius + player2.radius - d;  // Calculate the overlap between circles

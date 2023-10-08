@@ -1,5 +1,4 @@
 import {Position} from "./position";
-import {Circle} from "./circle";
 
 export class Triangle {
   readonly p1: Position;

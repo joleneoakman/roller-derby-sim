@@ -6,8 +6,14 @@ import {GameConstants} from "../game/game-constants";
 import {Team} from "../model/team";
 import {Outline} from "../model/outline";
 import {Position} from "../model/position";
+import {Arc} from "../model/arc";
+import {TrackLine} from "../model/track-line";
+import {Circle} from "../model/circle";
+import {Speed} from "../model/speed";
 
 export class Renderer {
+
+  public static debugPoints: Position[] = [];
 
   private readonly ctx: CanvasRenderingContext2D;
   private readonly scale: number;
@@ -23,74 +29,109 @@ export class Renderer {
 
   drawScene(state: GameState) {
     this.ctx.clearRect(GameConstants.ORIGIN.x, GameConstants.ORIGIN.y, this.width, this.height);
-    this.drawRect(GameConstants.ORIGIN, this.width, this.height, GameConstants.TRACK_LINE_COLOR);
+    this.drawRect(GameConstants.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_COLOR);
     this.drawTrack(state.track);
     for (let i = 0; i < state.players.length; i++) {
       this.drawPlayer(state.players[i], state.selection?.index === i);
     }
+    Renderer.debugPoints.forEach(p => this.drawCircle(Circle.of(p, 0.1), 'red'));
   }
 
   drawTrack(track: Track) {
-    // Track outline
-    const outline = Outline.of(GameConstants.TRACK_STROKE_COLOR, 2);
-    track.trackRectangles.forEach(rectangle => {
-      this.drawRect(rectangle.position, rectangle.width, rectangle.height, GameConstants.INSIDE_TRACK_COLOR, outline);
-    });
-    track.trackTriangles.forEach(triangle => {
-      this.drawTriangle(triangle.p1, triangle.p2, triangle.p3, GameConstants.INSIDE_TRACK_COLOR, outline);
-    });
-    track.trackCircles.forEach(circle => {
-      this.drawCircle(circle.position, circle.radius, GameConstants.INSIDE_TRACK_COLOR, outline);
-    });
-
     // Track
-    track.trackRectangles.forEach(rectangle => {
-      this.drawRect(rectangle.position, rectangle.width, rectangle.height, GameConstants.INSIDE_TRACK_COLOR);
-    });
-    track.trackTriangles.forEach(triangle => {
-      this.drawTriangle(triangle.p1, triangle.p2, triangle.p3, GameConstants.INSIDE_TRACK_COLOR);
-    });
-    track.trackCircles.forEach(circle => {
-      this.drawCircle(circle.position, circle.radius, GameConstants.INSIDE_TRACK_COLOR);
-    });
-
-    // Inside track outline
-    const innerRect = track.innerRectangle;
-    this.drawRect(innerRect.position, innerRect.width, innerRect.height, GameConstants.TRACK_LINE_COLOR, outline);
-    track.innerCircles.forEach(circle => {
-      this.drawCircle(circle.position, circle.radius, GameConstants.TRACK_LINE_COLOR, outline);
-    });
-
-    // Inside track
-    this.drawRect(innerRect.position, innerRect.width, innerRect.height, GameConstants.TRACK_LINE_COLOR);
-    track.innerCircles.forEach(circle => {
-      this.drawCircle(circle.position, circle.radius, GameConstants.TRACK_LINE_COLOR);
-    });
+    this.drawTrackLine(track.trackLineAt(1), GameConstants.INBOUNDS_COLOR);
+    this.drawTrackLine(track.trackLineAt(0), GameConstants.OUT_OF_BOUNDS_COLOR);
 
     // Lines
+    const outline = Outline.of(GameConstants.TRACK_STROKE_COLOR, 1);
     this.drawLine(track.jammerLine.p1, track.jammerLine.p2, outline);
     this.drawLine(track.pivotLine.p1, track.pivotLine.p2, outline);
     track.tenFeetLines.forEach(line => this.drawLine(line.p1, line.p2, outline));
+
+    // Center lines
+    this.drawTrackLineOutline(track.trackLineAt(0), outline, true);
+    this.drawTrackLineOutline(track.trackLineAt(1), outline, true);
+
+    // Debug info
+    if (GameConstants.DEBUG_BOUNDS) {
+      const debugOutline = Outline.of(GameConstants.TRACK_DEBUG_COLOR, 1);
+      this.drawTrackLineOutline(track.innerBounds, debugOutline);
+      this.drawTrackLineOutline(track.trackLineAt(0.5), debugOutline);
+      this.drawTrackLineOutline(track.outerBounds, debugOutline);
+
+      const laneOutline = Outline.of(GameConstants.TRACK_LANE_COLOR, 1);
+      for (let i = 1; i < 4; i++) {
+        this.drawTrackLineOutline(track.lane(i), laneOutline);
+      }
+    }
+  }
+
+  drawTrackLine(trackLine: TrackLine, color: string) {
+    this.drawQuad(trackLine.bottomLine.p1, trackLine.bottomLine.p2, trackLine.topLine.p1, trackLine.topLine.p2, color);
+    this.drawCircle(trackLine.leftCircle, color);
+    this.drawCircle(trackLine.rightCircle, color);
+  }
+
+  drawTrackLineOutline(trackLine: TrackLine, outline: Outline, drawPercentages = true) {
+    this.drawLine(trackLine.topLine.p1, trackLine.topLine.p2, outline);
+    this.drawLine(trackLine.bottomLine.p1, trackLine.bottomLine.p2, outline);
+    this.drawArc(trackLine.leftArc, outline);
+    this.drawArc(trackLine.rightArc, outline);
+    this.drawCircle(Circle.of(trackLine.startPoint, 0.1), 'red');
+
+    if (drawPercentages) {
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.1), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.2), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.3), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.4), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.5), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.6), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.7), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.8), 0.1), 'red');
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.9), 0.1), 'red');
+    }
   }
 
   drawPlayer(player: PlayerState, selected: boolean) {
     const position = player.position;
-    const targetVelocity = Velocity.of(10, player.targetVelocity.angle);
-    const velocity = Velocity.of(10, player.velocity.angle);
+    const targetVelocity = Velocity.of(Speed.ofKph(10), player.targetVelocity.angle);
+    const velocity = Velocity.of(Speed.ofKph(10), player.velocity.angle);
     const color = player.team === Team.A ? GameConstants.TEAM_A_COLOR : GameConstants.TEAM_B_COLOR;
     const strokeColor = player.team === Team.A ? GameConstants.TEAM_A_STROKE_COLOR : GameConstants.TEAM_B_STROKE_COLOR;
-    this.drawCircle(position, player.radius, color, Outline.of(strokeColor, 1));
+    this.drawCircle(player.toCircle(), color, Outline.of(strokeColor, 1));
     this.drawLine(position, Position.of(position.x + (targetVelocity.x * 20), position.y + (targetVelocity.y * 20)), Outline.of('black', 1));
     this.drawLine(position, Position.of(position.x + (velocity.x * 20), position.y + (velocity.y * 20)), Outline.of('black', 1));
   }
 
-  drawCircle(pos: Position, radius: number, color: string, outline?: Outline) {
+  drawArc(arc: Arc, outline: Outline) {
+    const { position, radius, startAngle, endAngle } = arc;
+    this.ctx.beginPath();
+    this.ctx.arc(position.x * this.scale, position.y * this.scale, radius * this.scale, startAngle.radians, endAngle.radians);
+    this.stroke(outline);
+    this.ctx.closePath();
+  }
+
+  drawCircle(circle: Circle, color: string, outline?: Outline) {
+    const pos = circle.position;
+    const radius = circle.radius;
     this.ctx.beginPath();
     this.ctx.arc(pos.x * this.scale, pos.y * this.scale, radius * this.scale, 0, Math.PI * 2);
     this.ctx.fillStyle = color;
     this.ctx.fill();
     this.stroke(outline);
     this.ctx.closePath();
+  }
+
+  drawQuad(pos1: Position, pos2: Position, pos3: Position, pos4: Position, color: string, outline?: Outline) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
+    this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
+    this.ctx.lineTo(pos3.x * this.scale, pos3.y * this.scale);
+    this.ctx.lineTo(pos4.x * this.scale, pos4.y * this.scale);
+    this.ctx.closePath();
+    this.stroke(outline);
+    this.ctx.fillStyle = color;
+    this.ctx.fill();
   }
 
   drawRect(pos: Position, width: number, height: number, color: string, outline?: Outline) {

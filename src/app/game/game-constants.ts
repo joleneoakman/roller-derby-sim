@@ -3,6 +3,11 @@ import {Position} from "../model/position";
 export class GameConstants {
 
   //
+  // Debug
+  //
+  public static readonly DEBUG_BOUNDS = true;
+
+  //
   // Rendering
   //
   public static readonly FPS = 60;
@@ -15,7 +20,7 @@ export class GameConstants {
   public static readonly ZERO_TO_MAX_IN_SECONDS = 10;
   public static readonly MAX_TO_ZERO_IN_SECONDS = 3;
   public static readonly COLLISION_COEFFICIENT = 1; // 0 - 1
-  public static readonly TURN_STEP_DEGREES = 1;
+  public static readonly MAX_TURN_PER_FRAME = 0.5;
 
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
@@ -23,17 +28,23 @@ export class GameConstants {
   //
   // Measurements
   //
-  public static readonly PLAYER_RADIUS = 1; // Todo: 0.4?
+  public static readonly LANE_COUNT = 4;
+  public static readonly PLAYER_RADIUS = 0.4;
   public static readonly CANVAS_WIDTH_IN_METERS = (5.33 + 8.08) * 3;
   public static readonly ONE_FOOT = 0.305;
   public static readonly TEN_FEET = 3.05;
+  public static readonly THIRTY_FEET = GameConstants.TEN_FEET * 3;
+  public static readonly TEN_FEET_LINE_COUNT = 18;
+  public static readonly PACK_TRACK_LINE = 0.36; // Pack is calculated at this track line
 
   //
-  // Colors
+  // Styling
   //
-  public static readonly TRACK_LINE_COLOR = '#e3aee1';
-  public static readonly INSIDE_TRACK_COLOR = '#bafefc';
+  public static readonly OUT_OF_BOUNDS_COLOR = '#e3aee1';
+  public static readonly INBOUNDS_COLOR = '#bafefc';
   public static readonly TRACK_STROKE_COLOR = 'blue';
+  public static readonly TRACK_DEBUG_COLOR = '#0000ff1f';
+  public static readonly TRACK_LANE_COLOR = '#0000ff2f';
 
   public static readonly TEAM_A_COLOR = 'red';
   public static readonly TEAM_A_STROKE_COLOR = 'black';

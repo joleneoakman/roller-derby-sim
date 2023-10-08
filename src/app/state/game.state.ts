@@ -88,11 +88,11 @@ export class GameState {
     for (let i = 0; i < count; i++) {
       const oldPlayer = this.players[i];
       const newPlayer = playersAfterBlocks[i];
-      const containsOld = GeometryTools.containsTrackPlayer(this.track, oldPlayer);
-      const containsNew = GeometryTools.containsTrackPlayer(this.track, newPlayer);
+      const containsOld = GeometryTools.isInBounds(this.track, oldPlayer);
+      const containsNew = GeometryTools.isInBounds(this.track, newPlayer);
 
       if (!containsNew) {
-        const targetPoint = this.track.getClosestCenterPointFor(newPlayer.toCircle());
+        const targetPoint = GeometryTools.getClosestPointOnCenterTrack(this.track, newPlayer);
         playersAfterBounds[i] = newPlayer.turnTowards(targetPoint);
       } else {
         playersAfterBounds[i] = newPlayer;

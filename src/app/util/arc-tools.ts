@@ -1,28 +1,24 @@
-import {GameConstants} from "../game/game-constants";
 import {Position} from "../model/position";
+import {Angle} from "../model/angle";
 
 export class ArcTools {
 
-  public static toAngle(x: number, y: number): number {
-    return ((- Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
-  }
-
-  public static turnTowardsAngle(currentAngle: number, targetAngle: number): number {
-    const angleDiff = targetAngle - currentAngle;
+  public static turnTowardsAngle(currentAngle: Angle, targetAngle: Angle, maxStep: number): Angle {
+    const angleDiff = targetAngle.degrees - currentAngle.degrees;
     const angleDiffAbs = Math.abs(angleDiff);
     let newAngle: number;
     if (angleDiffAbs > 180) {
-      const step = Math.min(GameConstants.TURN_STEP_DEGREES, - angleDiffAbs + 360);
-      newAngle = angleDiff > 0 ? currentAngle - step : currentAngle + step;
+      const step = Math.min(maxStep, - angleDiffAbs + 360);
+      newAngle = angleDiff > 0 ? currentAngle.degrees - step : currentAngle.degrees + step;
     } else {
-      const step = Math.min(GameConstants.TURN_STEP_DEGREES, angleDiffAbs);
-      newAngle = angleDiff > 0 ? currentAngle + step : currentAngle - step;
+      const step = Math.min(maxStep, angleDiffAbs);
+      newAngle = angleDiff > 0 ? currentAngle.degrees + step : currentAngle.degrees - step;
     }
-    return newAngle;
+    return Angle.ofDegrees(newAngle);
   }
 
   public static generateCirclePoints(center: Position, radius: number, count: number, distance: number, angle: number): Position[] {
-    const points: { x: number, y: number }[] = [];
+    const points: Position[] = [];
     let radian = angle * (Math.PI / 180); // Convert to radians
 
     for (let i = 0; i < count; i++) {

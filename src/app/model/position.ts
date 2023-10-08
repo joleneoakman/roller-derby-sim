@@ -12,4 +12,24 @@ export class Position implements Vector {
   public static of(x: number, y: number): Position {
     return new Position(x, y);
   }
+
+  public plus(v: Position): Position {
+    return Position.of(this.x + v.x, this.y + v.y);
+  }
+
+  public minus(v: Position): Position {
+    return Position.of(this.x - v.x, this.y - v.y);
+  }
+
+  public times(factor: number): Position {
+    return Position.of(this.x * factor, this.y * factor);
+  }
+
+  public get distance(): number {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+
+  public distanceTo(v: Position): number {
+    return this.minus(v).distance;
+  }
 }
