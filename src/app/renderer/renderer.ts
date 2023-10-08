@@ -49,15 +49,15 @@ export class Renderer {
     track.tenFeetLines.forEach(line => this.drawLine(line.p1, line.p2, outline));
 
     // Center lines
-    this.drawTrackLineOutline(track.trackLineAt(0), outline, true);
-    this.drawTrackLineOutline(track.trackLineAt(1), outline, true);
+    this.drawTrackLineOutline(track.trackLineAt(0), outline, GameConstants.DEBUG_TRACK_LINES);
+    this.drawTrackLineOutline(track.trackLineAt(1), outline, GameConstants.DEBUG_TRACK_LINES);
 
     // Debug info
     if (GameConstants.DEBUG_BOUNDS) {
       const debugOutline = Outline.of(GameConstants.TRACK_DEBUG_COLOR, 1);
-      this.drawTrackLineOutline(track.innerBounds, debugOutline);
-      this.drawTrackLineOutline(track.trackLineAt(0.5), debugOutline);
-      this.drawTrackLineOutline(track.outerBounds, debugOutline);
+      this.drawTrackLineOutline(track.innerBounds, debugOutline, GameConstants.DEBUG_TRACK_LINES);
+      this.drawTrackLineOutline(track.trackLineAt(0.5), debugOutline, GameConstants.DEBUG_TRACK_LINES);
+      this.drawTrackLineOutline(track.outerBounds, debugOutline, GameConstants.DEBUG_TRACK_LINES);
 
       const laneOutline = Outline.of(GameConstants.TRACK_LANE_COLOR, 1);
       for (let i = 1; i < 4; i++) {
@@ -72,14 +72,14 @@ export class Renderer {
     this.drawCircle(trackLine.rightCircle, color);
   }
 
-  drawTrackLineOutline(trackLine: TrackLine, outline: Outline, drawPercentages = true) {
+  drawTrackLineOutline(trackLine: TrackLine, outline: Outline, showPercentages?: boolean) {
     this.drawLine(trackLine.topLine.p1, trackLine.topLine.p2, outline);
     this.drawLine(trackLine.bottomLine.p1, trackLine.bottomLine.p2, outline);
     this.drawArc(trackLine.leftArc, outline);
     this.drawArc(trackLine.rightArc, outline);
-    this.drawCircle(Circle.of(trackLine.startPoint, 0.1), 'red');
 
-    if (drawPercentages) {
+    if (showPercentages) {
+      this.drawCircle(Circle.of(trackLine.pointAtPercentage(0), 0.1), 'red');
       this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.1), 0.1), 'red');
       this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.2), 0.1), 'red');
       this.drawCircle(Circle.of(trackLine.pointAtPercentage(0.3), 0.1), 'red');

@@ -4,33 +4,39 @@ import {Circle} from "./circle";
 import {Angle} from "./angle";
 import {Position} from "./position";
 import {GameConstants} from "../game/game-constants";
+import {GeometryTools} from "../util/geometry-tools";
+import {DistanceTools} from "../util/distance-tools";
+import {TrackLineShape} from "./trackLineShape";
 
 /**
  * A track line is a continuous shape that consists of a top and bottom line, and a left and right arc (half circles).
  */
-export class TrackLine {
+export class TrackLine implements TrackLineShape {
+
   readonly bottomLine: Line;
   readonly rightCircle: Circle;
   readonly topLine: Line;
   readonly leftCircle: Circle;
+
+  // Calculated fields
+  readonly leftArc: Arc;
+  readonly rightArc: Arc;
+  readonly shapes: TrackLineShape[];
 
   private constructor(bottomLine: Line, rightCircle: Circle, topLine: Line, leftCircle: Circle) {
     this.bottomLine = bottomLine;
     this.rightCircle = rightCircle;
     this.topLine = topLine;
     this.leftCircle = leftCircle;
+
+    // Calculated
+    this.leftArc = Arc.of(this.leftCircle, Angle.D_90, Angle.D_270);
+    this.rightArc = Arc.of(this.rightCircle, Angle.D_270, Angle.D_90);
+    this.shapes = [bottomLine, this.rightArc, topLine, this.leftArc];
   }
 
   public static of(bottomLine: Line, rightCircle: Circle, topLine: Line, leftCircle: Circle): TrackLine {
     return new TrackLine(bottomLine, rightCircle, topLine, leftCircle);
-  }
-
-  public get leftArc(): Arc {
-    return Arc.of(this.leftCircle, Angle.D_90, Angle.D_270);
-  }
-
-  public get rightArc(): Arc {
-    return Arc.of(this.rightCircle, Angle.D_270, Angle.D_90);
   }
 
   /**
@@ -65,6 +71,29 @@ export class TrackLine {
     const dLeft = this.leftArc.distance;
     const dRight = this.rightArc.distance;
     return dTop + dBottom + dLeft + dRight;
+  }
+
+  distanceAlong(target: Position): number {
+    return this.percentageAlong(target) * this.distance;
+  }
+
+  public getClosestPointTo(position: Position): Position {
+    const candidates: Position[] = [];
+    candidates.push(this.topLine.getClosestPointTo(position));
+    candidates.push(this.bottomLine.getClosestPointTo(position));
+    candidates.push(this.leftArc.getClosestPointTo(position));
+    candidates.push(this.rightArc.getClosestPointTo(position));
+
+    let minimumDistance = Number.MAX_VALUE;
+    let result = candidates[0];
+    for (const candidate of candidates) {
+      const distance = DistanceTools.ofPositions(position, candidate);
+      if (distance < minimumDistance) {
+        minimumDistance = distance;
+        result = candidate;
+      }
+    }
+    return result;
   }
 
   /**
@@ -123,4 +152,68 @@ export class TrackLine {
     return Line.of(this.bottomLine.p1, this.startPoint).pointAtPercentage((targetLength - accumulatedLength) / dBottom);
   }
 
+
+  /**
+   * Returns the percentage from the start position of the track line to the target position.
+   */
+  public percentageAlong(target: Position): number {
+    return this.percentageBetween(this.startPoint, target);
+  }
+
+  /**
+   * Returns the percentage traveled along the track line from the given reference point to the target position.
+   * The traveled percentage is calculated in counter-clockwise direction and is between 0 and 1.
+   */
+  public percentageBetween(p1: Position, target: Position): number {
+    const p2 = this.getClosestPointTo(target);
+
+    // Find shapes of p1 and p2 in order
+    const shapeIndexForP1 = this.findShapeIndexOf(p1);
+    const shapeIndexForP2 = this.findShapeIndexOf(p2);
+
+    // Loop through each shape to start accumulating distance
+    let accumulatedDistance = 0;
+    let p2Reached = false;
+    for (let i = 0; i < this.shapes.length && !p2Reached; i++) {
+      const currentIndex = (i + shapeIndexForP1) % this.shapes.length;
+      const currentShape = this.shapes[currentIndex];
+      const totalDistanceOfShape = currentShape.distance;
+
+      accumulatedDistance += totalDistanceOfShape;
+      if (currentIndex === shapeIndexForP1) {
+        const distanceFromStartToP1 = currentShape.distanceAlong(p1);
+        accumulatedDistance -= distanceFromStartToP1;
+      }
+      if (currentIndex == shapeIndexForP2) {
+        const distanceFromStartToP2 = currentShape.distanceAlong(p2);
+        const distanceFromP2ToEnd = totalDistanceOfShape - distanceFromStartToP2;
+        accumulatedDistance -= distanceFromP2ToEnd;
+        p2Reached = true;
+      }
+    }
+
+    // Calculate the percentage
+    const totalDistance = this.distance;
+    const result = accumulatedDistance / totalDistance;
+    return result < 0 ? result + 1 : result
+  }
+
+  private findShapeIndexOf(p1: Position) {
+    if (p1.equals(this.startPoint)) {
+      return 0;
+    }
+
+    let result = 0;
+    let minDistance = Number.MAX_VALUE;
+    for (let i = 0; i < this.shapes.length; i++) {
+      const shape = this.shapes[i];
+      const closestPoint = shape.getClosestPointTo(p1);
+      const distance = closestPoint.distanceTo(p1);
+      if (distance < minDistance) {
+        minDistance = distance;
+        result = i;
+      }
+    }
+    return result;
+  }
 }

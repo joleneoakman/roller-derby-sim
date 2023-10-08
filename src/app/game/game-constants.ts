@@ -6,6 +6,7 @@ export class GameConstants {
   // Debug
   //
   public static readonly DEBUG_BOUNDS = true;
+  public static readonly DEBUG_TRACK_LINES = false;
 
   //
   // Rendering
@@ -35,7 +36,7 @@ export class GameConstants {
   public static readonly TEN_FEET = 3.05;
   public static readonly THIRTY_FEET = GameConstants.TEN_FEET * 3;
   public static readonly TEN_FEET_LINE_COUNT = 18;
-  public static readonly PACK_TRACK_LINE = 0.36; // Pack is calculated at this track line
+  public static readonly PACK_LINE_PERCENTAGE = 0.35918181311; // Pack is calculated at this track line
 
   //
   // Styling

@@ -149,39 +149,4 @@ export class GeometryTools {
     }
     return false;
   }
-
-
-  static getClosestPointOnCenterTrack(track: Track, player: PlayerState): Position {
-    const position = player.position;
-    const candidates: Position[] = [];
-    const trackLine = track.trackLineAt(0.5);
-    candidates.push(GeometryTools.getClosestPointOnLine(trackLine.topLine, position));
-    candidates.push(GeometryTools.getClosestPointOnLine(trackLine.bottomLine, position));
-    candidates.push(trackLine.leftArc.getClosestPoint(position));
-    candidates.push(trackLine.rightArc.getClosestPoint(position));
-
-    let minimumDistance = Number.MAX_VALUE;
-    let result = candidates[0];
-    for (const candidate of candidates) {
-      const distance = DistanceTools.ofPositions(position, candidate);
-      if (distance < minimumDistance) {
-        minimumDistance = distance;
-        result = candidate;
-      }
-    }
-    return result;
-  }
-
-  public static getClosestPointOnLine(line: Line, p: Position): Position {
-    const { p1, p2 } = line;
-    const lineLen = DistanceTools.ofPositions(p1, p2);
-    const t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / (lineLen * lineLen);
-
-    const tClamped = MathTools.clamp(t, 0, 1);
-
-    const closestX = p1.x + tClamped * (p2.x - p1.x);
-    const closestY = p1.y + tClamped * (p2.y - p1.y);
-
-    return Position.of(closestX, closestY);
-  }
 }

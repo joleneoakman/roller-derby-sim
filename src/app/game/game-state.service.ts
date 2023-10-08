@@ -11,6 +11,7 @@ import {Pair} from "../model/pair";
 import {GameConstants} from "./game-constants";
 import {Speed} from "../model/speed";
 import {Angle} from "../model/angle";
+import {TrackLine} from "../model/track-line";
 
 
 @Injectable({
@@ -38,7 +39,8 @@ export class GameStateService {
 
   private static initialState(): GameState {
     const track = Track.create();
-    const players = GameStateService.initialDerbyTeams();
+    const players = GameStateService.initialSomePlayerAtPackLine(track.packLine);
+    // const players = GameStateService.initialDerbyTeams();
     return GameState.of(track, players);
   }
 
@@ -56,6 +58,32 @@ export class GameStateService {
       PlayerState.of(Team.B, PlayerType.BLOCKER, Position.of(width - 4, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
       PlayerState.of(Team.B, PlayerType.BLOCKER, Position.of(width - 5, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
     ];
+  }
+
+  private static initialSomePlayerAtPackLine(packLine: TrackLine): PlayerState[] {
+    const angle = Angle.ZERO;
+    return [
+      PlayerState.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.11), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.12), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.50), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.70), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.74), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.78), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.99), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+      PlayerState.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.01), Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100),
+    ]
+  }
+
+
+  private static initialPlayersAtPackLine(packLine: TrackLine): PlayerState[] {
+    const result: PlayerState[] = [];
+    const playerCount = 10;
+    for (let i = 0; i < playerCount; i++) {
+      const position = packLine.pointAtPercentage(i / playerCount);
+      const angle = Angle.ZERO;
+      result.push(PlayerState.of(Team.A, PlayerType.JAMMER, position, Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100));
+    }
+    return result;
   }
 
   private static initialPlayers(count: number): PlayerState[] {

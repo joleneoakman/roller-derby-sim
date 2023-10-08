@@ -1,8 +1,9 @@
 import {Position} from "./position";
 import {Angle} from "./angle";
 import {Circle} from "./circle";
+import {TrackLineShape} from "./trackLineShape";
 
-export class Arc {
+export class Arc implements TrackLineShape {
   readonly circle: Circle;
   readonly startAngle: Angle;
   readonly endAngle: Angle;
@@ -29,7 +30,11 @@ export class Arc {
     return this.startAngle.angleTo(this.endAngle).radians * this.radius;
   }
 
-  public getClosestPoint(p: Position): Position {
+  public distanceAlong(target: Position): number {
+    return this.percentageAlong(target) * this.distance;
+  }
+
+  public getClosestPointTo(p: Position): Position {
     const start = this.getPointAtAngle(this.startAngle);
     const end = this.getPointAtAngle(this.endAngle);
     const intersections = this.circle.getIntersectionWithCenter(p)
@@ -54,5 +59,24 @@ export class Arc {
   public pointAtPercentage(percentage: number): Position {
     const diff = this.startAngle.angleTo(this.endAngle);
     return this.getPointAtAngle(this.startAngle.plus(diff.radians * percentage));
+  }
+
+  /**
+   * Returns the percentage from the start position of the shape to the target position.
+   */
+  public percentageAlong(target: Position): number {
+    const p = this.getClosestPointTo(target);
+
+    // Calculate the angle between the target and the center of the circle
+    const targetAngle = Angle.ofVector(this.position.minus(p));
+
+    // Calculate angular distance from startAngle to targetAngle
+    const angularDistanceToTarget = this.startAngle.angleTo(targetAngle);
+
+    // Calculate the entire angular distance of the arc
+    const totalAngularDistance = this.startAngle.angleTo(this.endAngle);
+
+    // Calculate the percentage from start position to target position
+    return angularDistanceToTarget.radians / totalAngularDistance.radians;
   }
 }

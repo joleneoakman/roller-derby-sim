@@ -5,29 +5,33 @@ import {SelectionState} from "./selection.state";
 import {DistanceTools} from "../util/distance-tools";
 import {CollisionTools} from "../util/collision-tools";
 import {GeometryTools} from "../util/geometry-tools";
+import {PackState} from "./pack.state";
 
 export class GameState {
 
   readonly track: Track;
   readonly players: PlayerState[];
+  readonly pack: PackState;
   readonly selection?: SelectionState;
 
-  constructor(track: Track, players: PlayerState[], selection?: SelectionState) {
+  constructor(track: Track, players: PlayerState[], pack: PackState, selection?: SelectionState) {
     this.players = players;
     this.track = track;
+    this.pack = pack;
     this.selection = selection;
   }
 
   public static of(track: Track, players: PlayerState[]): GameState {
-    return new GameState(track, players, undefined);
+    return new GameState(track, players, PackState.create(players, track.packLine), undefined);
   }
 
   public withPlayers(players: PlayerState[]): GameState {
-    return new GameState(this.track, players, this.selection);
+    const pack = PackState.create(players, this.track.packLine);
+    return new GameState(this.track, players, pack, this.selection);
   }
 
   public withSelection(index: number, targetPosition: Position): GameState {
-    return new GameState(this.track, this.players, SelectionState.of(index, targetPosition));
+    return new GameState(this.track, this.players, this.pack, SelectionState.of(index, targetPosition));
   }
 
   public withSelectedTargetPosition(position: Position): GameState {
@@ -49,7 +53,7 @@ export class GameState {
   }
 
   public deselect(): GameState {
-    return new GameState(this.track, this.players, undefined);
+    return new GameState(this.track, this.players, this.pack, undefined);
   }
 
   public findPlayerIndexAt(position: Position): number {
@@ -92,7 +96,7 @@ export class GameState {
       const containsNew = GeometryTools.isInBounds(this.track, newPlayer);
 
       if (!containsNew) {
-        const targetPoint = GeometryTools.getClosestPointOnCenterTrack(this.track, newPlayer);
+        const targetPoint = this.track.getClosestPointOnTrackLine(newPlayer, 0.5);
         playersAfterBounds[i] = newPlayer.turnTowards(targetPoint);
       } else {
         playersAfterBounds[i] = newPlayer;

@@ -63,7 +63,7 @@ export class CollisionTools {
 
   public static collidePlayers(player1: PlayerState, player2: PlayerState): Pair<PlayerState, PlayerState> {
     // If there is no collision, return the original players
-    const distance = DistanceTools.ofPlayers(player1, player2);
+    const distance = player1.distanceTo(player2);
     if (distance > 0) {
       return Pair.of(player1, player2);
     }

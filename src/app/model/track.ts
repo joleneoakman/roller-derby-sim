@@ -5,6 +5,9 @@ import {Line} from "./line";
 import {MathTools} from "../util/math-tools";
 import {ArcTools} from "../util/arc-tools";
 import {TrackLine} from "./track-line";
+import {PlayerState} from "../state/player.state";
+import {DistanceTools} from "../util/distance-tools";
+import {GeometryTools} from "../util/geometry-tools";
 
 export class Track {
 
@@ -21,6 +24,9 @@ export class Track {
   readonly pivotLine: Line;
   readonly tenFeetLines: Line[];
 
+  // Pack line
+  readonly packLine: TrackLine;
+
   constructor(innerBounds: TrackLine,
               outerBounds: TrackLine,
               innerTrackLine: TrackLine,
@@ -35,6 +41,7 @@ export class Track {
     this.tenFeetLines = tenFeetLines;
     this.innerTrackLine = innerTrackLine;
     this.outerTrackLine = outerTrackLine;
+    this.packLine = this.trackLineAt(GameConstants.PACK_LINE_PERCENTAGE);
   }
 
   public static create(): Track {
@@ -169,6 +176,11 @@ export class Track {
       Track.interpolateLines(this.innerTrackLine.topLine, this.outerTrackLine.topLine, percentage),
       Track.interpolateCircles(this.innerTrackLine.leftCircle, this.outerTrackLine.leftCircle, percentage)
     );
+  }
+
+  public getClosestPointOnTrackLine(player: PlayerState, percentage: number): Position {
+    const trackLine = this.trackLineAt(0.5);
+    return trackLine.getClosestPointTo(player.position);
   }
 
   public lane(lane: number): TrackLine {

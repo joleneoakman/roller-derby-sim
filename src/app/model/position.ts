@@ -32,4 +32,8 @@ export class Position implements Vector {
   public distanceTo(v: Position): number {
     return this.minus(v).distance;
   }
+
+  equals(p1: Position) {
+    return this.x === p1.x && this.y === p1.y;
+  }
 }

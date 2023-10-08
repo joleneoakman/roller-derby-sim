@@ -17,8 +17,4 @@ export class DistanceTools {
     const dy = circle1.y - circle2.y;
     return Math.sqrt(dx * dx + dy * dy) - circle1.radius - circle2.radius;
   }
-
-  public static ofPlayers(player1: PlayerState, player2: PlayerState): number {
-    return DistanceTools.ofCircles(player1.toCircle(), player2.toCircle());
-  }
 }

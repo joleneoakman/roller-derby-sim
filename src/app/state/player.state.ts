@@ -58,6 +58,10 @@ export class PlayerState {
     return new PlayerState(this.team, this.type, position, this.velocity, this.targetVelocity, this.massKg);
   }
 
+  public distanceTo(other: PlayerState): number {
+    return DistanceTools.ofCircles(this.toCircle(), other.toCircle())
+  }
+
   public recalculate(): PlayerState {
     // Calculate new velocity based on target velocity
     const newVelocity = this.velocity.recalculate(this.targetVelocity);
@@ -75,7 +79,7 @@ export class PlayerState {
    */
   public collide(player2: PlayerState): Pair<PlayerState, PlayerState> {
     // If there is no collision, return the original players
-    const distance = DistanceTools.ofPlayers(this, player2);
+    const distance = this.distanceTo(player2);
     if (distance > 0) {
       return Pair.of(this, player2);
     }
