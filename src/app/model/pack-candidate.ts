@@ -8,12 +8,16 @@ import {GameConstants} from "../game/game-constants";
 export class PackCandidate {
   readonly start: number;
   readonly end: number;
+  readonly relativeStart: number;
+  readonly relativeEnd: number
   readonly playerIndices: number[];
   readonly hasBothTeams: boolean;
 
-  constructor(start: number, end: number, players: number[], hasBothTeams: boolean) {
+  constructor(start: number, end: number, relativeStart: number, relativeEnd: number, players: number[], hasBothTeams: boolean) {
     this.start = start;
     this.end = end;
+    this.relativeStart = relativeStart;
+    this.relativeEnd = relativeEnd;
     this.playerIndices = players;
     this.hasBothTeams = hasBothTeams;
   }
@@ -24,7 +28,11 @@ export class PackCandidate {
     let end = Math.max(...packPositions) + GameConstants.PLAYER_RADIUS;
     const switchStartAndEnd = (end - start) > totalDistance / 2;
     const hasBothTeams = PackCandidate.hasBothTeams(playerIndices, players);
-    return new PackCandidate(switchStartAndEnd ? end : start, switchStartAndEnd ? start : end, playerIndices, hasBothTeams);
+    const absoluteStart = switchStartAndEnd ? end : start;
+    const absoluteEnd = switchStartAndEnd ? start : end;
+    const relativeStart = absoluteStart / totalDistance;
+    const relativeEnd = absoluteEnd / totalDistance;
+    return new PackCandidate(absoluteStart, absoluteEnd, relativeStart, relativeEnd, playerIndices, hasBothTeams);
   }
 
   public get size(): number {

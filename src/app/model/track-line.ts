@@ -5,6 +5,7 @@ import {Angle} from "./angle";
 import {Position} from "./position";
 import {GameConstants} from "../game/game-constants";
 import {TrackLineShape} from "./trackLineShape";
+import {Quad} from "./quad";
 
 /**
  * A track line is a continuous shape that consists of a top and bottom line, and a left and right arc (half circles).
@@ -35,6 +36,27 @@ export class TrackLine implements TrackLineShape {
 
   public static of(bottomLine: Line, rightCircle: Circle, topLine: Line, leftCircle: Circle): TrackLine {
     return new TrackLine(bottomLine, rightCircle, topLine, leftCircle);
+  }
+
+  /**
+   * Returns true if the point is inside the enclosing space of the track line's shape.
+   */
+  public containsPoint(p: Position): boolean {
+    // Check if point is inside the center quad
+    const quad = Quad.of(this.bottomLine.p1, this.bottomLine.p2, this.topLine.p1, this.topLine.p2);
+    const containsQuadPoint = quad.containsPoint(p);
+    if (containsQuadPoint) {
+      return true;
+    }
+
+    // Check if point is the left arc
+    const containsLeftArcPoint = this.leftCircle.containsPoint(p);
+    if (containsLeftArcPoint) {
+      return true;
+    }
+
+    // Check if point is the right arc
+    return this.rightCircle.containsPoint(p);
   }
 
   /**
@@ -72,7 +94,7 @@ export class TrackLine implements TrackLineShape {
   }
 
   distanceAlong(target: Position): number {
-    return this.percentageAlong(target) * this.distance;
+    return this.getRelativePositionOf(target) * this.distance;
   }
 
   public getClosestPointTo(position: Position): Position {
@@ -97,15 +119,15 @@ export class TrackLine implements TrackLineShape {
   public pointAtDistance(distance: number): Position {
     const totalDistance = this.distance;
     const percentage = distance / totalDistance;
-    return this.pointAtPercentage(percentage);
+    return this.getAbsolutePositionOf(percentage);
   }
 
   /**
-   * Returns a point along the track line at the given percentage (0 - 1), with:
+   * Returns a point along the track line at the given relativeDistance (0 - 1), with:
    * - 0 being the start point
    * - 1 being the end point (same as start point)
    *
-   * The percentage is calculate by the length of the track, consisting of (in order):
+   * The relativeDistance is calculate by the length of the track, consisting of (in order):
    * - the start point along the bottom line
    * - the bottom line, so (startPoint -> line.p2)
    * - the right arc from arc.startAngle to arc.endAngle, along the radius
@@ -113,9 +135,9 @@ export class TrackLine implements TrackLineShape {
    * - the left arc from arc.startAngle to arc.endAngle, along the radius
    * - the bottom line, so (line.p1 -> startPoint)
    */
-  public pointAtPercentage(percentage: number): Position {
+  public getAbsolutePositionOf(relativeDistance: number): Position {
     const totalLength = this.distance;
-    const targetLength = totalLength * percentage;
+    const targetLength = totalLength * relativeDistance;
 
     // Lengths of individual segments
     const dBottomStart = this.startPoint.distanceTo(this.bottomLine.p2);
@@ -131,44 +153,44 @@ export class TrackLine implements TrackLineShape {
     // Point lies on the segment from startPoint to bottomLine.p2
     accumulatedLength += dBottomStart;
     if (targetLength < accumulatedLength) {
-      return Line.of(this.startPoint, this.bottomLine.p2).pointAtPercentage(targetLength / dBottomStart);
+      return Line.of(this.startPoint, this.bottomLine.p2).getAbsolutePositionOf(targetLength / dBottomStart);
     }
 
     // Point lies on the right arc
     if ((accumulatedLength + dRight) > targetLength) {
-      return this.rightArc.pointAtPercentage(- (targetLength - accumulatedLength - dRight) / dRight);
+      return this.rightArc.getAbsolutePositionOf(- (targetLength - accumulatedLength - dRight) / dRight);
     }
     accumulatedLength += dRight;
 
     // Point lies on the top line
     if ((accumulatedLength + dTop) > targetLength) {
-      return this.topLine.pointAtPercentage((targetLength - accumulatedLength) / dTop);
+      return this.topLine.getAbsolutePositionOf((targetLength - accumulatedLength) / dTop);
     }
     accumulatedLength += dTop;
 
     // Point lies on the left arc
     if (accumulatedLength + dLeft > targetLength) {
-      return this.leftArc.pointAtPercentage(- (targetLength - accumulatedLength - dLeft) / dLeft);
+      return this.leftArc.getAbsolutePositionOf(- (targetLength - accumulatedLength - dLeft) / dLeft);
     }
     accumulatedLength += dLeft;
 
     // Point lies on the bottom line from p1 to startPoint
-    return Line.of(this.bottomLine.p1, this.startPoint).pointAtPercentage((targetLength - accumulatedLength) / dBottom);
+    return Line.of(this.bottomLine.p1, this.startPoint).getAbsolutePositionOf((targetLength - accumulatedLength) / dBottom);
   }
 
 
   /**
    * Returns the percentage from the start position of the track line to the target position.
    */
-  public percentageAlong(target: Position): number {
-    return this.percentageBetween(this.startPoint, target);
+  public getRelativePositionOf(target: Position): number {
+    return this.getRelativeDistanceBetween(this.startPoint, target);
   }
 
   /**
    * Returns the percentage traveled along the track line from the given reference point to the target position.
    * The traveled percentage is calculated in counter-clockwise direction and is between 0 and 1.
    */
-  public percentageBetween(p1: Position, target: Position): number {
+  public getRelativeDistanceBetween(p1: Position, target: Position): number {
     const p2 = this.getClosestPointTo(target);
 
     // Find shapes of p1 and p2 in order
@@ -202,7 +224,10 @@ export class TrackLine implements TrackLineShape {
     return result < 0 ? result + 1 : result
   }
 
-  private findShapeIndexOf(p1: Position) {
+  /**
+   * Returns the index of the shape that contains the given point.
+   */
+  public findShapeIndexOf(p1: Position) {
     if (p1.equals(this.startPoint)) {
       return 0;
     }
@@ -219,5 +244,19 @@ export class TrackLine implements TrackLineShape {
       }
     }
     return result;
+  }
+
+  public getIntersectionWith(line: Line, shapeIndex: number): Position {
+    // Calculate for line
+    const shape = this.shapes[shapeIndex];
+    if (shape instanceof Line) {
+      const x = line.p1.x;
+      const y = (shape as Line).resolveY(x);
+      return Position.of(x, y);
+    }
+
+    // Calculate for arc
+    const arc = shape as Arc;
+    return arc.getIntersectionWith(line);
   }
 }

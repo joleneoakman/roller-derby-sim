@@ -3,9 +3,10 @@ import {Position} from "./position";
 import {GameConstants} from "../game/game-constants";
 import {Line} from "./line";
 import {MathTools} from "../util/math-tools";
-import {ArcTools} from "../util/arc-tools";
+import {CircleTools} from "../util/circle-tools";
 import {TrackLine} from "./track-line";
 import {Player} from "./player";
+import {Renderer} from "../renderer/renderer";
 
 export class Track {
 
@@ -25,6 +26,9 @@ export class Track {
   // Pack line
   readonly packLine: TrackLine;
 
+  // Rendering info
+  readonly trackRatio: number;
+
   constructor(innerBounds: TrackLine,
               outerBounds: TrackLine,
               innerTrackLine: TrackLine,
@@ -40,6 +44,7 @@ export class Track {
     this.innerTrackLine = innerTrackLine;
     this.outerTrackLine = outerTrackLine;
     this.packLine = this.trackLineAt(GameConstants.PACK_LINE_PERCENTAGE);
+    this.trackRatio = Track.calculateTrackRatio(this);
   }
 
   public static create(): Track {
@@ -49,7 +54,7 @@ export class Track {
     const h = 3.81;
     const rIn = 3.81;
     const rOut = 8.08;
-    const centerPoint = Position.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2, rOut * 1.5 - 1);
+    const centerPoint = Position.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2 - tenFeet, rOut * 1.5 - 1);
 
     // Inner bounds
     const r = GameConstants.PLAYER_RADIUS;
@@ -111,9 +116,9 @@ export class Track {
       Position.of(centerPoint.x - w, centerPoint.y + (h + rOut + oneFoot) / 2),
       Position.of(centerPoint.x + w, centerPoint.y + (h + rOut - oneFoot) / 2));
     const bottomX1 = centerPoint.x + w - tenFeet;
-    const bottomY1 = MathTools.getYFor(centerLineBottom, bottomX1);
+    const bottomY1 = centerLineBottom.resolveY( bottomX1);
     const bottomX2 = centerPoint.x + w - tenFeet * 2;
-    const bottomY2 = MathTools.getYFor(centerLineBottom, bottomX2);
+    const bottomY2 = centerLineBottom.resolveY(bottomX2);
     result.push(Track.createLine(Position.of(bottomX1, bottomY1), length));
     result.push(Track.createLine(Position.of(bottomX2, bottomY2), length));
 
@@ -122,13 +127,13 @@ export class Track {
       Position.of(centerPoint.x - w, centerPoint.y - (h + rOut - oneFoot) / 2),
       Position.of(centerPoint.x + w, centerPoint.y - (h + rOut + oneFoot) / 2));
     const topX0 = centerPoint.x - w;
-    const topY0 = MathTools.getYFor(centerLineTop, topX0);
+    const topY0 = centerLineTop.resolveY(topX0);
     const topX1 = centerPoint.x - w + tenFeet;
-    const topY1 = MathTools.getYFor(centerLineTop, topX1);
+    const topY1 = centerLineTop.resolveY(topX1);
     const topX2 = centerPoint.x - w + tenFeet * 2;
-    const topY2 = MathTools.getYFor(centerLineTop, topX2);
+    const topY2 = centerLineTop.resolveY(topX2);
     const topX3 = centerPoint.x - w + tenFeet * 3;
-    const topY3 = MathTools.getYFor(centerLineTop, topX3);
+    const topY3 = centerLineTop.resolveY(topX3);
     result.push(Track.createLine(Position.of(topX0, topY0), length));
     result.push(Track.createLine(Position.of(topX1, topY1), length));
     result.push(Track.createLine(Position.of(topX2, topY2), length));
@@ -137,7 +142,7 @@ export class Track {
     // Right arc
     const rightCenter = Position.of(centerPoint.x + w, centerPoint.y - oneFoot / 2);
     const scalar = 1.09;
-    const rightPoints = ArcTools.generateCirclePoints(rightCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, 90);
+    const rightPoints = CircleTools.generateCirclePoints(rightCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, 90);
     for (let i = 1; i < rightPoints.length; i++) {
       const point = rightPoints[i];
       const pos1 = MathTools.addDistanceAlongLine(Line.of(rightCenter, point), -length / 2);
@@ -147,7 +152,7 @@ export class Track {
 
     // Left arc
     const leftCenter = Position.of(centerPoint.x - w, centerPoint.y + oneFoot / 2);
-    const leftPoints = ArcTools.generateCirclePoints(leftCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, -90);
+    const leftPoints = CircleTools.generateCirclePoints(leftCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, -90);
     for (let i = 1; i < leftPoints.length; i++) {
       const point = leftPoints[i];
       const pos1 = MathTools.addDistanceAlongLine(Line.of(leftCenter, point), -length / 2);
@@ -176,14 +181,55 @@ export class Track {
     );
   }
 
+  /**
+   * Returns the absolute position (real world coordinates based on the relative position on the track, with:
+   *  - X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
+   *  - Y: Relative distance traveled along track (0 = start, 0.9999... = end)
+   */
+  public getAbsolutePosition(relativePosition: Position): Position {
+    const distance = this.packLine.distance * relativePosition.y;
+    const pointOnPackLine = this.packLine.pointAtDistance(distance);
+    const pointOnInnerTrackLine = this.innerBounds.getClosestPointTo(pointOnPackLine);
+    const pointOnOuterTrackLine = this.outerBounds.getClosestPointTo(pointOnPackLine);
+    const line = Line.of(pointOnInnerTrackLine, pointOnOuterTrackLine);
+    return line.getAbsolutePositionOf(relativePosition.x);
+  }
+
+  /**
+   * Returns the relative position on the track, given the absolute position (real world coordinates), with:
+   *  - X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
+   *  - Y: Relative distance traveled along track (0 = start, 0.9999... = end)
+   */
+  public getRelativePosition(candidate: Position): Position {
+    const pointOnInnerTrackLine = this.innerTrackLine.getClosestPointTo(candidate);
+    const shapeIndex = this.innerTrackLine.findShapeIndexOf(candidate);
+    const innerTrackToCandidate = Line.of(pointOnInnerTrackLine, candidate);
+    const pointOnInnerBounds = this.innerBounds.getIntersectionWith(innerTrackToCandidate, shapeIndex);
+    const pointOnOuterBounds = this.outerBounds.getIntersectionWith(innerTrackToCandidate, shapeIndex);
+    const innerOuterBounds = Line.of(pointOnInnerBounds, pointOnOuterBounds);
+    const relativeX = innerOuterBounds.getRelativePositionOf(candidate);
+    const relativeY = this.packLine.getRelativePositionOf(pointOnInnerTrackLine);
+    return Position.of(relativeX, relativeY);
+  }
+
   public getClosestPointOnTrackLine(player: Player, percentage: number): Position {
-    const trackLine = this.trackLineAt(0.5);
+    const trackLine = this.trackLineAt(percentage);
     return trackLine.getClosestPointTo(player.position);
   }
 
   public lane(lane: number): TrackLine {
     const percentage = lane / GameConstants.LANE_COUNT;
     return this.trackLineAt(percentage);
+  }
+
+  //
+  // Utility methods
+  //
+
+  private static calculateTrackRatio(track: Track): number {
+    const trackWidth = track.innerTrackLine.topLine.p2.distanceTo(track.outerTrackLine.topLine.p2);
+    const trackLength = track.packLine.distance;
+    return trackWidth / trackLength;
   }
 
   private static interpolateLines(line1: Line, line2: Line, percentage: number): Line {

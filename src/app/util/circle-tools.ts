@@ -1,6 +1,6 @@
 import {Position} from "../model/position";
 
-export class ArcTools {
+export class CircleTools {
 
   public static generateCirclePoints(center: Position, radius: number, count: number, distance: number, angle: number): Position[] {
     const points: Position[] = [];

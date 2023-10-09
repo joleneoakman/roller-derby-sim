@@ -3,10 +3,17 @@ import {Velocity} from "../model/velocity";
 import {Line} from "../model/line";
 
 export class MathTools {
-  public static clamp(value: number, min: number, max: number): number {
+
+  /**
+   * Limit the given value to the given range (min/max).
+   */
+  public static limit(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
   };
 
+  /**
+   * Calculate the dot n for the given positions and velocities.
+   */
   public static getDotN(position1: Position, velocity1: Velocity, position2: Position, velocity2: Velocity): number {
     const x1 = position1.x;
     const y1 = position1.y;
@@ -33,21 +40,6 @@ export class MathTools {
 
     // Calculate velocity along normal
     return rvx * nx + rvy * ny;
-  }
-
-  /**
-   * For the given line, find the y coordinate for the given x coordinate.
-   */
-  public static getYFor(line: Line, x: number): number {
-    const x1 = line.p1.x;
-    const y1 = line.p1.y;
-    const x2 = line.p2.x;
-    const y2 = line.p2.y;
-
-    const m = (y2 - y1) / (x2 - x1);
-    const b = y1 - m * x1;
-
-    return m * x + b;
   }
 
   /**

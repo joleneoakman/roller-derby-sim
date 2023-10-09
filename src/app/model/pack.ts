@@ -78,11 +78,21 @@ export class Pack {
     const totalDistance = packLine.distance;
     const count = players.length;
 
+    // Exclude players that are not applicable for pack
+    const applicablePlayers: boolean[] = [];
+    for (let i = 0; i < count; i++) {
+      applicablePlayers[i] = players[i].isInBounds();
+    }
+
     // Calculate which players within ten feet of each other
     const playersWithinTenFeet: boolean[][] = new Array(count);
     for (let i = 0; i < count; i++) {
       const row: boolean[] = new Array(count);
       for (let j = 0; j < count; j++) {
+        if (!applicablePlayers[i] || !applicablePlayers[j]) {
+          continue;
+        }
+
         if (i === j) {
           row[j] = true;
         } else {
@@ -92,13 +102,11 @@ export class Pack {
       playersWithinTenFeet[i] = row;
     }
 
-    // Exclude players that are not applicable for pack
-
     // Cluster the players within ten feet of each other in a pack
     const visited = new Array(count).fill(false);
     const packs: PackCandidate[] = [];
     for (let i = 0; i < count; i++) {
-      if (!visited[i]) {
+      if (!visited[i] && applicablePlayers[i]) {
         const packPlayerIndices: number[] = [];
         const stack = [i];
         visited[i] = true;

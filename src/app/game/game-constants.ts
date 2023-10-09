@@ -42,16 +42,20 @@ export class GameConstants {
   //
   // Styling
   //
-  public static readonly OUT_OF_BOUNDS_COLOR = '#e3aee1';
-  public static readonly INBOUNDS_COLOR = '#bafefc';
-  public static readonly TRACK_STROKE_COLOR = 'blue';
-  public static readonly TRACK_DEBUG_COLOR = '#0000ff1f';
-  public static readonly TRACK_LANE_COLOR = '#0000ff2f';
+  public static readonly OUT_OF_BOUNDS_COLOR = '#855e83'; // '#e3aee1';
+  public static readonly INBOUNDS_COLOR = '#a1e1df'; // '#bafefc';
+  public static readonly TRACK_STROKE_COLOR = '#50004b';
+  public static readonly TRACK_DEBUG_COLOR = '#50004b1f';
+  public static readonly TRACK_LANE_COLOR = '#50004b2f';
+  public static readonly PACK_COLOR = '#ffff005f';
 
-  public static readonly TEAM_A_COLOR = 'red';
+  public static readonly PLAYER_OUTLINE_WIDTH = 1;
+  public static readonly TRACK_LINE_OUTLINE_WIDTH = 1;
+
+  public static readonly TEAM_A_COLOR = '#d51349';
   public static readonly TEAM_A_STROKE_COLOR = 'black';
   public static readonly TEAM_A_SELECTED_COLOR = 'orange';
-  public static readonly TEAM_B_COLOR = 'blue';
+  public static readonly TEAM_B_COLOR = '#5a06d9';
   public static readonly TEAM_B_STROKE_COLOR = 'black';
   public static readonly TEAM_B_SELECTED_COLOR = 'lightblue';
 }

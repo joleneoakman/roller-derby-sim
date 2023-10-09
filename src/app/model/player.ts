@@ -7,39 +7,49 @@ import {Pair} from "./pair";
 import {GameConstants} from "../game/game-constants";
 import {MathTools} from "../util/math-tools";
 import {Track} from "./track";
-import {GeometryTools} from "../util/geometry-tools";
 
 export class Player {
+
+  // Fixed data
   readonly team: Team;
   readonly type: PlayerType;
+  readonly massKg: number;
+  readonly radius: number = GameConstants.PLAYER_RADIUS;
+
+  // Physics data
   readonly position: Position;
+  // X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
+  // Y: Relative distance traveled along track (0 = start, 0.9999... = end)
+  readonly relativePosition: Position;
   readonly velocity: Velocity;
   readonly targetVelocity: Velocity;
-  readonly massKg: number;
-
-  readonly radius: number = GameConstants.PLAYER_RADIUS;
 
   private constructor(team: Team,
                       type: PlayerType,
                       position: Position,
+                      relativePosition: Position,
                       velocity: Velocity,
                       targetVelocity: Velocity,
                       massKg: number) {
     this.team = team;
     this.type = type;
     this.position = position;
+    this.relativePosition = relativePosition;
     this.velocity = velocity;
     this.targetVelocity = targetVelocity;
     this.massKg = massKg;
+    console.log(relativePosition);
   }
 
-  public static of(team: Team,
+  public static of(track: Track,
+                   team: Team,
                    type: PlayerType,
                    position: Position,
                    velocity: Velocity,
                    targetVelocity: Velocity,
                    massKg: number): Player {
-    return new Player(team, type, position, velocity, targetVelocity, massKg);
+    const relativePosition = track.getRelativePosition(position);
+    return new Player(team, type, position, relativePosition, velocity, targetVelocity, massKg);
   }
 
   public toCircle(): Circle {
@@ -47,32 +57,31 @@ export class Player {
   }
 
   public withVelocity(velocity: Velocity): Player {
-    return new Player(this.team, this.type, this.position, velocity, this.targetVelocity, this.massKg);
+    return new Player(this.team, this.type, this.position, this.relativePosition, velocity, this.targetVelocity, this.massKg);
   }
 
   public withTargetVelocity(targetVelocity: Velocity): Player {
-    return new Player(this.team, this.type, this.position, this.velocity, targetVelocity, this.massKg);
+    return new Player(this.team, this.type, this.position, this.relativePosition, this.velocity, targetVelocity, this.massKg);
   }
 
-  public withPosition(position: Position): Player {
-    return new Player(this.team, this.type, position, this.velocity, this.targetVelocity, this.massKg);
+  public withPosition(position: Position, track: Track): Player {
+    const relativePosition = track.getRelativePosition(position);
+    return new Player(this.team, this.type, position, relativePosition, this.velocity, this.targetVelocity, this.massKg);
   }
 
   public distanceTo(other: Player): number {
     return this.toCircle().distanceTo(other.toCircle());
   }
 
-  public isInBounds(track: Track): boolean {
-    const insideOuterBounds = GeometryTools.containsTrackLinePoint(track.outerBounds, this.position);
-    const insideInnerBounds = GeometryTools.containsTrackLinePoint(track.innerBounds, this.position);
-    return insideOuterBounds && !insideInnerBounds;
+  public isInBounds(): boolean {
+    return this.relativePosition.x >= 0 && this.relativePosition.x <= 1;
   }
 
-  public recalculate(): Player {
+  public recalculate(track: Track): Player {
     // Calculate new velocity based on target velocity
     const newVelocity = this.velocity.recalculate(this.targetVelocity);
     const newPosition = newVelocity.calculatePosition(this.position);
-    return this.withVelocity(newVelocity).withPosition(newPosition);
+    return this.withVelocity(newVelocity).withPosition(newPosition, track);
   }
 
   public turnTowards(targetPoint: Position): Player {
@@ -80,7 +89,7 @@ export class Player {
     return this.withTargetVelocity(this.targetVelocity.withAngle(angle));
   }
 
-  public collideWith(player2: Player): Pair<Player, Player> {
+  public collideWith(player2: Player, track: Track): Pair<Player, Player> {
     // If there is no collision, return the original players
     let player1: Player = this;
     const distance = player1.distanceTo(player2);
@@ -94,8 +103,8 @@ export class Player {
     // Correct player positions if they are overlapping
     if (distance < 0) {
       const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position);
-      player2 = player2.withPosition(corrected.b.position);
+      player1 = player1.withPosition(corrected.a.position, track);
+      player2 = player2.withPosition(corrected.b.position, track);
     }
     return Pair.of(player1, player2);
   }
@@ -103,7 +112,7 @@ export class Player {
   /**
    * Calculates the both player states after a collision between them.
    */
-  public collide(player2: Player): Pair<Player, Player> {
+  public collide(player2: Player, track: Track): Pair<Player, Player> {
     // If there is no collision, return the original players
     const distance = this.distanceTo(player2);
     if (distance > 0) {
@@ -114,8 +123,8 @@ export class Player {
     let player1: Player = this;
     if (distance < 0) {
       const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position);
-      player2 = player2.withPosition(corrected.b.position);
+      player1 = player1.withPosition(corrected.a.position, track);
+      player2 = player2.withPosition(corrected.b.position, track);
     }
     if (true) {
       return Pair.of(player1, player2);
@@ -161,8 +170,8 @@ export class Player {
     const newPos2 = Position.of(newPosX2, newPosY2);
 
     // Return new players
-    const player1New = this.withVelocity(newV1).withPosition(newPos1);
-    const player2New = player2.withVelocity(newV2).withPosition(newPos2);
+    const player1New = this.withVelocity(newV1).withPosition(newPos1, track);
+    const player2New = player2.withVelocity(newV2).withPosition(newPos2, track);
     return Pair.of(player1New, player2New);
   }
 

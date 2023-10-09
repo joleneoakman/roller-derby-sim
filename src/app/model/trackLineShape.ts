@@ -17,10 +17,10 @@ export interface TrackLineShape {
   /**
    * Returns a point along the shape at the given percentage (0 - 1).
    */
-  pointAtPercentage(percentage: number): Position;
+  getAbsolutePositionOf(percentage: number): Position;
 
   /**
    * Returns the percentage along the shape from the start position to the target position.
    */
-  percentageAlong(target: Position): number;
+  getRelativePositionOf(target: Position): number;
 }

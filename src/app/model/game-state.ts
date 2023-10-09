@@ -37,7 +37,7 @@ export class GameState {
     }
     return this.withSelection(this.playerSelection.index, position).withPlayers(this.players.map((p, i) => {
       if (i === this.playerSelection?.index) {
-        return p.withTargetPosition(position);
+        return p.withPosition(position, this.track);
       } else {
         return p;
       }
@@ -66,7 +66,11 @@ export class GameState {
   }
 
   public recalculate(): GameState {
-    const playersAfterMove = this.players.map(player => player.recalculate());
+    if (true) {
+      return this;
+    }
+
+    const playersAfterMove = this.players.map(player => player.recalculate(this.track));
 
     // Calculate new player velocities based on objectives
     // Todo: implement
@@ -78,7 +82,7 @@ export class GameState {
       const playerAfterMove1 = playersAfterBlocks[i];
       for (let j = i + 1; j < count; j++) {
         const playerAfterMove2 = playersAfterBlocks[j];
-        const collided = playerAfterMove1.collideWith(playerAfterMove2);
+        const collided = playerAfterMove1.collideWith(playerAfterMove2, this.track);
         playersAfterBlocks[i] = collided.a;
         playersAfterBlocks[j] = collided.b;
       }
@@ -89,8 +93,8 @@ export class GameState {
     for (let i = 0; i < count; i++) {
       const oldPlayer = this.players[i];
       const newPlayer = playersAfterBlocks[i];
-      const containsOld = oldPlayer.isInBounds(this.track);
-      const containsNew = newPlayer.isInBounds(this.track);
+      const containsOld = oldPlayer.isInBounds();
+      const containsNew = newPlayer.isInBounds();
 
       if (!containsNew) {
         const targetPoint = this.track.getClosestPointOnTrackLine(newPlayer, 0.5);

@@ -39,61 +39,69 @@ export class GameStateService {
 
   private static initialState(): GameState {
     const track = Track.create();
-    const players = GameStateService.initialSomePlayerAtPackLine(track.packLine);
-    // const players = GameStateService.initialDerbyTeams();
+    // const players = GameStateService.onePlayer(track);
+    const players = GameStateService.initialSomePlayerAtPackLine(track);
+    // const players = GameStateService.initialDerbyTeams(track);
     return GameState.of(track, players);
   }
 
-  private static initialDerbyTeams(): Player[] {
+  private static onePlayer(track: Track): Player[] {
+    const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
+    return [
+      Player.of(track, Team.A, PlayerType.BLOCKER, track.innerBounds.getAbsolutePositionOf(0.1), velocity, velocity, 100),
+    ]
+  }
+
+  private static initialDerbyTeams(track: Track): Player[] {
     const width = GameConstants.CANVAS_WIDTH_IN_METERS;
     return [
-      Player.of(Team.A, PlayerType.JAMMER, Position.of(1, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.A, PlayerType.PIVOT, Position.of(2, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.A, PlayerType.BLOCKER, Position.of(3, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.A, PlayerType.BLOCKER, Position.of(4, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.A, PlayerType.BLOCKER, Position.of(5, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.B, PlayerType.JAMMER, Position.of(width - 1, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.B, PlayerType.PIVOT, Position.of(width - 2, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.B, PlayerType.BLOCKER, Position.of(width - 3, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.B, PlayerType.BLOCKER, Position.of(width - 4, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
-      Player.of(Team.B, PlayerType.BLOCKER, Position.of(width - 5, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.A, PlayerType.JAMMER, Position.of(1, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.A, PlayerType.PIVOT, Position.of(2, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, Position.of(3, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, Position.of(4, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, Position.of(5, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.B, PlayerType.JAMMER, Position.of(width - 1, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.B, PlayerType.PIVOT, Position.of(width - 2, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, Position.of(width - 3, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, Position.of(width - 4, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, Position.of(width - 5, 1), Velocity.ZERO, Velocity.ofReadable(5, -90),  100),
     ];
   }
 
-  private static initialSomePlayerAtPackLine(packLine: TrackLine): Player[] {
+  private static initialSomePlayerAtPackLine(track: Track): Player[] {
     const angle = Angle.ZERO;
     const speed = Speed.ofKph(0);
     return [
-      Player.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.11), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.12), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.50), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.A, PlayerType.BLOCKER, packLine.pointAtPercentage(0.70), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.74), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.78), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.99), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(Team.B, PlayerType.BLOCKER, packLine.pointAtPercentage(0.01), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.11), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.12), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.50), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.70), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.74), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.78), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.99), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
+      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.01), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
     ]
   }
 
 
-  private static initialPlayersAtPackLine(packLine: TrackLine): Player[] {
+  private static initialPlayersAtPackLine(track: Track): Player[] {
     const result: Player[] = [];
     const playerCount = 10;
     for (let i = 0; i < playerCount; i++) {
-      const position = packLine.pointAtPercentage(i / playerCount);
+      const position = track.packLine.getAbsolutePositionOf(i / playerCount);
       const angle = Angle.ZERO;
-      result.push(Player.of(Team.A, PlayerType.JAMMER, position, Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100));
+      result.push(Player.of(track, Team.A, PlayerType.JAMMER, position, Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ZERO, angle), 100));
     }
     return result;
   }
 
-  private static initialPlayers(count: number): Player[] {
+  private static initialPlayers(track: Track, count: number): Player[] {
     const positionsAndAngles = this.generatePointsOnCircle(Position.of(35, 6), 3, 6);
     const result: Player[] = [];
     for (let i = 0; i < count; i++) {
       const position = positionsAndAngles.a[i];
       const angle = positionsAndAngles.b[i];
-      result.push(Player.of(Team.A, PlayerType.JAMMER, position, Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ofKph(1), angle), 100));
+      result.push(Player.of(track, Team.A, PlayerType.JAMMER, position, Velocity.of(Speed.ZERO, angle), Velocity.of(Speed.ofKph(1), angle), 100));
     }
     return result;
   }

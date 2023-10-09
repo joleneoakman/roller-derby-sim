@@ -20,7 +20,7 @@ export class Line implements TrackLineShape {
   }
 
   public distanceAlong(target: Position): number {
-    return this.percentageAlong(target) * this.distance;
+    return this.getRelativePositionOf(target) * this.distance;
   }
 
   public getClosestPointTo(p: Position): Position {
@@ -29,7 +29,7 @@ export class Line implements TrackLineShape {
     const lineLen = p1.distanceTo(p2);
     const t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / (lineLen * lineLen);
 
-    const tClamped = MathTools.clamp(t, 0, 1);
+    const tClamped = MathTools.limit(t, 0, 1);
 
     const closestX = p1.x + tClamped * (p2.x - p1.x);
     const closestY = p1.y + tClamped * (p2.y - p1.y);
@@ -42,7 +42,7 @@ export class Line implements TrackLineShape {
    * - 0.5 halfway point between p1 and p2
    * - 1 being p2
    */
-  public pointAtPercentage(percentage: number): Position {
+  public getAbsolutePositionOf(percentage: number): Position {
     const x = this.p1.x * (1 - percentage) + this.p2.x * (percentage);
     const y = this.p1.y * (1 - percentage) + this.p2.y * (percentage);
     return new Position(x, y);
@@ -52,7 +52,7 @@ export class Line implements TrackLineShape {
    * Returns the percentage (0..1) from the start position (p1) of line to the target position.
    * The target position must be on the line between p1 and p2.
    */
-  percentageAlong(target: Position): number {
+  public getRelativePositionOf(target: Position): number {
     if (target.equals(this.p1)) {
       return 0;
     }
@@ -76,5 +76,23 @@ export class Line implements TrackLineShape {
 
     // Calculate the percentage
     return dotProduct / (length * length);
+  }
+
+  /**
+   * For the given line, find the y coordinate for the given x coordinate.
+   */
+  public resolveY(x: number): number {
+    const x1 = this.p1.x;
+    const y1 = this.p1.y;
+    const x2 = this.p2.x;
+    const y2 = this.p2.y;
+    if (x1 === x2) {
+      return y1;
+    }
+
+    const m = (y2 - y1) / (x2 - x1);
+    const b = y1 - m * x1;
+
+    return m * x + b;
   }
 }
