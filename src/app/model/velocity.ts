@@ -1,7 +1,6 @@
 import {Vector} from "./vector";
 import {GameConstants} from "../game/game-constants";
 import {Position} from "./position";
-import {ArcTools} from "../util/arc-tools";
 import {Angle} from "./angle";
 import {Speed} from "./speed";
 

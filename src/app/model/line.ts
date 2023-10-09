@@ -1,6 +1,5 @@
 import {Position} from "./position";
 import {TrackLineShape} from "./trackLineShape";
-import {DistanceTools} from "../util/distance-tools";
 import {MathTools} from "../util/math-tools";
 
 export class Line implements TrackLineShape {
@@ -27,7 +26,7 @@ export class Line implements TrackLineShape {
   public getClosestPointTo(p: Position): Position {
     const p1 = this.p1;
     const p2 = this.p2;
-    const lineLen = DistanceTools.ofPositions(p1, p2);
+    const lineLen = p1.distanceTo(p2);
     const t = ((p.x - p1.x) * (p2.x - p1.x) + (p.y - p1.y) * (p2.y - p1.y)) / (lineLen * lineLen);
 
     const tClamped = MathTools.clamp(t, 0, 1);

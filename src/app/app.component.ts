@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, ViewChild} from '@angular/core';
 import {Renderer} from "./renderer/renderer";
 import {Observable} from "rxjs";
-import {GameState} from "./state/game.state";
+import {GameState} from "./model/game-state";
 import {Position} from "./model/position";
 import {GameConstants} from "./game/game-constants";
 import {GameStateService} from "./game/game-state.service";

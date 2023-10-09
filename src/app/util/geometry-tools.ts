@@ -3,20 +3,9 @@ import {Line} from "../model/line";
 import {MathTools} from "./math-tools";
 import {Rectangle} from "../model/rectangle";
 import {Position} from "../model/position";
-import {Track} from "../model/track";
-import {PlayerState} from "../state/player.state";
-import {DistanceTools} from "./distance-tools";
-import {Triangle} from "../model/triangle";
-import {Arc} from "../model/arc";
 import {TrackLine} from "../model/track-line";
 
 export class GeometryTools {
-
-  public static isInBounds(track: Track, player: PlayerState): boolean {
-    const insideOuterBounds = GeometryTools.containsTrackLinePoint(track.outerBounds, player.position);
-    const insideInnerBounds = GeometryTools.containsTrackLinePoint(track.innerBounds, player.position);
-    return insideOuterBounds && !insideInnerBounds;
-  }
 
   public static containsTrackLinePoint(trackLine: TrackLine, p: Position): boolean {
     // Check if point is inside the center quad
@@ -31,13 +20,13 @@ export class GeometryTools {
     }
 
     // Check if point is the left arc
-    const containsLeftArcPoint = GeometryTools.containsCirclePoint(trackLine.leftCircle, p);
+    const containsLeftArcPoint = trackLine.leftCircle.containsPoint(p);
     if (containsLeftArcPoint) {
       return true;
     }
 
     // Check if point is the right arc
-    return GeometryTools.containsCirclePoint(trackLine.rightCircle, p);
+    return trackLine.rightCircle.containsPoint(p);
   }
 
   /**
@@ -56,56 +45,6 @@ export class GeometryTools {
       if (intersect) inside = !inside;
     }
     return inside;
-  }
-
-  /**
-   * Returns true if the given arc contains the given point.
-   */
-  public static containsArcPoint(arc: Arc, p: Position): boolean {
-    // Todo: this isn't correct yet, probably angles are messed up
-
-    // Calculate distance from point to center of arc
-    const dx = p.x - arc.position.x;
-    const dy = p.y - arc.position.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Check if point is within the circle defined by the radius
-    if (distance > arc.radius) return false;
-
-    // Calculate angle relative to arc center
-    let angle = Math.atan2(dy, dx);
-
-    // Convert to positive angle in [0, 2 * PI]
-    if (angle < 0) angle += 2 * Math.PI;
-
-    // Normalize angles to positive values in [0, 2 * PI]
-    let startAngle = arc.startAngle.radians;
-    let endAngle = arc.endAngle.radians;
-
-    // Account for angles that cross the 0/2*PI line
-    if (endAngle < startAngle) {
-      return (angle >= startAngle && angle <= 2 * Math.PI) || (angle >= 0 && angle <= endAngle);
-    }
-
-    return angle >= startAngle && angle <= endAngle;
-  }
-
-  public static containsCirclePoint(circle: Circle, p: Position): boolean {
-    const distance = DistanceTools.ofCircleToPosition(circle, p);
-    return distance <= 0;
-  }
-
-  public static containsTrianglePoint(triangle: Triangle, p: Position): boolean {
-    const { p1, p2, p3 } = triangle;
-    const areaOrig = this.areaOfTriangle(p1, p2, p3);
-    const area1 = this.areaOfTriangle(p, p2, p3);
-    const area2 = this.areaOfTriangle(p1, p, p3);
-    const area3 = this.areaOfTriangle(p1, p2, p);
-    return areaOrig === (area1 + area2 + area3);
-  }
-
-  public static areaOfTriangle(p1: Position, p2: Position, p3: Position): number {
-    return Math.abs((p1.x*(p2.y-p3.y) + p2.x*(p3.y-p1.y) + p3.x*(p1.y-p2.y)) / 2);
   }
 
   public static containsRectanglePoint(rect: Rectangle, p: Position): boolean {

@@ -1,5 +1,6 @@
 import {Position} from "./position";
 import {Line} from "./line";
+import {Pair} from "./pair";
 
 export class Circle {
   readonly position: Position;
@@ -24,6 +25,19 @@ export class Circle {
 
   public get y(): number {
     return this.position.y;
+  }
+
+  public distanceTo(circle: Circle): number {
+    return this.distanceToPoint(circle.position) - circle.radius;
+  }
+
+  public distanceToPoint(position: Position): number {
+    return this.position.distanceTo(position) - this.radius;
+  }
+
+  public containsPoint(position: Position): boolean {
+    const distance = this.distanceToPoint(position);
+    return distance <= 0;
   }
 
   public getClosestPoint(position: Position): Position {
@@ -75,5 +89,46 @@ export class Circle {
     }
 
     return [pos1, pos2];
+  }
+
+  /**
+   * Returns true if the given circle collides with this circle.
+   */
+  public collidesWith(circle2: Circle): boolean {
+    const distance = this.distanceTo(circle2);
+    return distance < 0;
+  }
+
+  public collideWith(circle2: Circle): Pair<Circle, Circle> {
+    // Step 1: Calculate distance between centers
+    let circle1: Circle = this;
+    const dx = circle1.x - circle2.x;
+    const dy = circle1.y - circle2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Step 2: Calculate overlap
+    const overlap = (circle2.radius + circle1.radius) - distance;
+
+    if (overlap <= 0) {
+      return Pair.of(circle1, circle2);
+    }
+
+    // Step 3: Divide the overlap by 2
+    const halfOverlap = overlap / 2;
+
+    // Step 4: Calculate direction to move each circle
+    const ax = dx / distance;
+    const ay = dy / distance;
+
+    // Step 5: Update positions
+    const x1 = circle1.x + ax * halfOverlap;
+    const y1 = circle1.y + ay * halfOverlap;
+
+    const x2 = circle2.x - ax * halfOverlap;
+    const y2 = circle2.y - ay * halfOverlap;
+
+    const circleNew1 = circle1.withPosition(Position.of(x1, y1));
+    const circleNew2 = circle2.withPosition(Position.of(x2, y2));
+    return Pair.of(circleNew1, circleNew2);
   }
 }

@@ -1,15 +1,15 @@
-import {Team} from "../model/team";
-import {PlayerType} from "../model/player-type";
-import {Velocity} from "../model/velocity";
-import {Circle} from "../model/circle";
-import {Position} from "../model/position";
-import {Pair} from "../model/pair";
+import {Team} from "./team";
+import {PlayerType} from "./player-type";
+import {Velocity} from "./velocity";
+import {Circle} from "./circle";
+import {Position} from "./position";
+import {Pair} from "./pair";
 import {GameConstants} from "../game/game-constants";
 import {MathTools} from "../util/math-tools";
-import {CollisionTools} from "../util/collision-tools";
-import {DistanceTools} from "../util/distance-tools";
+import {Track} from "./track";
+import {GeometryTools} from "../util/geometry-tools";
 
-export class PlayerState {
+export class Player {
   readonly team: Team;
   readonly type: PlayerType;
   readonly position: Position;
@@ -38,46 +38,72 @@ export class PlayerState {
                    position: Position,
                    velocity: Velocity,
                    targetVelocity: Velocity,
-                   massKg: number): PlayerState {
-    return new PlayerState(team, type, position, velocity, targetVelocity, massKg);
+                   massKg: number): Player {
+    return new Player(team, type, position, velocity, targetVelocity, massKg);
   }
 
   public toCircle(): Circle {
     return Circle.of(this.position, this.radius);
   }
 
-  public withVelocity(velocity: Velocity): PlayerState {
-    return new PlayerState(this.team, this.type, this.position, velocity, this.targetVelocity, this.massKg);
+  public withVelocity(velocity: Velocity): Player {
+    return new Player(this.team, this.type, this.position, velocity, this.targetVelocity, this.massKg);
   }
 
-  public withTargetVelocity(targetVelocity: Velocity): PlayerState {
-    return new PlayerState(this.team, this.type, this.position, this.velocity, targetVelocity, this.massKg);
+  public withTargetVelocity(targetVelocity: Velocity): Player {
+    return new Player(this.team, this.type, this.position, this.velocity, targetVelocity, this.massKg);
   }
 
-  public withPosition(position: Position): PlayerState {
-    return new PlayerState(this.team, this.type, position, this.velocity, this.targetVelocity, this.massKg);
+  public withPosition(position: Position): Player {
+    return new Player(this.team, this.type, position, this.velocity, this.targetVelocity, this.massKg);
   }
 
-  public distanceTo(other: PlayerState): number {
-    return DistanceTools.ofCircles(this.toCircle(), other.toCircle())
+  public distanceTo(other: Player): number {
+    return this.toCircle().distanceTo(other.toCircle());
   }
 
-  public recalculate(): PlayerState {
+  public isInBounds(track: Track): boolean {
+    const insideOuterBounds = GeometryTools.containsTrackLinePoint(track.outerBounds, this.position);
+    const insideInnerBounds = GeometryTools.containsTrackLinePoint(track.innerBounds, this.position);
+    return insideOuterBounds && !insideInnerBounds;
+  }
+
+  public recalculate(): Player {
     // Calculate new velocity based on target velocity
     const newVelocity = this.velocity.recalculate(this.targetVelocity);
     const newPosition = newVelocity.calculatePosition(this.position);
     return this.withVelocity(newVelocity).withPosition(newPosition);
   }
 
-  turnTowards(targetPoint: Position): PlayerState {
+  public turnTowards(targetPoint: Position): Player {
     const angle = this.velocity.turnTowards(targetPoint, this.position);
     return this.withTargetVelocity(this.targetVelocity.withAngle(angle));
+  }
+
+  public collideWith(player2: Player): Pair<Player, Player> {
+    // If there is no collision, return the original players
+    let player1: Player = this;
+    const distance = player1.distanceTo(player2);
+    if (distance > 0) {
+      return Pair.of(player1, player2);
+    }
+
+    // Recalculate player velocities based on initial velocities and masses
+
+
+    // Correct player positions if they are overlapping
+    if (distance < 0) {
+      const corrected = player1.toCircle().collideWith(player2.toCircle());
+      player1 = player1.withPosition(corrected.a.position);
+      player2 = player2.withPosition(corrected.b.position);
+    }
+    return Pair.of(player1, player2);
   }
 
   /**
    * Calculates the both player states after a collision between them.
    */
-  public collide(player2: PlayerState): Pair<PlayerState, PlayerState> {
+  public collide(player2: Player): Pair<Player, Player> {
     // If there is no collision, return the original players
     const distance = this.distanceTo(player2);
     if (distance > 0) {
@@ -85,9 +111,9 @@ export class PlayerState {
     }
 
     // Correct player positions if they are overlapping
-    let player1: PlayerState = this;
+    let player1: Player = this;
     if (distance < 0) {
-      const corrected = CollisionTools.collideCircles(player1.toCircle(), player2.toCircle());
+      const corrected = player1.toCircle().collideWith(player2.toCircle());
       player1 = player1.withPosition(corrected.a.position);
       player2 = player2.withPosition(corrected.b.position);
     }
@@ -140,11 +166,11 @@ export class PlayerState {
     return Pair.of(player1New, player2New);
   }
 
-  public getDotN(player2: PlayerState): number {
+  public getDotN(player2: Player): number {
     return MathTools.getDotN(this.position, this.velocity, player2.position, player2.velocity);
   }
 
-  withTargetPosition(position: Position): PlayerState {
+  withTargetPosition(position: Position): Player {
     // Todo
     return this.turnTowards(position);
   }

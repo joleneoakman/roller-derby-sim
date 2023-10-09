@@ -1,6 +1,6 @@
-import {PlayerState} from "../state/player.state";
+import {Player} from "../model/player";
 import {Track} from "../model/track";
-import {GameState} from "../state/game.state";
+import {GameState} from "../model/game-state";
 import {Velocity} from "../model/velocity";
 import {GameConstants} from "../game/game-constants";
 import {Team} from "../model/team";
@@ -10,7 +10,7 @@ import {Arc} from "../model/arc";
 import {TrackLine} from "../model/track-line";
 import {Circle} from "../model/circle";
 import {Speed} from "../model/speed";
-import {PackState} from "../state/pack.state";
+import {Pack} from "../model/pack";
 
 export class Renderer {
 
@@ -34,7 +34,7 @@ export class Renderer {
     this.drawTrack(state.track);
     this.drawPack(state.track, state.pack);
     for (let i = 0; i < state.players.length; i++) {
-      this.drawPlayer(state.players[i], state.selection?.index === i);
+      this.drawPlayer(state.players[i], state.playerSelection?.index === i);
     }
     Renderer.debugPoints.forEach(p => this.drawCircle(Circle.of(p, 0.1), 'red'));
   }
@@ -68,7 +68,7 @@ export class Renderer {
     }
   }
 
-  drawPack(track: Track, pack: PackState) {
+  drawPack(track: Track, pack: Pack) {
     const activePack = pack.activePack;
     if (activePack === undefined) {
       return;
@@ -115,7 +115,7 @@ export class Renderer {
     }
   }
 
-  drawPlayer(player: PlayerState, selected: boolean) {
+  drawPlayer(player: Player, selected: boolean) {
     const position = player.position;
     const targetVelocity = Velocity.of(Speed.ofKph(10), player.targetVelocity.angle);
     const velocity = Velocity.of(Speed.ofKph(10), player.velocity.angle);

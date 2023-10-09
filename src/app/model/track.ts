@@ -5,9 +5,7 @@ import {Line} from "./line";
 import {MathTools} from "../util/math-tools";
 import {ArcTools} from "../util/arc-tools";
 import {TrackLine} from "./track-line";
-import {PlayerState} from "../state/player.state";
-import {DistanceTools} from "../util/distance-tools";
-import {GeometryTools} from "../util/geometry-tools";
+import {Player} from "./player";
 
 export class Track {
 
@@ -178,7 +176,7 @@ export class Track {
     );
   }
 
-  public getClosestPointOnTrackLine(player: PlayerState, percentage: number): Position {
+  public getClosestPointOnTrackLine(player: Player, percentage: number): Position {
     const trackLine = this.trackLineAt(0.5);
     return trackLine.getClosestPointTo(player.position);
   }

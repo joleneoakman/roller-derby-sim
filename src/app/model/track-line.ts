@@ -4,8 +4,6 @@ import {Circle} from "./circle";
 import {Angle} from "./angle";
 import {Position} from "./position";
 import {GameConstants} from "../game/game-constants";
-import {GeometryTools} from "../util/geometry-tools";
-import {DistanceTools} from "../util/distance-tools";
 import {TrackLineShape} from "./trackLineShape";
 
 /**
@@ -87,7 +85,7 @@ export class TrackLine implements TrackLineShape {
     let minimumDistance = Number.MAX_VALUE;
     let result = candidates[0];
     for (const candidate of candidates) {
-      const distance = DistanceTools.ofPositions(position, candidate);
+      const distance = position.distanceTo(candidate);
       if (distance < minimumDistance) {
         minimumDistance = distance;
         result = candidate;

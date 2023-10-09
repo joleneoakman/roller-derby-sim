@@ -1,45 +1,42 @@
-import {PlayerState} from "./player.state";
-import {Track} from "../model/track";
-import {Position} from "../model/position";
-import {SelectionState} from "./selection.state";
-import {DistanceTools} from "../util/distance-tools";
-import {CollisionTools} from "../util/collision-tools";
-import {GeometryTools} from "../util/geometry-tools";
-import {PackState} from "./pack.state";
+import {Player} from "./player";
+import {Track} from "./track";
+import {Position} from "./position";
+import {PlayerSelection} from "./player-selection";
+import {Pack} from "./pack";
 
 export class GameState {
 
   readonly track: Track;
-  readonly players: PlayerState[];
-  readonly pack: PackState;
-  readonly selection?: SelectionState;
+  readonly players: Player[];
+  readonly pack: Pack;
+  readonly playerSelection?: PlayerSelection;
 
-  constructor(track: Track, players: PlayerState[], pack: PackState, selection?: SelectionState) {
+  constructor(track: Track, players: Player[], pack: Pack, selection?: PlayerSelection) {
     this.players = players;
     this.track = track;
     this.pack = pack;
-    this.selection = selection;
+    this.playerSelection = selection;
   }
 
-  public static of(track: Track, players: PlayerState[]): GameState {
-    return new GameState(track, players, PackState.create(players, track.packLine), undefined);
+  public static of(track: Track, players: Player[]): GameState {
+    return new GameState(track, players, Pack.create(players, track.packLine), undefined);
   }
 
-  public withPlayers(players: PlayerState[]): GameState {
-    const pack = PackState.create(players, this.track.packLine);
-    return new GameState(this.track, players, pack, this.selection);
+  public withPlayers(players: Player[]): GameState {
+    const pack = Pack.create(players, this.track.packLine);
+    return new GameState(this.track, players, pack, this.playerSelection);
   }
 
   public withSelection(index: number, targetPosition: Position): GameState {
-    return new GameState(this.track, this.players, this.pack, SelectionState.of(index, targetPosition));
+    return new GameState(this.track, this.players, this.pack, PlayerSelection.of(index, targetPosition));
   }
 
   public withSelectedTargetPosition(position: Position): GameState {
-    if (this.selection === undefined) {
+    if (this.playerSelection === undefined) {
       return this;
     }
-    return this.withSelection(this.selection.index, position).withPlayers(this.players.map((p, i) => {
-      if (i === this.selection?.index) {
+    return this.withSelection(this.playerSelection.index, position).withPlayers(this.players.map((p, i) => {
+      if (i === this.playerSelection?.index) {
         return p.withTargetPosition(position);
       } else {
         return p;
@@ -60,7 +57,7 @@ export class GameState {
     const count = this.players.length;
     for (let i = 0; i < count; i++) {
       const player = this.players[i];
-      const distance = DistanceTools.ofPositions(player.position, position);
+      const distance = player.position.distanceTo(position);
       if (distance <= player.radius) {
         return i;
       }
@@ -76,24 +73,24 @@ export class GameState {
 
     // Calculate new player positions and velocities after collisions
     const count = this.players.length;
-    const playersAfterBlocks: PlayerState[] = [...playersAfterMove];
+    const playersAfterBlocks: Player[] = [...playersAfterMove];
     for (let i = 0; i < count; i++) {
       const playerAfterMove1 = playersAfterBlocks[i];
       for (let j = i + 1; j < count; j++) {
         const playerAfterMove2 = playersAfterBlocks[j];
-        const collided = CollisionTools.collidePlayers(playerAfterMove1, playerAfterMove2);
+        const collided = playerAfterMove1.collideWith(playerAfterMove2);
         playersAfterBlocks[i] = collided.a;
         playersAfterBlocks[j] = collided.b;
       }
     }
 
     // Calculate player - track collisions (and compensate)
-    const playersAfterBounds: PlayerState[] = new Array(count);
+    const playersAfterBounds: Player[] = new Array(count);
     for (let i = 0; i < count; i++) {
       const oldPlayer = this.players[i];
       const newPlayer = playersAfterBlocks[i];
-      const containsOld = GeometryTools.isInBounds(this.track, oldPlayer);
-      const containsNew = GeometryTools.isInBounds(this.track, newPlayer);
+      const containsOld = oldPlayer.isInBounds(this.track);
+      const containsNew = newPlayer.isInBounds(this.track);
 
       if (!containsNew) {
         const targetPoint = this.track.getClosestPointOnTrackLine(newPlayer, 0.5);
