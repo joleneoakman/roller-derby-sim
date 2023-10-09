@@ -2,6 +2,7 @@ import {PlayerState} from "./player.state";
 import {TrackLine} from "../model/track-line";
 import {Pack} from "../model/pack";
 import {GameConstants} from "../game/game-constants";
+import {Pair} from "../model/pair";
 
 export class PackState {
 
@@ -9,16 +10,35 @@ export class PackState {
   readonly positions: number[]; // Position on the pack line (in meters)
   readonly distances: number[][]; // Distances between players along the pack line (in meters)
   readonly packs: Pack[];
+  readonly activePackIndex: number; // Pack index or -1 if no active pack
+  readonly splitPackIndex1: number; // Pack index or -1 if no split pack
+  readonly splitPackIndex2: number; // Pack index or -1 if no split pack
 
   constructor(players: PlayerState[], packLine: TrackLine) {
     this.players = players;
     this.positions = PackState.calculatePositions(this.players, packLine);
     this.distances = PackState.calculateDistances(this.players, this.positions, packLine.distance);
     this.packs = PackState.calculatePacks(this.players, this.positions, this.distances, packLine);
+
+    const activePackIndices = PackState.calculateActivePack(this.packs);
+    this.activePackIndex = activePackIndices.a;
+    this.splitPackIndex1 = activePackIndices.b.a;
+    this.splitPackIndex2 = activePackIndices.b.b;
   }
 
   public static create(players: PlayerState[], packLine: TrackLine): PackState {
     return new PackState(players, packLine);
+  }
+
+  public get activePack(): Pack | undefined {
+    return this.packs[this.activePackIndex];
+  }
+
+  public get splitPack(): Pair<Pack, Pack> | undefined {
+    if (this.splitPackIndex1 === -1 || this.splitPackIndex2 === -1) {
+      return undefined;
+    }
+    return Pair.of(this.packs[this.splitPackIndex1], this.packs[this.splitPackIndex2]);
   }
 
   //
@@ -99,5 +119,27 @@ export class PackState {
     }
 
     return packs;
+  }
+
+  private static calculateActivePack(packs: Pack[]): Pair<number, Pair<number, number>> {
+    let curSize = 0;
+    let candidatePackIndices: number[] = [];
+    for (let i = 0; i < packs.length; i++) {
+      const pack = packs[i];
+      if (pack.size > curSize && pack.hasBothTeams) {
+        curSize = pack.size;
+        candidatePackIndices = [i];
+      } else if (pack.size === curSize && pack.hasBothTeams) {
+        candidatePackIndices.push(i);
+      }
+    }
+
+    if (candidatePackIndices.length === 1) {
+      return Pair.of(candidatePackIndices[0], Pair.of(-1, -1));
+    } else if (candidatePackIndices.length === 2) {
+      return Pair.of(-1, Pair.of(candidatePackIndices[0], candidatePackIndices[1]));
+    } else {
+      return Pair.of(-1, Pair.of(-1, -1));
+    }
   }
 }

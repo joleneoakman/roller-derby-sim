@@ -34,6 +34,7 @@ export class GameConstants {
   public static readonly CANVAS_WIDTH_IN_METERS = (5.33 + 8.08) * 3;
   public static readonly ONE_FOOT = 0.305;
   public static readonly TEN_FEET = 3.05;
+  public static readonly TWENTY_FEET = GameConstants.TEN_FEET * 2;
   public static readonly THIRTY_FEET = GameConstants.TEN_FEET * 3;
   public static readonly TEN_FEET_LINE_COUNT = 18;
   public static readonly PACK_LINE_PERCENTAGE = 0.35918181311; // Pack is calculated at this track line

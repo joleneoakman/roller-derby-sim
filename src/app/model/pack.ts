@@ -1,5 +1,6 @@
 import {PlayerState} from "../state/player.state";
 import {Team} from "./team";
+import {GameConstants} from "../game/game-constants";
 
 /**
  * Represents a pack of players, defined by start and end percentages.
@@ -19,8 +20,8 @@ export class Pack {
 
   public static of(playerIndices: number[], players: PlayerState[], positions: number[], totalDistance: number): Pack {
     const packPositions = playerIndices.map(i => positions[i]);
-    let start = Math.min(...packPositions);
-    let end = Math.max(...packPositions);
+    let start = Math.min(...packPositions) - GameConstants.PLAYER_RADIUS;
+    let end = Math.max(...packPositions) + GameConstants.PLAYER_RADIUS;
     const switchStartAndEnd = (end - start) > totalDistance / 2;
     const hasBothTeams = Pack.hasBothTeams(playerIndices, players);
     return new Pack(switchStartAndEnd ? end : start, switchStartAndEnd ? start : end, playerIndices, hasBothTeams);

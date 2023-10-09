@@ -10,6 +10,7 @@ import {Arc} from "../model/arc";
 import {TrackLine} from "../model/track-line";
 import {Circle} from "../model/circle";
 import {Speed} from "../model/speed";
+import {PackState} from "../state/pack.state";
 
 export class Renderer {
 
@@ -31,6 +32,7 @@ export class Renderer {
     this.ctx.clearRect(GameConstants.ORIGIN.x, GameConstants.ORIGIN.y, this.width, this.height);
     this.drawRect(GameConstants.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_COLOR);
     this.drawTrack(state.track);
+    this.drawPack(state.track, state.pack);
     for (let i = 0; i < state.players.length; i++) {
       this.drawPlayer(state.players[i], state.selection?.index === i);
     }
@@ -64,6 +66,27 @@ export class Renderer {
         this.drawTrackLineOutline(track.lane(i), laneOutline);
       }
     }
+  }
+
+  drawPack(track: Track, pack: PackState) {
+    const activePack = pack.activePack;
+    if (activePack === undefined) {
+      return;
+    }
+
+    const packLine = track.packLine;
+    const startOnPackLine = packLine.pointAtDistance(activePack.start);
+    const endOnPackLine = packLine.pointAtDistance(activePack.end);
+    const engZoneStartOnPackLine = packLine.pointAtDistance(activePack.start - GameConstants.TWENTY_FEET);
+    const engZoneEndOnPackLine = packLine.pointAtDistance(activePack.end + GameConstants.TWENTY_FEET);
+    const start = track.innerTrackLine.getClosestPointTo(startOnPackLine);
+    const end = track.innerTrackLine.getClosestPointTo(endOnPackLine);
+    const engZoneStart = track.innerTrackLine.getClosestPointTo(engZoneStartOnPackLine);
+    const engZoneEnd = track.innerTrackLine.getClosestPointTo(engZoneEndOnPackLine);
+    this.drawCircle(Circle.of(start, 0.1), 'yellow', Outline.of('orange', 0.5));
+    this.drawCircle(Circle.of(end, 0.1), 'yellow', Outline.of('orange', 0.5));
+    this.drawCircle(Circle.of(engZoneStart, 0.1), 'yellow', Outline.of('orange', 0.5));
+    this.drawCircle(Circle.of(engZoneEnd, 0.1), 'yellow', Outline.of('orange', 0.5));
   }
 
   drawTrackLine(trackLine: TrackLine, color: string) {

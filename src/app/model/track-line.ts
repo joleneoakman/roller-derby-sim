@@ -96,6 +96,12 @@ export class TrackLine implements TrackLineShape {
     return result;
   }
 
+  public pointAtDistance(distance: number): Position {
+    const totalDistance = this.distance;
+    const percentage = distance / totalDistance;
+    return this.pointAtPercentage(percentage);
+  }
+
   /**
    * Returns a point along the track line at the given percentage (0 - 1), with:
    * - 0 being the start point
