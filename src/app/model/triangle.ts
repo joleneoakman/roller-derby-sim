@@ -1,6 +1,7 @@
 import {Position} from "./position";
+import {Shape} from "./shape";
 
-export class Triangle {
+export class Triangle implements Shape {
   readonly p1: Position;
   readonly p2: Position;
   readonly p3: Position;

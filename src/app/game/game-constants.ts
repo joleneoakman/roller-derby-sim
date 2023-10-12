@@ -1,4 +1,5 @@
 import {Position} from "../model/position";
+import {Fill} from "../renderer/fill";
 
 export class GameConstants {
 
@@ -37,7 +38,7 @@ export class GameConstants {
   public static readonly TWENTY_FEET = GameConstants.TEN_FEET * 2;
   public static readonly THIRTY_FEET = GameConstants.TEN_FEET * 3;
   public static readonly TEN_FEET_LINE_COUNT = 18;
-  public static readonly PACK_LINE_PERCENTAGE = 0.35918181311; // Pack is calculated at this track line
+  public static readonly PACK_LINE_RADIUS = 5.344422989025845; // Pack is calculated at this track line
 
   //
   // Styling
@@ -48,6 +49,14 @@ export class GameConstants {
   public static readonly TRACK_DEBUG_COLOR = '#50004b1f';
   public static readonly TRACK_LANE_COLOR = '#50004b2f';
   public static readonly PACK_COLOR = '#ffff005f';
+  public static readonly PACK_POINT_COLOR = '#ffff00';
+  public static readonly DEBUG_POINT_COLOR = '#f00';
+
+  public static readonly OUT_OF_BOUNDS_FILL = Fill.of(GameConstants.OUT_OF_BOUNDS_COLOR);
+  public static readonly INBOUNDS_FILL = Fill.of(GameConstants.INBOUNDS_COLOR);
+  public static readonly PACK_FILL = Fill.of(GameConstants.PACK_COLOR);
+  public static readonly PACK_POINT_FILL = Fill.of(GameConstants.PACK_POINT_COLOR);
+  public static readonly DEBUG_POINT_FILL = Fill.of(GameConstants.DEBUG_POINT_COLOR);
 
   public static readonly PLAYER_OUTLINE_WIDTH = 1;
   public static readonly TRACK_LINE_OUTLINE_WIDTH = 1;

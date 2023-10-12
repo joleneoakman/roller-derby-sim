@@ -1,38 +1,58 @@
-import {Player} from "./player";
 import {Team} from "./team";
 import {GameConstants} from "../game/game-constants";
+import {PackPlayer} from "./pack-player";
+import {Overflow} from "./overflow";
 
 /**
  * Represents a pack of players, defined by start and end positions (according to pack line).
  */
 export class PackCandidate {
-  readonly start: number;
-  readonly end: number;
-  readonly relativeStart: number;
-  readonly relativeEnd: number
+  readonly back: Overflow;
+  readonly front: Overflow;
+  readonly relativeBack: Overflow;
+  readonly relativeFront: Overflow;
+  readonly backEngagementZone: Overflow;
+  readonly frontEngagementZone: Overflow;
+  readonly relativeBackEngagementZone: Overflow;
+  readonly relativeFrontEngagementZone: Overflow;
   readonly playerIndices: number[];
   readonly hasBothTeams: boolean;
 
-  constructor(start: number, end: number, relativeStart: number, relativeEnd: number, players: number[], hasBothTeams: boolean) {
-    this.start = start;
-    this.end = end;
-    this.relativeStart = relativeStart;
-    this.relativeEnd = relativeEnd;
+  constructor(back: Overflow,
+              front: Overflow,
+              relativeBack: Overflow,
+              relativeFront: Overflow,
+              backEngagementZone: Overflow,
+              frontEngagementZone: Overflow,
+              relativeBackEngagementZone: Overflow,
+              relativeFrontEngagementZone: Overflow,
+              players: number[],
+              hasBothTeams: boolean) {
+    this.back = back;
+    this.front = front;
+    this.relativeBack = relativeBack;
+    this.relativeFront = relativeFront;
+    this.backEngagementZone = backEngagementZone;
+    this.frontEngagementZone = frontEngagementZone;
+    this.relativeBackEngagementZone = relativeBackEngagementZone;
+    this.relativeFrontEngagementZone = relativeFrontEngagementZone;
     this.playerIndices = players;
     this.hasBothTeams = hasBothTeams;
   }
 
-  public static of(playerIndices: number[], players: Player[], positions: number[], totalDistance: number): PackCandidate {
-    const packPositions = playerIndices.map(i => positions[i]);
-    let start = Math.min(...packPositions) - GameConstants.PLAYER_RADIUS;
-    let end = Math.max(...packPositions) + GameConstants.PLAYER_RADIUS;
-    const switchStartAndEnd = (end - start) > totalDistance / 2;
-    const hasBothTeams = PackCandidate.hasBothTeams(playerIndices, players);
-    const absoluteStart = switchStartAndEnd ? end : start;
-    const absoluteEnd = switchStartAndEnd ? start : end;
-    const relativeStart = absoluteStart / totalDistance;
-    const relativeEnd = absoluteEnd / totalDistance;
-    return new PackCandidate(absoluteStart, absoluteEnd, relativeStart, relativeEnd, playerIndices, hasBothTeams);
+  public static of(players: PackPlayer[], totalDistance: number): PackCandidate {
+    const sortedPlayers = PackCandidate.sortPlayersFrontToBack(players);
+    const back = sortedPlayers[0].position;
+    const front = sortedPlayers[sortedPlayers.length - 1].position;
+    const relativeBack = Overflow.of(back.value / totalDistance, 1);
+    const relativeFront = Overflow.of(front.value / totalDistance, 1);
+    const backEngagementZone = Overflow.of(back.value - GameConstants.TWENTY_FEET, totalDistance);
+    const frontEngagementZone = Overflow.of(front.value + GameConstants.TWENTY_FEET, totalDistance);
+    const relativeBackEngagementZone = Overflow.of(back.value / totalDistance, 1);
+    const relativeFrontEngagementZone = Overflow.of(front.value / totalDistance, 1);
+    const sortedPlayerIndices = sortedPlayers.map(p => p.playerIndex);
+    const hasBothTeams = PackCandidate.hasBothTeams(players);
+    return new PackCandidate(back, front, relativeBack, relativeFront, backEngagementZone, frontEngagementZone, relativeBackEngagementZone, relativeFrontEngagementZone, sortedPlayerIndices, hasBothTeams);
   }
 
   public get size(): number {
@@ -47,14 +67,17 @@ export class PackCandidate {
   // Utility methods
   //
 
-  private static hasBothTeams(playerIndices: number[], players: Player[]): boolean {
+  private static sortPlayersFrontToBack(players: PackPlayer[]): PackPlayer[] {
+    return players.slice().sort((a: PackPlayer, b: PackPlayer) => a.position.compareInFrontOf(b.position));
+  }
+
+  private static hasBothTeams(players: PackPlayer[]): boolean {
     let hasA = false;
     let hasB = false;
-    for (const index of playerIndices) {
-      const player = players[index];
-      if (player.team === Team.A) {
+    for (const player of players) {
+      if (player.player.team === Team.A) {
         hasA = true;
-      } else if (player.team === Team.B) {
+      } else if (player.player.team === Team.B) {
         hasB = true;
       }
     }

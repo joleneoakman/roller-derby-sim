@@ -38,7 +38,6 @@ export class Player {
     this.velocity = velocity;
     this.targetVelocity = targetVelocity;
     this.massKg = massKg;
-    console.log(relativePosition);
   }
 
   public static of(track: Track,

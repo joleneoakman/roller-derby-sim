@@ -1,8 +1,10 @@
 import {Position} from "./position";
 import {Line} from "./line";
 import {Pair} from "./pair";
+import {Angle} from "./angle";
+import {Shape} from "./shape";
 
-export class Circle {
+export class Circle implements Shape {
   readonly position: Position;
   readonly radius: number;
 
@@ -46,6 +48,14 @@ export class Circle {
       throw Error("No point found");
     }
     return intersections.reduce((prev, curr) => prev.distanceTo(position) < curr.distanceTo(position) ? prev : curr);
+  }
+
+  /**
+   * Calculate the angle between the target and the center of the arc.
+   */
+  public getAngleOf(position: Position): Angle {
+    const p = this.getClosestPoint(position);
+    return Angle.ofVector(p.minus(this.position));
   }
 
   public getIntersectionWithCenter(position: Position): Position[] {

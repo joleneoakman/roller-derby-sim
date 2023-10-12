@@ -4,8 +4,9 @@ import {Circle} from "./circle";
 import {Angle} from "./angle";
 import {Position} from "./position";
 import {GameConstants} from "../game/game-constants";
-import {TrackLineShape} from "./trackLineShape";
+import {TrackLineShape} from "./track-line-shape";
 import {Quad} from "./quad";
+import {Overflow} from "./overflow";
 
 /**
  * A track line is a continuous shape that consists of a top and bottom line, and a left and right arc (half circles).
@@ -93,8 +94,8 @@ export class TrackLine implements TrackLineShape {
     return dTop + dBottom + dLeft + dRight;
   }
 
-  distanceAlong(target: Position): number {
-    return this.getRelativePositionOf(target) * this.distance;
+  getDistanceAlong(target: Position): number {
+    return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
   public getClosestPointTo(position: Position): Position {
@@ -123,34 +124,25 @@ export class TrackLine implements TrackLineShape {
   }
 
   /**
-   * Returns a point along the track line at the given relativeDistance (0 - 1), with:
-   * - 0 being the start point
-   * - 1 being the end point (same as start point)
-   *
-   * The relativeDistance is calculate by the length of the track, consisting of (in order):
-   * - the start point along the bottom line
-   * - the bottom line, so (startPoint -> line.p2)
-   * - the right arc from arc.startAngle to arc.endAngle, along the radius
-   * - the top line, so (line.p2 -> line.p1)
-   * - the left arc from arc.startAngle to arc.endAngle, along the radius
-   * - the bottom line, so (line.p1 -> startPoint)
+   * Returns a point along the shape at the given relativeDistance.
+   * Values between 0 and 1 are always on the shape.
+   * Given that the track line is a continuous shape, values outside of these bounds are normalized to 0 and 1.
    */
   public getAbsolutePositionOf(relativeDistance: number): Position {
-    const totalLength = this.distance;
-    const targetLength = totalLength * relativeDistance;
+    // Normalize the relativeDistance
+    relativeDistance = (relativeDistance + 1) % 1;
 
     // Lengths of individual segments
+    const totalLength = this.distance;
+    const targetLength = totalLength * relativeDistance;
     const dBottomStart = this.startPoint.distanceTo(this.bottomLine.p2);
     const dRight = this.rightArc.distance;
     const dTop = this.topLine.distance;
     const dLeft = this.leftArc.distance;
     const dBottom = this.startPoint.distanceTo(this.bottomLine.p1);
 
-    let accumulatedLength = 0;
-
-    //console.log(`totalLength: ${totalLength} dBottomStart: ${dBottomStart} dRight: ${dRight} dTop: ${dTop} dLeft: ${dLeft} dBottom: ${dBottom}`);
-
     // Point lies on the segment from startPoint to bottomLine.p2
+    let accumulatedLength = 0;
     accumulatedLength += dBottomStart;
     if (targetLength < accumulatedLength) {
       return Line.of(this.startPoint, this.bottomLine.p2).getAbsolutePositionOf(targetLength / dBottomStart);
@@ -180,21 +172,21 @@ export class TrackLine implements TrackLineShape {
 
 
   /**
-   * Returns the percentage from the start position of the track line to the target position.
+   * Returns the relativeDistance of the given target position between start (0) and finish (1) along the track line.
    */
-  public getRelativePositionOf(target: Position): number {
+  public getRelativeDistanceAlong(target: Position): number {
     return this.getRelativeDistanceBetween(this.startPoint, target);
   }
 
   /**
-   * Returns the percentage traveled along the track line from the given reference point to the target position.
-   * The traveled percentage is calculated in counter-clockwise direction and is between 0 and 1.
+   * Returns the relativeDistance of the given target position along the track line, starting at the given start position.
+   * The traveled percentage is calculated in counter-clockwise direction and is between 0 (inclusive) and 1 (exclusive).
    */
-  public getRelativeDistanceBetween(p1: Position, target: Position): number {
+  public getRelativeDistanceBetween(startPoint: Position, target: Position): number {
     const p2 = this.getClosestPointTo(target);
 
     // Find shapes of p1 and p2 in order
-    const shapeIndexForP1 = this.findShapeIndexOf(p1);
+    const shapeIndexForP1 = this.findShapeIndexOf(startPoint);
     const shapeIndexForP2 = this.findShapeIndexOf(p2);
 
     // Loop through each shape to start accumulating distance
@@ -207,11 +199,11 @@ export class TrackLine implements TrackLineShape {
 
       accumulatedDistance += totalDistanceOfShape;
       if (currentIndex === shapeIndexForP1) {
-        const distanceFromStartToP1 = currentShape.distanceAlong(p1);
+        const distanceFromStartToP1 = currentShape.getDistanceAlong(startPoint);
         accumulatedDistance -= distanceFromStartToP1;
       }
       if (currentIndex == shapeIndexForP2) {
-        const distanceFromStartToP2 = currentShape.distanceAlong(p2);
+        const distanceFromStartToP2 = currentShape.getDistanceAlong(p2);
         const distanceFromP2ToEnd = totalDistanceOfShape - distanceFromStartToP2;
         accumulatedDistance -= distanceFromP2ToEnd;
         p2Reached = true;
@@ -244,6 +236,74 @@ export class TrackLine implements TrackLineShape {
       }
     }
     return result;
+  }
+
+  /**
+   * Returns an array of shapes that cover a part of the track based on the given relative back and front positions.
+   */
+  public getShapes(back: Position, front: Position): TrackLineShape[] {
+    // Iterate through shapes to assemble parts
+    const backIndex = this.findShapeIndexOf(back);
+    const frontIndex = this.findShapeIndexOf(front);
+    const result: TrackLineShape[] = [];
+    for (let i = 0; i < this.shapes.length; i++) {
+      const index = (i + backIndex) % this.shapes.length;
+      const shape = this.shapes[index];
+      const isBack = index === backIndex;
+      const isFront = index === frontIndex;
+
+      if (isBack && isFront) {
+        // Add part between back and front
+        if (shape instanceof Line) {
+          result.push(Line.of(back, front));
+        } else {
+          const arc = shape as Arc;
+          const frontAngle = arc.getAngleOf(front); // circles are clockwise ...
+          const backAngle = arc.getAngleOf(back); // circles are clockwise ...
+          result.push(Arc.of(arc.circle, frontAngle, backAngle));
+        }
+      } else if (isBack) {
+        // Add part between back and shape end
+        if (shape instanceof Line) {
+          const line = shape as Line;
+          result.push(Line.of(back, line.p2));
+        } else {
+          const arc = shape as Arc;
+          const backAngle = arc.getAngleOf(back); // circles are clockwise ...
+          result.push(Arc.of(arc.circle, arc.startAngle, backAngle));
+        }
+      } else if (isFront) {
+        // Add part between shape begin and front
+        if (shape instanceof Line) {
+          const line = shape as Line;
+          result.push(Line.of(line.p1, front));
+        } else {
+          const arc = shape as Arc;
+          const frontAngle = arc.getAngleOf(front); // circles are clockwise ...
+          result.push(Arc.of(arc.circle, frontAngle, arc.endAngle));
+        }
+      } else {
+        // Add entire shape
+        result.push(shape);
+      }
+
+      if (isFront) {
+        return result;
+      }
+    }
+    return [];
+  }
+
+  /**
+   * Returns the index of the shape that contains the given relative distance.
+   */
+  public findShapeIndexOfRelativeDistance(relativeDistance: Overflow): number {
+    const value = relativeDistance.value / relativeDistance.max;
+    if (value === 0) {
+      return 0;
+    }
+    const position = this.getAbsolutePositionOf(value);
+    return this.findShapeIndexOf(position);
   }
 
   public getIntersectionWith(line: Line, shapeIndex: number): Position {

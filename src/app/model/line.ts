@@ -1,5 +1,5 @@
 import {Position} from "./position";
-import {TrackLineShape} from "./trackLineShape";
+import {TrackLineShape} from "./track-line-shape";
 import {MathTools} from "../util/math-tools";
 
 export class Line implements TrackLineShape {
@@ -19,8 +19,8 @@ export class Line implements TrackLineShape {
     return Math.sqrt(Math.pow(this.p1.x - this.p2.x, 2) + Math.pow(this.p1.y - this.p2.y, 2));
   }
 
-  public distanceAlong(target: Position): number {
-    return this.getRelativePositionOf(target) * this.distance;
+  public getDistanceAlong(target: Position): number {
+    return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
   public getClosestPointTo(p: Position): Position {
@@ -36,11 +36,14 @@ export class Line implements TrackLineShape {
     return Position.of(closestX, closestY);
   }
 
-    /**
-   * Returns a point along the track line at the given percentage (0 - 1), with:
+  /**
+   * Returns a point along the shape at the given relativeDistance.
+   * Values between 0 and 1 are always on the shape, with:
    * - 0 being p1
    * - 0.5 halfway point between p1 and p2
    * - 1 being p2
+   * - values > 1 being on the line p2 to infinity
+   * - values < 0 being on the line p1 to infinity
    */
   public getAbsolutePositionOf(percentage: number): Position {
     const x = this.p1.x * (1 - percentage) + this.p2.x * (percentage);
@@ -52,7 +55,7 @@ export class Line implements TrackLineShape {
    * Returns the percentage (0..1) from the start position (p1) of line to the target position.
    * The target position must be on the line between p1 and p2.
    */
-  public getRelativePositionOf(target: Position): number {
+  public getRelativeDistanceAlong(target: Position): number {
     if (target.equals(this.p1)) {
       return 0;
     }

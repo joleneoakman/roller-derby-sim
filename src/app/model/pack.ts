@@ -3,6 +3,8 @@ import {TrackLine} from "./track-line";
 import {PackCandidate} from "./pack-candidate";
 import {GameConstants} from "../game/game-constants";
 import {Pair} from "./pair";
+import {PackPlayer} from "./pack-player";
+import {Overflow} from "./overflow";
 
 export class Pack {
 
@@ -14,7 +16,7 @@ export class Pack {
   readonly splitPackIndex1: number; // Pack index or -1 if no split pack
   readonly splitPackIndex2: number; // Pack index or -1 if no split pack
 
-  constructor(players: Player[], packLine: TrackLine) {
+  private constructor(players: Player[], packLine: TrackLine) {
     this.players = players;
     this.positions = Pack.calculatePositions(this.players, packLine);
     this.distances = Pack.calculateDistances(this.players, this.positions, packLine.distance);
@@ -31,7 +33,7 @@ export class Pack {
   }
 
   public get activePack(): PackCandidate | undefined {
-    return this.packs[this.activePackIndex];
+    return this.activePackIndex === -1 ? undefined : this.packs[this.activePackIndex];
   }
 
   public get splitPack(): Pair<PackCandidate, PackCandidate> | undefined {
@@ -49,7 +51,7 @@ export class Pack {
     const count = players.length;
     const positions: number[] = new Array(count);
     for (let i = 0; i < count; i++) {
-      positions[i] = packLine.distanceAlong(players[i].position);
+      positions[i] = packLine.getDistanceAlong(players[i].position);
     }
     return positions;
   }
@@ -107,13 +109,14 @@ export class Pack {
     const packs: PackCandidate[] = [];
     for (let i = 0; i < count; i++) {
       if (!visited[i] && applicablePlayers[i]) {
-        const packPlayerIndices: number[] = [];
+        const packPlayers: PackPlayer[] = [];
         const stack = [i];
         visited[i] = true;
 
         while (stack.length > 0) {
           const currentPlayer = stack.pop() as number;
-          packPlayerIndices.push(currentPlayer);
+          const position = Overflow.of(positions[currentPlayer], totalDistance);
+          packPlayers.push(PackPlayer.of(players[currentPlayer], currentPlayer, position));
 
           for (let j = 0; j < count; j++) {
             if (!visited[j] && playersWithinTenFeet[currentPlayer][j]) {
@@ -123,7 +126,7 @@ export class Pack {
           }
         }
 
-        packs.push(PackCandidate.of(packPlayerIndices, players, positions, totalDistance));
+        packs.push(PackCandidate.of(packPlayers, totalDistance));
       }
     }
 

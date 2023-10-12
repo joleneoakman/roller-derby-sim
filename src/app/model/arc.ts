@@ -1,8 +1,9 @@
 import {Position} from "./position";
 import {Angle} from "./angle";
 import {Circle} from "./circle";
-import {TrackLineShape} from "./trackLineShape";
+import {TrackLineShape} from "./track-line-shape";
 import {Line} from "./line";
+import {MathTools} from "../util/math-tools";
 
 export class Arc implements TrackLineShape {
   readonly circle: Circle;
@@ -31,8 +32,16 @@ export class Arc implements TrackLineShape {
     return this.startAngle.angleTo(this.endAngle).radians * this.radius;
   }
 
-  public distanceAlong(target: Position): number {
-    return this.getRelativePositionOf(target) * this.distance;
+  public get p1(): Position {
+    return this.getPointAtAngle(this.startAngle);
+  }
+
+  public get p2(): Position {
+    return this.getPointAtAngle(this.endAngle);
+  }
+
+  public getDistanceAlong(target: Position): number {
+    return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
   public getIntersectionWith(line: Line): Position {
@@ -73,15 +82,21 @@ export class Arc implements TrackLineShape {
     return Position.of(x, y);
   }
 
-  public getAbsolutePositionOf(percentage: number): Position {
+  /**
+   * Returns a point along the shape at the given relativeDistance.
+   * Values between 0 and 1 are always on the shape.
+   * Values outside of these bounds are normalized to 0 and 1.
+   */
+  public getAbsolutePositionOf(relativeDistance: number): Position {
+    relativeDistance = MathTools.limit(relativeDistance, 0, 1)
     const diff = this.startAngle.angleTo(this.endAngle);
-    return this.getPointAtAngle(this.startAngle.plus(diff.radians * percentage));
+    return this.getPointAtAngle(this.startAngle.plus(diff.radians * relativeDistance));
   }
 
   /**
    * Returns the percentage from the start position of the shape to the target position.
    */
-  public getRelativePositionOf(target: Position): number {
+  public getRelativeDistanceAlong(target: Position): number {
     const p = this.getClosestPointTo(target);
 
     // Calculate the angle between the target and the center of the circle
@@ -95,5 +110,22 @@ export class Arc implements TrackLineShape {
 
     // Calculate the percentage from start position to target position
     return angularDistanceToTarget.radians / totalAngularDistance.radians;
+  }
+
+  /**
+   * Calculate the angle between the target and the center of the arc, limited to the angle of the arc.
+   */
+  public getAngleOf(position: Position): Angle {
+    const result = this.circle.getAngleOf(position);
+
+    // Todo: limit angle to arc
+    // 270 -> 90      3     => 3
+    // 270 -> 90      130   => 90
+    // 270 -> 90      359   => 359
+    // 90  -> 270     3     => 90
+    // 90  -> 270     130   => 130
+    // 90  -> 270     359   => 270
+
+    return result;
   }
 }

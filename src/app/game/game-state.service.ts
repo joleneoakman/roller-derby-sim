@@ -5,12 +5,13 @@ import {Team} from "../model/team";
 import {PlayerType} from "../model/player-type";
 import {Position} from "../model/position";
 import {Velocity} from "../model/velocity";
-import {BehaviorSubject, Subject} from "rxjs";
+import {BehaviorSubject, of, Subject} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Pair} from "../model/pair";
 import {GameConstants} from "./game-constants";
 import {Speed} from "../model/speed";
 import {Angle} from "../model/angle";
+import {Testing} from "../test/testing";
 import {TrackLine} from "../model/track-line";
 
 
@@ -23,6 +24,7 @@ export class GameStateService {
   private state$: Subject<GameState> = new BehaviorSubject(this.state);
 
   constructor() {
+    Testing.runAll();
     setInterval(() => {
       this.state$.next(this.state);
     }, 1000);
@@ -39,8 +41,8 @@ export class GameStateService {
 
   private static initialState(): GameState {
     const track = Track.create();
-    // const players = GameStateService.onePlayer(track);
     const players = GameStateService.initialSomePlayerAtPackLine(track);
+    // const players = GameStateService.onePlayer(track);
     // const players = GameStateService.initialDerbyTeams(track);
     return GameState.of(track, players);
   }
@@ -71,16 +73,12 @@ export class GameStateService {
   private static initialSomePlayerAtPackLine(track: Track): Player[] {
     const angle = Angle.ZERO;
     const speed = Speed.ofKph(0);
-    return [
-      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.11), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.12), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.50), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.A, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.70), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.74), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.78), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.99), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-      Player.of(track, Team.B, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(0.01), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100),
-    ]
+    const offset = 0.9;
+    const positions = [offset, 0.05 + offset, 0.10 + offset, 0.15 + offset];
+    return positions.map((p, i) => {
+      const team = i % 2 === 0 ? Team.A : Team.B;
+      return Player.of(track, team, PlayerType.BLOCKER, track.packLine.getAbsolutePositionOf(p), Velocity.of(Speed.ZERO, angle), Velocity.of(speed, angle), 100);
+    })
   }
 
 

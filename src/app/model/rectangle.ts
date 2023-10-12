@@ -1,6 +1,7 @@
 import {Position} from "./position";
+import {Shape} from "./shape";
 
-export class Rectangle {
+export class Rectangle implements Shape {
 
   readonly position: Position;
   readonly width: number;

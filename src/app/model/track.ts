@@ -6,6 +6,12 @@ import {MathTools} from "../util/math-tools";
 import {CircleTools} from "../util/circle-tools";
 import {TrackLine} from "./track-line";
 import {Player} from "./player";
+import {Overflow} from "./overflow";
+import {TrackLineShape} from "./track-line-shape";
+import {Shape} from "./shape";
+import {Arc} from "./arc";
+import {Quad} from "./quad";
+import {Triangle} from "./triangle";
 import {Renderer} from "../renderer/renderer";
 
 export class Track {
@@ -33,6 +39,7 @@ export class Track {
               outerBounds: TrackLine,
               innerTrackLine: TrackLine,
               outerTrackLine: TrackLine,
+              packLine: TrackLine,
               jammerLine: Line,
               pivotLine: Line,
               tenFeetLines: Line[]) {
@@ -43,7 +50,7 @@ export class Track {
     this.tenFeetLines = tenFeetLines;
     this.innerTrackLine = innerTrackLine;
     this.outerTrackLine = outerTrackLine;
-    this.packLine = this.trackLineAt(GameConstants.PACK_LINE_PERCENTAGE);
+    this.packLine = packLine;
     this.trackRatio = Track.calculateTrackRatio(this);
   }
 
@@ -53,6 +60,7 @@ export class Track {
     const w = 5.33;
     const h = 3.81;
     const rIn = 3.81;
+    const rPack = GameConstants.PACK_LINE_RADIUS;
     const rOut = 8.08;
     const centerPoint = Position.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2 - tenFeet, rOut * 1.5 - 1);
 
@@ -85,6 +93,13 @@ export class Track {
       Line.of(Position.of(centerPoint.x + w, centerPoint.y - rOut - oneFoot), Position.of(centerPoint.x - w, centerPoint.y - rOut + oneFoot)),
       Circle.of(Position.of(centerPoint.x - w, centerPoint.y + oneFoot), rOut));
 
+    // Pack line
+    const packLine = TrackLine.of(
+      Line.of(Position.of(centerPoint.x - w, centerPoint.y + rPack), Position.of(centerPoint.x + w, centerPoint.y + rPack)),
+      Circle.of(Position.of(centerPoint.x + w, centerPoint.y), rPack),
+      Line.of(Position.of(centerPoint.x + w, centerPoint.y - rPack), Position.of(centerPoint.x - w, centerPoint.y - rPack)),
+      Circle.of(Position.of(centerPoint.x - w, centerPoint.y), rPack));
+
     // Lines
     const jammerLine = Line.of(Position.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + h), Position.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + rOut + oneFoot * 0.6));
     const pivotLine = Line.of(Position.of(centerPoint.x + w, centerPoint.y + h), Position.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot));
@@ -95,6 +110,7 @@ export class Track {
       outerBounds,
       innerTrackLine,
       outerTrackLine,
+      packLine,
       jammerLine,
       pivotLine,
       tenFeetLines
@@ -201,14 +217,15 @@ export class Track {
    *  - Y: Relative distance traveled along track (0 = start, 0.9999... = end)
    */
   public getRelativePosition(candidate: Position): Position {
-    const pointOnInnerTrackLine = this.innerTrackLine.getClosestPointTo(candidate);
-    const shapeIndex = this.innerTrackLine.findShapeIndexOf(candidate);
-    const innerTrackToCandidate = Line.of(pointOnInnerTrackLine, candidate);
+    const pointOnPackLine = this.packLine.getClosestPointTo(candidate);
+    const pointOnInnerTrackLine = this.innerTrackLine.getClosestPointTo(pointOnPackLine);
+    const shapeIndex = this.packLine.findShapeIndexOf(candidate);
+    const innerTrackToCandidate = Line.of(pointOnPackLine, pointOnInnerTrackLine);
     const pointOnInnerBounds = this.innerBounds.getIntersectionWith(innerTrackToCandidate, shapeIndex);
     const pointOnOuterBounds = this.outerBounds.getIntersectionWith(innerTrackToCandidate, shapeIndex);
     const innerOuterBounds = Line.of(pointOnInnerBounds, pointOnOuterBounds);
-    const relativeX = innerOuterBounds.getRelativePositionOf(candidate);
-    const relativeY = this.packLine.getRelativePositionOf(pointOnInnerTrackLine);
+    const relativeX = innerOuterBounds.getRelativeDistanceAlong(candidate);
+    const relativeY = this.packLine.getRelativeDistanceAlong(pointOnPackLine);
     return Position.of(relativeX, relativeY);
   }
 
@@ -220,6 +237,41 @@ export class Track {
   public lane(lane: number): TrackLine {
     const percentage = lane / GameConstants.LANE_COUNT;
     return this.trackLineAt(percentage);
+  }
+
+  public getPackShapes(relativeBack: Overflow, relativeFront: Overflow): Shape[] {
+    const packBack = this.packLine.getAbsolutePositionOf(relativeBack.value);
+    const packFront = this.packLine.getAbsolutePositionOf(relativeFront.value);
+    const innerBack = this.innerTrackLine.getClosestPointTo(packBack);
+    const innerFront = this.innerTrackLine.getClosestPointTo(packFront);
+    const lineBack = Line.of(innerBack, packBack);
+    const lineFront = Line.of(innerFront, packFront);
+    const shapeIndexBack = this.innerTrackLine.findShapeIndexOf(innerBack);
+    const shapeIndexFront = this.innerTrackLine.findShapeIndexOf(innerFront);
+    const outerBack = this.outerTrackLine.getIntersectionWith(lineBack, shapeIndexBack);
+    const outerFront = this.outerTrackLine.getIntersectionWith(lineFront, shapeIndexFront);
+
+    // Get inner/outer shapes
+    const innerShapes = this.innerTrackLine.getShapes(innerBack, innerFront);
+    const outerShapes = this.outerTrackLine.getShapes(outerBack, outerFront);
+
+    // Merge shapes
+    const shapes: Shape[] = [];
+    for (let i = 0; i < innerShapes.length; i++) {
+      const innerShape = innerShapes[i];
+      const outerShape = outerShapes[i];
+      if (innerShape instanceof Line) {
+        const innerLine = innerShape as Line;
+        const outerLine = outerShape as Line;
+        shapes.push(Quad.of(innerLine.p1, innerLine.p2, outerLine.p2, outerLine.p1));
+      } else if (innerShape instanceof Arc) {
+        const innerArc = innerShape as Arc;
+        const outerArc = outerShape as Arc;
+        shapes.push(outerShape);
+        shapes.push(Triangle.of(innerArc.position, outerArc.p1, outerArc.p2));
+      }
+    }
+    return shapes;
   }
 
   //
