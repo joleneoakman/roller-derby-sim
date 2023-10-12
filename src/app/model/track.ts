@@ -13,6 +13,7 @@ import {Arc} from "./arc";
 import {Quad} from "./quad";
 import {Triangle} from "./triangle";
 import {Renderer} from "../renderer/renderer";
+import {PackCandidate} from "./pack-candidate";
 
 export class Track {
 
@@ -239,15 +240,17 @@ export class Track {
     return this.trackLineAt(percentage);
   }
 
-  public getPackShapes(relativeBack: Overflow, relativeFront: Overflow): Shape[] {
-    const packBack = this.packLine.getAbsolutePositionOf(relativeBack.value);
-    const packFront = this.packLine.getAbsolutePositionOf(relativeFront.value);
+  public getPackShapes(pack: PackCandidate): Shape[] {
+    const packBack = this.packLine.getAbsolutePositionOf(pack.relativeBack.value);
+    const packFront = this.packLine.getAbsolutePositionOf(pack.relativeFront.value);
+    const shapeIndexBack = this.innerTrackLine.findShapeIndexOf(packBack);
+    const shapeIndexFront = this.innerTrackLine.findShapeIndexOf(packFront);
+
+    // Pack points
     const innerBack = this.innerTrackLine.getClosestPointTo(packBack);
     const innerFront = this.innerTrackLine.getClosestPointTo(packFront);
     const lineBack = Line.of(innerBack, packBack);
     const lineFront = Line.of(innerFront, packFront);
-    const shapeIndexBack = this.innerTrackLine.findShapeIndexOf(innerBack);
-    const shapeIndexFront = this.innerTrackLine.findShapeIndexOf(innerFront);
     const outerBack = this.outerTrackLine.getIntersectionWith(lineBack, shapeIndexBack);
     const outerFront = this.outerTrackLine.getIntersectionWith(lineFront, shapeIndexFront);
 
@@ -255,8 +258,25 @@ export class Track {
     const innerShapes = this.innerTrackLine.getShapes(innerBack, innerFront);
     const outerShapes = this.outerTrackLine.getShapes(outerBack, outerFront);
 
+    // Engagement zone points
+    const engZoneStartOnPackLine = this.packLine.pointAtDistance(pack.back.value - GameConstants.TWENTY_FEET);
+    const engZoneEndOnPackLine = this.packLine.pointAtDistance(pack.front.value + GameConstants.TWENTY_FEET);
+    const innerEngZoneBack = this.innerTrackLine.getClosestPointTo(engZoneStartOnPackLine);
+    const innerEngZoneFront = this.innerTrackLine.getClosestPointTo(engZoneEndOnPackLine);
+    const engZoneLineBack = Line.of(engZoneStartOnPackLine, innerEngZoneBack);
+    const engZoneLineFront = Line.of(engZoneEndOnPackLine, innerEngZoneFront);
+    const shapeIndexEngZoneBack = this.packLine.findShapeIndexOf(engZoneStartOnPackLine);
+    const shapeIndexEngZoneFront = this.packLine.findShapeIndexOf(engZoneEndOnPackLine);
+    const outerEngZoneBack = this.outerTrackLine.getIntersectionWith(engZoneLineBack, shapeIndexEngZoneBack);
+    const outerEngZoneFront = this.outerTrackLine.getIntersectionWith(engZoneLineFront, shapeIndexEngZoneFront);
+
     // Merge shapes
-    const shapes: Shape[] = [];
+    const shapes: Shape[] = [
+      Line.of(innerBack, outerBack),
+      Line.of(innerFront, outerFront),
+      Line.of(innerEngZoneBack, outerEngZoneBack),
+      Line.of(innerEngZoneFront, outerEngZoneFront)
+    ];
     for (let i = 0; i < innerShapes.length; i++) {
       const innerShape = innerShapes[i];
       const outerShape = outerShapes[i];

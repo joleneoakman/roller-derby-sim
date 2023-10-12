@@ -15,6 +15,7 @@ import {Rectangle} from "../model/rectangle";
 import {Fill} from "./fill";
 import {Quad} from "../model/quad";
 import {Triangle} from "../model/triangle";
+import {Line} from "../model/line";
 
 export class Renderer {
 
@@ -161,37 +162,28 @@ export class Renderer {
       return;
     }
 
-    // Shape
-    const packLine = track.packLine;
-    const shapes = track.getPackShapes(activePack.relativeBack, activePack.relativeFront);
+    const shapes = track.getPackShapes(activePack);
     for (let shape of shapes) {
-      if (shape instanceof Quad) {
-        const quad = shape as Quad;
-        this.drawQuad(quad.p1, quad.p2, quad.p3, quad.p4, GameConstants.PACK_FILL);
-      } else if (shape instanceof Arc) {
+      if (shape instanceof Arc) {
         const arc = shape as Arc;
         this.drawArc(arc, GameConstants.PACK_FILL, undefined, false);
       } else if (shape instanceof Triangle) {
         const triangle = shape as Triangle;
         this.drawTriangle(triangle.p1, triangle.p2, triangle.p3, GameConstants.PACK_FILL);
       }
-      this.drawTrackLine(track.innerTrackLine, GameConstants.OUT_OF_BOUNDS_FILL);
     }
-
-
-    // Some points
-    const startOnPackLine = packLine.pointAtDistance(activePack.back.value);
-    const endOnPackLine = packLine.pointAtDistance(activePack.front.value);
-    const engZoneStartOnPackLine = packLine.pointAtDistance(activePack.back.value - GameConstants.TWENTY_FEET);
-    const engZoneEndOnPackLine = packLine.pointAtDistance(activePack.front.value + GameConstants.TWENTY_FEET);
-    const start = track.innerTrackLine.getClosestPointTo(startOnPackLine);
-    const end = track.innerTrackLine.getClosestPointTo(endOnPackLine);
-    const engZoneStart = track.innerTrackLine.getClosestPointTo(engZoneStartOnPackLine);
-    const engZoneEnd = track.innerTrackLine.getClosestPointTo(engZoneEndOnPackLine);
-    this.drawPoint(start, GameConstants.PACK_POINT_FILL);
-    this.drawPoint(end, GameConstants.PACK_POINT_FILL);
-    this.drawPoint(engZoneStart, GameConstants.PACK_POINT_FILL);
-    this.drawPoint(engZoneEnd, GameConstants.PACK_POINT_FILL);
+    this.drawTrackLine(track.innerTrackLine, GameConstants.OUT_OF_BOUNDS_FILL);
+    for (let shape of shapes) {
+      if (shape instanceof Quad) {
+        const quad = shape as Quad;
+        this.drawQuad(quad.p1, quad.p2, quad.p3, quad.p4, GameConstants.PACK_FILL);
+      } else if (shape instanceof Line) {
+        const line = shape as Line;
+        this.drawLine(line.p1, line.p2, GameConstants.PACK_FILL.toStroke());
+        this.drawPoint(line.p1, GameConstants.PACK_POINT_FILL);
+        this.drawPoint(line.p2, GameConstants.PACK_POINT_FILL);
+      }
+    }
   }
 
   private drawTrackLine(trackLine: TrackLine, fill?: Fill, stroke?: Stroke, showPercentages: boolean = false) {
