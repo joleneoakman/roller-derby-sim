@@ -245,7 +245,7 @@ export class Renderer {
   private drawTarget(radius: number, target: Target, team: Team, selected: boolean, isTarget: boolean) {
     const {color, strokeColor} = Renderer.getColorForTarget(team, selected, isTarget);
     const playerFill = Fill.of(color);
-    const playerStroke = Stroke.of(strokeColor, isTarget ? GameConstants.PLAYER_OUTLINE_WIDTH : GameConstants.TARGET_OUTLINE_WIDTH);
+    const playerStroke = Stroke.of(strokeColor, selected && !isTarget ? 2 : 1);
 
     // Circle
     const position = target.position;
