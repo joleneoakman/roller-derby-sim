@@ -22,7 +22,7 @@ export class GameConstants {
   public static readonly ZERO_TO_MAX_IN_SECONDS = 10;
   public static readonly MAX_TO_ZERO_IN_SECONDS = 3;
   public static readonly COLLISION_COEFFICIENT = 1; // 0 - 1
-  public static readonly MAX_TURN_PER_FRAME = 0.5;
+  public static readonly MAX_TURN_PER_FRAME = 2;
 
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
@@ -59,12 +59,17 @@ export class GameConstants {
   public static readonly DEBUG_POINT_FILL = Fill.of(GameConstants.DEBUG_POINT_COLOR);
 
   public static readonly PLAYER_OUTLINE_WIDTH = 1;
+  public static readonly TARGET_OUTLINE_WIDTH = 0.5;
   public static readonly TRACK_LINE_OUTLINE_WIDTH = 1;
 
+  public static readonly TEAM_A_SELECTED_STROKE_COLOR = '#f00';
+  public static readonly TEAM_B_SELECTED_STROKE_COLOR = '#00f';
   public static readonly TEAM_A_COLOR = '#d51349';
-  public static readonly TEAM_A_STROKE_COLOR = 'black';
-  public static readonly TEAM_A_SELECTED_COLOR = 'orange';
+  public static readonly TEAM_A_STROKE_COLOR = '#410516';
+  public static readonly TEAM_A_SELECTED_COLOR = '#fc7a9e';
+  public static readonly TEAM_A_TARGET_COLOR = 'rgba(255,19,73,0.3)';
   public static readonly TEAM_B_COLOR = '#5a06d9';
-  public static readonly TEAM_B_STROKE_COLOR = 'black';
-  public static readonly TEAM_B_SELECTED_COLOR = 'lightblue';
+  public static readonly TEAM_B_STROKE_COLOR = '#26035d';
+  public static readonly TEAM_B_SELECTED_COLOR = '#a973fd';
+  public static readonly TEAM_B_TARGET_COLOR = 'rgba(90,6,217,0.3)';
 }

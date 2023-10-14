@@ -5,6 +5,7 @@ import {GameConstants} from "../game/game-constants";
 import {Pair} from "./pair";
 import {PackPlayer} from "./pack-player";
 import {Overflow} from "./overflow";
+import {Track} from "./track";
 
 export class Pack {
 
@@ -16,11 +17,11 @@ export class Pack {
   readonly splitPackIndex1: number; // Pack index or -1 if no split pack
   readonly splitPackIndex2: number; // Pack index or -1 if no split pack
 
-  private constructor(players: Player[], packLine: TrackLine) {
+  private constructor(players: Player[], track: Track) {
     this.players = players;
-    this.positions = Pack.calculatePositions(this.players, packLine);
-    this.distances = Pack.calculateDistances(this.players, this.positions, packLine.distance);
-    this.packs = Pack.calculatePacks(this.players, this.positions, this.distances, packLine);
+    this.positions = Pack.calculatePositions(this.players, track.packLine);
+    this.distances = Pack.calculateDistances(this.players, this.positions, track.packLine.distance);
+    this.packs = Pack.calculatePacks(this.players, this.positions, this.distances, track);
 
     const activePackIndices = Pack.calculateActivePack(this.packs);
     this.activePackIndex = activePackIndices.a;
@@ -28,8 +29,8 @@ export class Pack {
     this.splitPackIndex2 = activePackIndices.b.b;
   }
 
-  public static create(players: Player[], packLine: TrackLine): Pack {
-    return new Pack(players, packLine);
+  public static create(players: Player[], track: Track): Pack {
+    return new Pack(players, track);
   }
 
   public get activePack(): PackCandidate | undefined {
@@ -76,14 +77,14 @@ export class Pack {
     return distances;
   }
 
-  private static calculatePacks(players: Player[], positions: number[], distances: number[][], packLine: TrackLine): PackCandidate[] {
-    const totalDistance = packLine.distance;
+  private static calculatePacks(players: Player[], positions: number[], distances: number[][], track: Track): PackCandidate[] {
+    const totalDistance = track.packLine.distance;
     const count = players.length;
 
     // Exclude players that are not applicable for pack
     const applicablePlayers: boolean[] = [];
     for (let i = 0; i < count; i++) {
-      applicablePlayers[i] = players[i].isInBounds();
+      applicablePlayers[i] = players[i].isInBounds(track);
     }
 
     // Calculate which players within ten feet of each other

@@ -3,6 +3,7 @@ import {Track} from "./track";
 import {Position} from "./position";
 import {PlayerSelection} from "./player-selection";
 import {Pack} from "./pack";
+import {Target} from "./target";
 
 export class GameState {
 
@@ -19,25 +20,35 @@ export class GameState {
   }
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(track, players, Pack.create(players, track.packLine), undefined);
+    return new GameState(track, players, Pack.create(players, track), undefined);
   }
 
   public withPlayers(players: Player[]): GameState {
-    const pack = Pack.create(players, this.track.packLine);
+    const pack = Pack.create(players, this.track);
     return new GameState(this.track, players, pack, this.playerSelection);
   }
 
-  public withSelection(index: number, targetPosition: Position): GameState {
-    return new GameState(this.track, this.players, this.pack, PlayerSelection.of(index, targetPosition));
+  public withSelection(index: number): GameState {
+    return new GameState(this.track, this.players, this.pack, PlayerSelection.of(index));
   }
 
   public withSelectedTargetPosition(position: Position): GameState {
     if (this.playerSelection === undefined) {
       return this;
     }
-    return this.withSelection(this.playerSelection.index, position).withPlayers(this.players.map((p, i) => {
+    return this.withSelection(this.playerSelection.index).withPlayers(this.players.map((p, i) => {
       if (i === this.playerSelection?.index) {
-        return p.withPosition(position, this.track);
+        return p.addTarget(Target.of(position));
+      } else {
+        return p;
+      }
+    }));
+  }
+
+  public clearTargets(): GameState {
+    return this.withPlayers(this.players.map((p, i) => {
+      if (i === this.playerSelection?.index) {
+        return p.clearTargets();
       } else {
         return p;
       }
@@ -46,7 +57,7 @@ export class GameState {
 
   public select(position: Position): GameState {
      const index = this.findPlayerIndexAt(position);
-     return this.withSelection(index, position);
+     return this.withSelection(index);
   }
 
   public deselect(): GameState {
@@ -66,23 +77,19 @@ export class GameState {
   }
 
   public recalculate(): GameState {
-    if (true) {
-      return this;
-    }
-
-    const playersAfterMove = this.players.map(player => player.recalculate(this.track));
+    const playersAfterMove = this.players.map(player => player.moveTowardsTarget());
 
     // Calculate new player velocities based on objectives
     // Todo: implement
 
     // Calculate new player positions and velocities after collisions
-    const count = this.players.length;
+    /*const count = this.players.length;
     const playersAfterBlocks: Player[] = [...playersAfterMove];
     for (let i = 0; i < count; i++) {
       const playerAfterMove1 = playersAfterBlocks[i];
       for (let j = i + 1; j < count; j++) {
         const playerAfterMove2 = playersAfterBlocks[j];
-        const collided = playerAfterMove1.collideWith(playerAfterMove2, this.track);
+        const collided = playerAfterMove1.collideWith(playerAfterMove2);
         playersAfterBlocks[i] = collided.a;
         playersAfterBlocks[j] = collided.b;
       }
@@ -93,8 +100,8 @@ export class GameState {
     for (let i = 0; i < count; i++) {
       const oldPlayer = this.players[i];
       const newPlayer = playersAfterBlocks[i];
-      const containsOld = oldPlayer.isInBounds();
-      const containsNew = newPlayer.isInBounds();
+      const containsOld = oldPlayer.isInBounds(this.track);
+      const containsNew = newPlayer.isInBounds(this.track);
 
       if (!containsNew) {
         const targetPoint = this.track.getClosestPointOnTrackLine(newPlayer, 0.5);
@@ -103,6 +110,7 @@ export class GameState {
         playersAfterBounds[i] = newPlayer;
       }
     }
-    return this.withPlayers(playersAfterBounds);
+    return this.withPlayers(playersAfterBounds);*/
+    return this.withPlayers(playersAfterMove);
   }
 }

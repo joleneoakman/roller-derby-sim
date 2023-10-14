@@ -1,7 +1,6 @@
 import {Player} from "../model/player";
 import {Track} from "../model/track";
 import {GameState} from "../model/game-state";
-import {Velocity} from "../model/velocity";
 import {GameConstants} from "../game/game-constants";
 import {Team} from "../model/team";
 import {Stroke} from "./stroke";
@@ -9,13 +8,13 @@ import {Position} from "../model/position";
 import {Arc} from "../model/arc";
 import {TrackLine} from "../model/track-line";
 import {Circle} from "../model/circle";
-import {Speed} from "../model/speed";
 import {Pack} from "../model/pack";
 import {Rectangle} from "../model/rectangle";
 import {Fill} from "./fill";
 import {Quad} from "../model/quad";
 import {Triangle} from "../model/triangle";
 import {Line} from "../model/line";
+import {Target} from "../model/target";
 
 export class Renderer {
 
@@ -39,28 +38,31 @@ export class Renderer {
     this.drawRect(GameConstants.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_FILL);
 
     // Track
-    this.drawTrack(state.track);
+    const track = state.track;
+    this.drawTrack(track);
 
     // Pack
-    this.drawPack(state.track, state.pack);
+    const pack = state.pack;
+    this.drawPack(track, pack);
 
     // Players
     for (let i = 0; i < state.players.length; i++) {
-      this.drawPlayer(state.players[i], state.playerSelection?.index === i);
+      this.drawPlayer(state.players[i], track, state.playerSelection?.index === i);
     }
 
     // Relative track
-    const relativeTrack = Renderer.createRelativeTrack(this.width, this.height, this.scale, state.track);
+    const relativeTrack = Renderer.createRelativeTrack(this.width, this.height, this.scale, track);
     this.drawRelativeTrack(relativeTrack, 0.2);
 
     // Relative pack
-    this.drawRelativePack(relativeTrack, state.pack);
+    this.drawRelativePack(relativeTrack, pack);
 
     // Relative players
     for (let i = 0; i < state.players.length; i++) {
       const player = state.players[i];
-      if (player.relativePosition.x >= -1 && player.relativePosition.x <= 2) {
-        this.drawRelativePlayer(relativeTrack, player, state.playerSelection?.index === i);
+      const relativePosition = player.relativePosition(track);
+      if (relativePosition.x >= -1 && relativePosition.x <= 2) {
+        this.drawRelativePlayer(relativeTrack, player, relativePosition, state.playerSelection?.index === i);
       }
     }
 
@@ -120,9 +122,9 @@ export class Renderer {
     this.drawLine(Position.of(x1, rect.y), Position.of(x1, rect.y + rect.height), Stroke.of(GameConstants.TRACK_LANE_COLOR, 1));
   }
 
-  private drawRelativePlayer(relativeTrack: Rectangle, player: Player, selected: boolean) {
-    const {color, strokeColor} = Renderer.getColorsForPlayer(player);
-    const relativeCircle = Circle.of(Position.of(relativeTrack.x + relativeTrack.width * player.relativePosition.x, relativeTrack.y + relativeTrack.height * (1 - player.relativePosition.y)), player.radius / 2.5);
+  private drawRelativePlayer(relativeTrack: Rectangle, player: Player, relativePosition: Position, selected: boolean) {
+    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false);
+    const relativeCircle = Circle.of(Position.of(relativeTrack.x + relativeTrack.width * relativePosition.x, relativeTrack.y + relativeTrack.height * (1 - relativePosition.y)), player.radius / 2.5);
     this.drawCircle(relativeCircle, Fill.of(color), Stroke.of(strokeColor, GameConstants.PLAYER_OUTLINE_WIDTH));
   }
 
@@ -214,16 +216,44 @@ export class Renderer {
     }
   }
 
-  private drawPlayer(player: Player, selected: boolean) {
+  private drawPlayer(player: Player, track: Track, selected: boolean) {
     const position = player.position;
-    const targetVelocity = Velocity.of(Speed.ofKph(10), player.targetVelocity.angle);
-    const velocity = Velocity.of(Speed.ofKph(10), player.velocity.angle);
-    const {color, strokeColor} = Renderer.getColorsForPlayer(player);
-    this.drawCircle(player.toCircle(), Fill.of(color), Stroke.of(strokeColor, 1));
-    this.drawLine(position, Position.of(position.x + (targetVelocity.x * 10), position.y + (targetVelocity.y * 10)), Stroke.of('black', 1));
+
+    // Draw target lines (on select)
+    const showTargets = selected;
+    const strokeColor = player.team === Team.A ? GameConstants.TEAM_A_STROKE_COLOR : GameConstants.TEAM_B_STROKE_COLOR;
+    const lineStroke = Stroke.of(strokeColor, 0.5, true);
+    for (let i = 0; showTargets && i < player.targets.length; i++) {
+      const a = i === 0 ? player.current : player.targets[i - 1];
+      const b = player.targets[i];
+      this.drawLine(a.position, b.position, lineStroke);
+    }
+
+    // Draw player circle
+    this.drawTarget(player.radius, player.current, player.team, selected, false);
+
+    // Draw target circles (on select)
+    for (let i = 0; showTargets && i < player.targets.length; i++) {
+      this.drawTarget(player.radius, player.targets[i], player.team, selected, true);
+    }
+
+    // Draw debug coordinates
+    this.drawText(position.plus(Position.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), lineStroke);
+    this.drawText(position.plus(Position.of(0, 1.2)), '' + player.relativePosition(track).x.toFixed(2) + ', ' + player.relativePosition(track).y.toFixed(2), lineStroke);
+  }
+
+  private drawTarget(radius: number, target: Target, team: Team, selected: boolean, isTarget: boolean) {
+    const {color, strokeColor} = Renderer.getColorForTarget(team, selected, isTarget);
+    const playerFill = Fill.of(color);
+    const playerStroke = Stroke.of(strokeColor, isTarget ? GameConstants.PLAYER_OUTLINE_WIDTH : GameConstants.TARGET_OUTLINE_WIDTH);
+
+    // Circle
+    const position = target.position;
+    this.drawCircle(Circle.of(position, radius), playerFill, playerStroke);
+
+    // Direction indicator
+    const velocity = target.velocity;
     this.drawLine(position, Position.of(position.x + (velocity.x * 10), position.y + (velocity.y * 10)), Stroke.of('black', 1));
-    this.drawText(position.plus(Position.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), Stroke.of('black', 1));
-    this.drawText(position.plus(Position.of(0, 1.2)), '' + player.relativePosition.x.toFixed(2) + ', ' + player.relativePosition.y.toFixed(2), Stroke.of('black', 1));
   }
 
   private drawText(position: Position, text: string, stroke: Stroke) {
@@ -329,9 +359,19 @@ if (!fill) {
     return Rectangle.of(Position.of(x, y), w, h);
   }
 
-  private static getColorsForPlayer(player: Player): {color: string, strokeColor: string} {
-    const color = player.team === Team.A ? GameConstants.TEAM_A_COLOR : GameConstants.TEAM_B_COLOR;
-    const strokeColor = player.team === Team.A ? GameConstants.TEAM_A_STROKE_COLOR : GameConstants.TEAM_B_STROKE_COLOR;
-    return {color, strokeColor};
+  private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean): {color: string, strokeColor: string} {
+    if (team === Team.A && selected && !isTarget) {
+      return {color: GameConstants.TEAM_A_SELECTED_COLOR, strokeColor: GameConstants.TEAM_A_SELECTED_STROKE_COLOR};
+    } else if (team === Team.B && selected && !isTarget) {
+      return {color: GameConstants.TEAM_B_SELECTED_COLOR, strokeColor: GameConstants.TEAM_B_SELECTED_STROKE_COLOR};
+    } else if (team === Team.A && !isTarget) {
+      return {color: GameConstants.TEAM_A_COLOR, strokeColor: GameConstants.TEAM_A_STROKE_COLOR};
+    } else if (team === Team.B && !isTarget) {
+      return {color: GameConstants.TEAM_B_COLOR, strokeColor: GameConstants.TEAM_B_STROKE_COLOR};
+    } else if (team === Team.A && isTarget) {
+      return {color: GameConstants.TEAM_A_TARGET_COLOR, strokeColor: GameConstants.TEAM_A_STROKE_COLOR};
+    } else {
+      return {color: GameConstants.TEAM_B_TARGET_COLOR, strokeColor: GameConstants.TEAM_B_STROKE_COLOR};
+    }
   }
-}
+ }

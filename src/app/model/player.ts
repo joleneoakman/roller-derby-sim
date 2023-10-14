@@ -7,6 +7,7 @@ import {Pair} from "./pair";
 import {GameConstants} from "../game/game-constants";
 import {MathTools} from "../util/math-tools";
 import {Track} from "./track";
+import {Target} from "./target";
 
 export class Player {
 
@@ -16,79 +17,126 @@ export class Player {
   readonly massKg: number;
   readonly radius: number = GameConstants.PLAYER_RADIUS;
 
-  // Physics data
-  readonly position: Position;
-  // X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
-  // Y: Relative distance traveled along track (0 = start, 0.9999... = end)
-  readonly relativePosition: Position;
-  readonly velocity: Velocity;
-  readonly targetVelocity: Velocity;
+  // Motion data
+  readonly current: Target;
+  readonly targets: Target[] = [];
 
   private constructor(team: Team,
                       type: PlayerType,
-                      position: Position,
-                      relativePosition: Position,
-                      velocity: Velocity,
-                      targetVelocity: Velocity,
-                      massKg: number) {
+                      massKg: number,
+                      current: Target,
+                      targets: Target[]) {
     this.team = team;
     this.type = type;
-    this.position = position;
-    this.relativePosition = relativePosition;
-    this.velocity = velocity;
-    this.targetVelocity = targetVelocity;
     this.massKg = massKg;
+    this.current = current;
+    this.targets = targets;
   }
 
-  public static of(track: Track,
-                   team: Team,
+  //
+  // Create
+  //
+
+  public static of(team: Team,
                    type: PlayerType,
-                   position: Position,
-                   velocity: Velocity,
-                   targetVelocity: Velocity,
-                   massKg: number): Player {
-    const relativePosition = track.getRelativePosition(position);
-    return new Player(team, type, position, relativePosition, velocity, targetVelocity, massKg);
+                   massKg: number,
+                   current: Target): Player {
+    return new Player(team, type, massKg, current, []);
+  }
+
+  //
+  // With
+  //
+
+  public withMotion(motion: Target): Player {
+    return new Player(this.team, this.type, this.massKg, motion, this.targets);
+  }
+
+  public withPosition(position: Position): Player {
+    return this.withMotion(this.current.withPosition(position));
+  }
+
+  public withVelocity(velocity: Velocity): Player {
+    return this.withMotion(this.current.withVelocity(velocity));
+  }
+
+  public withTargets(targets: Target[]): Player {
+    return new Player(this.team, this.type, this.massKg, this.current, targets);
+  }
+
+  public addTarget(motion: Target): Player {
+    return this.withTargets([...this.targets, motion]);
+  }
+
+  public markTargetAsReached() {
+    const newTargets = this.targets.slice(1);
+    return this.withTargets(newTargets);
+  }
+
+  public clearTargets(): Player {
+    return this.withTargets([]);
+  }
+
+  //
+  // Getters
+  //
+
+  public get position(): Position {
+    return this.current.position;
+  }
+
+  public get velocity(): Velocity {
+    return this.current.velocity;
   }
 
   public toCircle(): Circle {
     return Circle.of(this.position, this.radius);
   }
 
-  public withVelocity(velocity: Velocity): Player {
-    return new Player(this.team, this.type, this.position, this.relativePosition, velocity, this.targetVelocity, this.massKg);
+  public relativePosition(track: Track): Position {
+    return this.current.relativePosition(track);
   }
 
-  public withTargetVelocity(targetVelocity: Velocity): Player {
-    return new Player(this.team, this.type, this.position, this.relativePosition, this.velocity, targetVelocity, this.massKg);
-  }
 
-  public withPosition(position: Position, track: Track): Player {
-    const relativePosition = track.getRelativePosition(position);
-    return new Player(this.team, this.type, position, relativePosition, this.velocity, this.targetVelocity, this.massKg);
-  }
+  //
+  // Calculations
+  //
 
   public distanceTo(other: Player): number {
     return this.toCircle().distanceTo(other.toCircle());
   }
 
-  public isInBounds(): boolean {
-    return this.relativePosition.x >= 0 && this.relativePosition.x <= 1;
+  public isInBounds(track: Track): boolean {
+    const relativePosition = this.relativePosition(track);
+    return relativePosition.x >= 0 && relativePosition.x <= 1;
   }
 
-  public recalculate(track: Track): Player {
+  public moveTowardsTarget(): Player {
+    if (this.targets.length === 0) {
+      return this;
+    }
+
+    const target = this.targets[0];
+    if (this.position.distanceTo(target.position) < 0.000001) {
+      return this.markTargetAsReached();
+    }
+
+
     // Calculate new velocity based on target velocity
-    const newVelocity = this.velocity.recalculate(this.targetVelocity);
+    // Todo ? this.turnTowards(this.targetPosition);
+
+    const newVelocity = this.velocity.recalculate(target.velocity);
     const newPosition = newVelocity.calculatePosition(this.position);
-    return this.withVelocity(newVelocity).withPosition(newPosition, track);
+    return this.withVelocity(newVelocity).withPosition(newPosition);
   }
 
-  public turnTowards(targetPoint: Position): Player {
-    const angle = this.velocity.turnTowards(targetPoint, this.position);
-    return this.withTargetVelocity(this.targetVelocity.withAngle(angle));
-  }
+  // public turnTowards(targetPoint: Position): Player {
+    // Todo ?
+    // const angle = this.velocity.turnTowards(targetPoint, this.position);
+    // return this.withTargetVelocity(this.targets.velcity.withAngle(angle));
+  // }
 
-  public collideWith(player2: Player, track: Track): Pair<Player, Player> {
+  public collideWith(player2: Player): Pair<Player, Player> {
     // If there is no collision, return the original players
     let player1: Player = this;
     const distance = player1.distanceTo(player2);
@@ -102,8 +150,8 @@ export class Player {
     // Correct player positions if they are overlapping
     if (distance < 0) {
       const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position, track);
-      player2 = player2.withPosition(corrected.b.position, track);
+      player1 = player1.withPosition(corrected.a.position);
+      player2 = player2.withPosition(corrected.b.position);
     }
     return Pair.of(player1, player2);
   }
@@ -122,8 +170,8 @@ export class Player {
     let player1: Player = this;
     if (distance < 0) {
       const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position, track);
-      player2 = player2.withPosition(corrected.b.position, track);
+      player1 = player1.withPosition(corrected.a.position);
+      player2 = player2.withPosition(corrected.b.position);
     }
     if (true) {
       return Pair.of(player1, player2);
@@ -169,17 +217,12 @@ export class Player {
     const newPos2 = Position.of(newPosX2, newPosY2);
 
     // Return new players
-    const player1New = this.withVelocity(newV1).withPosition(newPos1, track);
-    const player2New = player2.withVelocity(newV2).withPosition(newPos2, track);
+    const player1New = this.withVelocity(newV1).withPosition(newPos1);
+    const player2New = player2.withVelocity(newV2).withPosition(newPos2);
     return Pair.of(player1New, player2New);
   }
 
   public getDotN(player2: Player): number {
     return MathTools.getDotN(this.position, this.velocity, player2.position, player2.velocity);
-  }
-
-  withTargetPosition(position: Position): Player {
-    // Todo
-    return this.turnTowards(position);
   }
 }

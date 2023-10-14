@@ -1,4 +1,4 @@
-<canvas #canvas (mousedown)="onMouseDown($event)" (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp($event)"></canvas>
+<canvas #canvas (mousedown)="onClick($event)" (contextmenu)="$event.preventDefault()"></canvas>
 <!--<pre style="width:22%; height: 100%; left: 78%; position: absolute">
   {{ (state$ | async) | json }}
 </pre>-->

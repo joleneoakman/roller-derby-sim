@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {Renderer} from "./renderer/renderer";
 import {Observable} from "rxjs";
 import {GameState} from "./model/game-state";
@@ -29,20 +29,24 @@ export class AppComponent implements AfterViewInit {
     this.gameLoop();
   }
 
-  public onMouseDown(event: any) {
-    const clientPos = Position.of(event.clientX, event.clientY);
-    const normalizedPos = this.normalizePoint(clientPos);
-    this.gameStateService.update(state => state.select(normalizedPos));
+  @HostListener('document:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Delete') {
+      this.gameStateService.update(state => state.clearTargets());
+    } else if (event.key === 'Escape') {
+      this.gameStateService.update(state => state.deselect());
+    }
   }
 
-  public onMouseMove(event: any) {
+  public onClick(event: MouseEvent) {
     const clientPos = Position.of(event.clientX, event.clientY);
     const normalizedPos = this.normalizePoint(clientPos);
-    this.gameStateService.update(state => state.withSelectedTargetPosition(normalizedPos));
-  }
-
-  public onMouseUp(event: any) {
-    this.gameStateService.update(state => state.deselect());
+    console.warn(event);
+    if (event.button === 0) {
+      this.gameStateService.update(state => state.select(normalizedPos));
+    } else if (event.button === 2) {
+      this.gameStateService.update(state => state.withSelectedTargetPosition(normalizedPos));
+    }
   }
 
   private resize() {
