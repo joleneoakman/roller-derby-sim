@@ -1,4 +1,3 @@
-import {Position} from "../model/position";
 import {Fill} from "../renderer/fill";
 
 export class GameConstants {
@@ -13,16 +12,15 @@ export class GameConstants {
   // Rendering
   //
   public static readonly FPS = 60;
-  public static readonly ORIGIN = Position.of(0, 0);
 
   //
   // Physics
   //
-  public static readonly MAX_SPEED_KPH = 20;
+  public static readonly MAX_SPEED_KPH = 15;
   public static readonly ZERO_TO_MAX_IN_SECONDS = 10;
-  public static readonly MAX_TO_ZERO_IN_SECONDS = 3;
+  public static readonly MAX_TO_ZERO_IN_SECONDS = 4;
   public static readonly COLLISION_COEFFICIENT = 1; // 0 - 1
-  public static readonly MAX_TURN_PER_FRAME = 2;
+  public static readonly MAX_TURN_PER_FRAME = 1;
 
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);

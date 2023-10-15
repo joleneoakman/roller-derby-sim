@@ -1,4 +1,4 @@
-import {Position} from "../model/position";
+import {Vector} from "../model/vector";
 import {Velocity} from "../model/velocity";
 import {Line} from "../model/line";
 
@@ -14,7 +14,7 @@ export class MathTools {
   /**
    * Calculate the dot n for the given positions and velocities.
    */
-  public static getDotN(position1: Position, velocity1: Velocity, position2: Position, velocity2: Velocity): number {
+  public static getDotN(position1: Vector, velocity1: Velocity, position2: Vector, velocity2: Velocity): number {
     const x1 = position1.x;
     const y1 = position1.y;
     const vx1 = velocity1.x;
@@ -45,7 +45,7 @@ export class MathTools {
   /**
    * Returns a new position that adds the given distance to the second point of the line.
    */
-  public static addDistanceAlongLine(line: Line, distance: number): Position {
+  public static addDistanceAlongLine(line: Line, distance: number): Vector {
     // Calculate vector from p1 to p2
     const dx = line.p2.x - line.p1.x;
     const dy = line.p2.y - line.p1.y;
@@ -59,6 +59,6 @@ export class MathTools {
     const newX = line.p2.x + normalizedDx * distance;
     const newY = line.p2.y + normalizedDy * distance;
 
-    return Position.of(newX, newY);
+    return Vector.of(newX, newY);
   }
 }

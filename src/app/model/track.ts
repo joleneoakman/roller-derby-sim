@@ -1,18 +1,15 @@
 import {Circle} from "./circle";
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {GameConstants} from "../game/game-constants";
 import {Line} from "./line";
 import {MathTools} from "../util/math-tools";
 import {CircleTools} from "../util/circle-tools";
 import {TrackLine} from "./track-line";
 import {Player} from "./player";
-import {Overflow} from "./overflow";
-import {TrackLineShape} from "./track-line-shape";
 import {Shape} from "./shape";
 import {Arc} from "./arc";
 import {Quad} from "./quad";
 import {Triangle} from "./triangle";
-import {Renderer} from "../renderer/renderer";
 import {PackCandidate} from "./pack-candidate";
 
 export class Track {
@@ -63,47 +60,47 @@ export class Track {
     const rIn = 3.81;
     const rPack = GameConstants.PACK_LINE_RADIUS;
     const rOut = 8.08;
-    const centerPoint = Position.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2 - tenFeet, rOut * 1.5 - 1);
+    const centerPoint = Vector.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2 - tenFeet, rOut * 1.5 - 1);
 
     // Inner bounds
     const r = GameConstants.PLAYER_RADIUS;
     const innerBounds = TrackLine.of(
-      Line.of(Position.of(centerPoint.x - w, centerPoint.y + h + r), Position.of(centerPoint.x + w, centerPoint.y + h + r)),
-      Circle.of(Position.of(centerPoint.x + w, centerPoint.y), rIn + r),
-      Line.of(Position.of(centerPoint.x + w, centerPoint.y - h - r), Position.of(centerPoint.x - w, centerPoint.y - h - r)),
-      Circle.of(Position.of(centerPoint.x - w, centerPoint.y), rIn + r));
+      Line.of(Vector.of(centerPoint.x - w, centerPoint.y + h + r), Vector.of(centerPoint.x + w, centerPoint.y + h + r)),
+      Circle.of(Vector.of(centerPoint.x + w, centerPoint.y), rIn + r),
+      Line.of(Vector.of(centerPoint.x + w, centerPoint.y - h - r), Vector.of(centerPoint.x - w, centerPoint.y - h - r)),
+      Circle.of(Vector.of(centerPoint.x - w, centerPoint.y), rIn + r));
 
     // Outer bounds
     const outerBounds = TrackLine.of(
-      Line.of(Position.of(centerPoint.x - w, centerPoint.y + rOut + oneFoot - r), Position.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot - r)),
-      Circle.of(Position.of(centerPoint.x + w, centerPoint.y - oneFoot), rOut - r),
-      Line.of(Position.of(centerPoint.x + w, centerPoint.y - rOut - oneFoot + r), Position.of(centerPoint.x - w, centerPoint.y - rOut + oneFoot + r)),
-      Circle.of(Position.of(centerPoint.x - w, centerPoint.y + oneFoot), rOut - r));
+      Line.of(Vector.of(centerPoint.x - w, centerPoint.y + rOut + oneFoot - r), Vector.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot - r)),
+      Circle.of(Vector.of(centerPoint.x + w, centerPoint.y - oneFoot), rOut - r),
+      Line.of(Vector.of(centerPoint.x + w, centerPoint.y - rOut - oneFoot + r), Vector.of(centerPoint.x - w, centerPoint.y - rOut + oneFoot + r)),
+      Circle.of(Vector.of(centerPoint.x - w, centerPoint.y + oneFoot), rOut - r));
 
     // Inner track line
     const innerTrackLine = TrackLine.of(
-      Line.of(Position.of(centerPoint.x - w, centerPoint.y + h), Position.of(centerPoint.x + w, centerPoint.y + h)),
-      Circle.of(Position.of(centerPoint.x + w, centerPoint.y), rIn),
-      Line.of(Position.of(centerPoint.x + w, centerPoint.y - h), Position.of(centerPoint.x - w, centerPoint.y - h)),
-      Circle.of(Position.of(centerPoint.x - w, centerPoint.y), rIn));
+      Line.of(Vector.of(centerPoint.x - w, centerPoint.y + h), Vector.of(centerPoint.x + w, centerPoint.y + h)),
+      Circle.of(Vector.of(centerPoint.x + w, centerPoint.y), rIn),
+      Line.of(Vector.of(centerPoint.x + w, centerPoint.y - h), Vector.of(centerPoint.x - w, centerPoint.y - h)),
+      Circle.of(Vector.of(centerPoint.x - w, centerPoint.y), rIn));
 
     // Outer track line
     const outerTrackLine = TrackLine.of(
-      Line.of(Position.of(centerPoint.x - w, centerPoint.y + rOut + oneFoot), Position.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot)),
-      Circle.of(Position.of(centerPoint.x + w, centerPoint.y - oneFoot), rOut),
-      Line.of(Position.of(centerPoint.x + w, centerPoint.y - rOut - oneFoot), Position.of(centerPoint.x - w, centerPoint.y - rOut + oneFoot)),
-      Circle.of(Position.of(centerPoint.x - w, centerPoint.y + oneFoot), rOut));
+      Line.of(Vector.of(centerPoint.x - w, centerPoint.y + rOut + oneFoot), Vector.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot)),
+      Circle.of(Vector.of(centerPoint.x + w, centerPoint.y - oneFoot), rOut),
+      Line.of(Vector.of(centerPoint.x + w, centerPoint.y - rOut - oneFoot), Vector.of(centerPoint.x - w, centerPoint.y - rOut + oneFoot)),
+      Circle.of(Vector.of(centerPoint.x - w, centerPoint.y + oneFoot), rOut));
 
     // Pack line
     const packLine = TrackLine.of(
-      Line.of(Position.of(centerPoint.x - w, centerPoint.y + rPack), Position.of(centerPoint.x + w, centerPoint.y + rPack)),
-      Circle.of(Position.of(centerPoint.x + w, centerPoint.y), rPack),
-      Line.of(Position.of(centerPoint.x + w, centerPoint.y - rPack), Position.of(centerPoint.x - w, centerPoint.y - rPack)),
-      Circle.of(Position.of(centerPoint.x - w, centerPoint.y), rPack));
+      Line.of(Vector.of(centerPoint.x - w, centerPoint.y + rPack), Vector.of(centerPoint.x + w, centerPoint.y + rPack)),
+      Circle.of(Vector.of(centerPoint.x + w, centerPoint.y), rPack),
+      Line.of(Vector.of(centerPoint.x + w, centerPoint.y - rPack), Vector.of(centerPoint.x - w, centerPoint.y - rPack)),
+      Circle.of(Vector.of(centerPoint.x - w, centerPoint.y), rPack));
 
     // Lines
-    const jammerLine = Line.of(Position.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + h), Position.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + rOut + oneFoot * 0.6));
-    const pivotLine = Line.of(Position.of(centerPoint.x + w, centerPoint.y + h), Position.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot));
+    const jammerLine = Line.of(Vector.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + h), Vector.of(centerPoint.x + w - tenFeet * 3, centerPoint.y + rOut + oneFoot * 0.6));
+    const pivotLine = Line.of(Vector.of(centerPoint.x + w, centerPoint.y + h), Vector.of(centerPoint.x + w, centerPoint.y + rOut - oneFoot));
     const tenFeetLines = Track.createTenFeetLines(centerPoint, w, h, rIn, rOut);
 
     return new Track(
@@ -118,7 +115,7 @@ export class Track {
     );
   }
 
-  private static createTenFeetLines(centerPoint: Position,
+  private static createTenFeetLines(centerPoint: Vector,
                                     w: number,
                                     h: number,
                                     rIn: number,
@@ -130,19 +127,19 @@ export class Track {
 
     // Bottom lines
     const centerLineBottom = Line.of(
-      Position.of(centerPoint.x - w, centerPoint.y + (h + rOut + oneFoot) / 2),
-      Position.of(centerPoint.x + w, centerPoint.y + (h + rOut - oneFoot) / 2));
+      Vector.of(centerPoint.x - w, centerPoint.y + (h + rOut + oneFoot) / 2),
+      Vector.of(centerPoint.x + w, centerPoint.y + (h + rOut - oneFoot) / 2));
     const bottomX1 = centerPoint.x + w - tenFeet;
     const bottomY1 = centerLineBottom.resolveY( bottomX1);
     const bottomX2 = centerPoint.x + w - tenFeet * 2;
     const bottomY2 = centerLineBottom.resolveY(bottomX2);
-    result.push(Track.createLine(Position.of(bottomX1, bottomY1), length));
-    result.push(Track.createLine(Position.of(bottomX2, bottomY2), length));
+    result.push(Track.createLine(Vector.of(bottomX1, bottomY1), length));
+    result.push(Track.createLine(Vector.of(bottomX2, bottomY2), length));
 
     // Top lines
     const centerLineTop = Line.of(
-      Position.of(centerPoint.x - w, centerPoint.y - (h + rOut - oneFoot) / 2),
-      Position.of(centerPoint.x + w, centerPoint.y - (h + rOut + oneFoot) / 2));
+      Vector.of(centerPoint.x - w, centerPoint.y - (h + rOut - oneFoot) / 2),
+      Vector.of(centerPoint.x + w, centerPoint.y - (h + rOut + oneFoot) / 2));
     const topX0 = centerPoint.x - w;
     const topY0 = centerLineTop.resolveY(topX0);
     const topX1 = centerPoint.x - w + tenFeet;
@@ -151,13 +148,13 @@ export class Track {
     const topY2 = centerLineTop.resolveY(topX2);
     const topX3 = centerPoint.x - w + tenFeet * 3;
     const topY3 = centerLineTop.resolveY(topX3);
-    result.push(Track.createLine(Position.of(topX0, topY0), length));
-    result.push(Track.createLine(Position.of(topX1, topY1), length));
-    result.push(Track.createLine(Position.of(topX2, topY2), length));
-    result.push(Track.createLine(Position.of(topX3, topY3), length));
+    result.push(Track.createLine(Vector.of(topX0, topY0), length));
+    result.push(Track.createLine(Vector.of(topX1, topY1), length));
+    result.push(Track.createLine(Vector.of(topX2, topY2), length));
+    result.push(Track.createLine(Vector.of(topX3, topY3), length));
 
     // Right arc
-    const rightCenter = Position.of(centerPoint.x + w, centerPoint.y - oneFoot / 2);
+    const rightCenter = Vector.of(centerPoint.x + w, centerPoint.y - oneFoot / 2);
     const scalar = 1.09;
     const rightPoints = CircleTools.generateCirclePoints(rightCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, 90);
     for (let i = 1; i < rightPoints.length; i++) {
@@ -168,7 +165,7 @@ export class Track {
     }
 
     // Left arc
-    const leftCenter = Position.of(centerPoint.x - w, centerPoint.y + oneFoot / 2);
+    const leftCenter = Vector.of(centerPoint.x - w, centerPoint.y + oneFoot / 2);
     const leftPoints = CircleTools.generateCirclePoints(leftCenter, (rIn + rOut) / 2, 6, tenFeet * scalar, -90);
     for (let i = 1; i < leftPoints.length; i++) {
       const point = leftPoints[i];
@@ -180,8 +177,8 @@ export class Track {
     return result;
   }
 
-  private static createLine(position: Position, length: number): Line {
-    return Line.of(Position.of(position.x, position.y - length / 2), Position.of(position.x, position.y + length / 2));
+  private static createLine(position: Vector, length: number): Line {
+    return Line.of(Vector.of(position.x, position.y - length / 2), Vector.of(position.x, position.y + length / 2));
   }
 
   /**
@@ -203,7 +200,7 @@ export class Track {
    *  - X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
    *  - Y: Relative distance traveled along track (0 = start, 0.9999... = end)
    */
-  public getAbsolutePosition(relativePosition: Position): Position {
+  public getAbsolutePosition(relativePosition: Vector): Vector {
     const distance = this.packLine.distance * relativePosition.y;
     const pointOnPackLine = this.packLine.pointAtDistance(distance);
     const pointOnInnerTrackLine = this.innerBounds.getClosestPointTo(pointOnPackLine);
@@ -217,7 +214,7 @@ export class Track {
    *  - X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
    *  - Y: Relative distance traveled along track (0 = start, 0.9999... = end)
    */
-  public getRelativePosition(candidate: Position): Position {
+  public getRelativePosition(candidate: Vector): Vector {
     const pointOnPackLine = this.packLine.getClosestPointTo(candidate);
     const pointOnInnerTrackLine = this.innerTrackLine.getClosestPointTo(pointOnPackLine);
     const shapeIndex = this.packLine.findShapeIndexOf(candidate);
@@ -227,10 +224,10 @@ export class Track {
     const innerOuterBounds = Line.of(pointOnInnerBounds, pointOnOuterBounds);
     const relativeX = innerOuterBounds.getRelativeDistanceAlong(candidate);
     const relativeY = this.packLine.getRelativeDistanceAlong(pointOnPackLine);
-    return Position.of(relativeX, relativeY);
+    return Vector.of(relativeX, relativeY);
   }
 
-  public getClosestPointOnTrackLine(player: Player, percentage: number): Position {
+  public getClosestPointOnTrackLine(player: Player, percentage: number): Vector {
     const trackLine = this.trackLineAt(percentage);
     return trackLine.getClosestPointTo(player.position);
   }
@@ -311,7 +308,7 @@ export class Track {
     const y1 = line1.p1.y * innerWeight + line2.p1.y * outerWeight;
     const x2 = line1.p2.x * innerWeight + line2.p2.x * outerWeight;
     const y2 = line1.p2.y * innerWeight + line2.p2.y * outerWeight;
-    return Line.of(Position.of(x1, y1), Position.of(x2, y2));
+    return Line.of(Vector.of(x1, y1), Vector.of(x2, y2));
   }
 
   private static interpolateCircles(circle1: Circle, circle2: Circle, percentage: number): Circle {
@@ -320,6 +317,6 @@ export class Track {
     const x = circle1.x * innerWeight + circle2.x * outerWeight;
     const y = circle1.y * innerWeight + circle2.y * outerWeight;
     const radius = circle1.radius * innerWeight + circle2.radius * outerWeight;
-    return Circle.of(Position.of(x, y), radius);
+    return Circle.of(Vector.of(x, y), radius);
   }
 }

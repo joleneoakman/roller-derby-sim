@@ -2,12 +2,12 @@ import {Team} from "./team";
 import {PlayerType} from "./player-type";
 import {Velocity} from "./velocity";
 import {Circle} from "./circle";
-import {Position} from "./position";
-import {Pair} from "./pair";
+import {Vector} from "./vector";
 import {GameConstants} from "../game/game-constants";
-import {MathTools} from "../util/math-tools";
 import {Track} from "./track";
 import {Target} from "./target";
+import {Angle} from "./angle";
+import {Speed} from "./speed";
 
 export class Player {
 
@@ -52,7 +52,7 @@ export class Player {
     return new Player(this.team, this.type, this.massKg, motion, this.targets);
   }
 
-  public withPosition(position: Position): Player {
+  public withPosition(position: Vector): Player {
     return this.withMotion(this.current.withPosition(position));
   }
 
@@ -68,7 +68,7 @@ export class Player {
     return this.withTargets([...this.targets, motion]);
   }
 
-  public markTargetAsReached() {
+  public markTargetAsReached(): Player {
     const newTargets = this.targets.slice(1);
     return this.withTargets(newTargets);
   }
@@ -81,7 +81,7 @@ export class Player {
   // Getters
   //
 
-  public get position(): Position {
+  public get position(): Vector {
     return this.current.position;
   }
 
@@ -93,7 +93,7 @@ export class Player {
     return Circle.of(this.position, this.radius);
   }
 
-  public relativePosition(track: Track): Position {
+  public relativePosition(track: Track): Vector {
     return this.current.relativePosition(track);
   }
 
@@ -112,117 +112,123 @@ export class Player {
   }
 
   public moveTowardsTarget(): Player {
-    if (this.targets.length === 0) {
-      return this;
+    // Target reached!
+    const target = this.targets.length > 0 ? this.targets[0] : undefined;
+    if (target && this.position.distanceTo(target.position) < 0.05) {
+      return this.markTargetAsReached().moveTowardsTarget();
     }
 
-    const target = this.targets[0];
-    if (this.position.distanceTo(target.position) < 0.000001) {
-      return this.markTargetAsReached();
-    }
+    // Adjust angle
+    const newAngle = Player.calculateAdjustedAngle(this.current, target?.position);
 
-
-    // Calculate new velocity based on target velocity
-    // Todo ? this.turnTowards(this.targetPosition);
-
-    const newVelocity = this.velocity.recalculate(target.velocity);
-    const newPosition = newVelocity.calculatePosition(this.position);
+    // Adjust speed
+    const newSpeed = Player.calculateAdjustedSpeed(this.current, this.targets);
+    // Do move
+    const newVelocity = Velocity.of(newSpeed, newAngle);
+    const newPosition = this.position.plus(this.velocity.vector);
     return this.withVelocity(newVelocity).withPosition(newPosition);
   }
 
-  // public turnTowards(targetPoint: Position): Player {
-    // Todo ?
-    // const angle = this.velocity.turnTowards(targetPoint, this.position);
-    // return this.withTargetVelocity(this.targets.velcity.withAngle(angle));
-  // }
+  //
+  // Utility methods
+  //
 
-  public collideWith(player2: Player): Pair<Player, Player> {
-    // If there is no collision, return the original players
-    let player1: Player = this;
-    const distance = player1.distanceTo(player2);
-    if (distance > 0) {
-      return Pair.of(player1, player2);
+  private static calculateAdjustedAngle(current: Target, targetPosition?: Vector): Angle {
+    if (targetPosition === undefined) {
+      return current.velocity.angle;
     }
-
-    // Recalculate player velocities based on initial velocities and masses
-
-
-    // Correct player positions if they are overlapping
-    if (distance < 0) {
-      const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position);
-      player2 = player2.withPosition(corrected.b.position);
+    const currentAngle = current.velocity.angle;
+    const normalizedTarget = targetPosition.minus(current.position);
+    if (normalizedTarget.isOrigin()) {
+      return currentAngle;
     }
-    return Pair.of(player1, player2);
+    const targetAngle = Angle.ofVector(normalizedTarget);
+    return currentAngle.turnTowards(targetAngle, GameConstants.MAX_TURN_PER_FRAME);
   }
 
   /**
-   * Calculates the both player states after a collision between them.
+   * calculateAdjustedSpeed - Calculates the adjusted speed for a player based on their current position, velocity, and target(s).
+   *
+   * Logic Phases:
+   * 1. Accelerate: The player starts from their current position and accelerates until reaching the maximum speed.
+   * 2. Maintain Max Speed: The player maintains the maximum speed if the distance to the next target(s) is greater than the stopping distance.
+   * 3. Decelerate: Begins to slow down to either stop at the final target or adjust speed according to the angle between successive targets.
+   *
+   * Scenarios:
+   * - Single Target: The player needs to come to a full stop at the next target.
+   * - Multiple Targets:
+   *    - If angle between successive targets is 0 degrees: Maximum speed.
+   *    - If angle is 90 degrees: Complete stop before moving to the next target.
+   *    - If angle is between 0 and 90: Speed is adjusted based on `accelerationWeight * (1 - angle / 90)`.
+   *
+   * Exit Conditions:
+   * 1. All targets processed.
+   * 2. Distance to n-th target is greater than stopping distance.
+   * 3. Max accelerationWeight becomes 0.
+   *
+   * @param {Target} current - Current position and velocity of the player.
+   * @param {Target[]} targets - Array of future targets.
+   * @returns {Speed} - The new adjusted speed.
    */
-  public collide(player2: Player, track: Track): Pair<Player, Player> {
-    // If there is no collision, return the original players
-    const distance = this.distanceTo(player2);
-    if (distance > 0) {
-      return Pair.of(this, player2);
+  private static calculateAdjustedSpeed(current: Target, targets: Target[]): Speed {
+    const currentKph = current.velocity.speed.kph;
+    let distanceToStop = Player.calculateStoppingDistance(currentKph);
+    let accelerationWeight = 1;
+
+    if (targets.length === 0) {
+      // No targets, so just decelerate
+      accelerationWeight = 0;
+    } else {
+      // Inversely adjust speed to let player face target before accelerating
+      const playerAngle = current.velocity.angle;
+      const playerTargetAngle = Angle.ofVector(targets[0].position.minus(current.position));
+      const smallestRotation = playerAngle.minus(playerTargetAngle).shortestAngle().degrees;
+      if (smallestRotation > 90) {
+        accelerationWeight = 0;
+      } else if (smallestRotation > 0) {
+        accelerationWeight *= (1 - smallestRotation / 90);
+      }
+
+      // Check next targets to see if we need to slow down
+      const allPositions = [current, ...targets];
+      for (let i = 1; i < allPositions.length && accelerationWeight > 0; i++) {
+        const prev = allPositions[i - 1];
+        const curr = allPositions[i];
+        const distance1 = prev.position.distanceTo(curr.position);
+
+        if (distance1 > distanceToStop) {
+          break;
+        } else if (i === allPositions.length - 1) {
+          accelerationWeight = 0;
+          break;
+        }
+
+        const next = allPositions[i + 1];
+        const angle = Angle.ofVectors(prev.position, curr.position, next.position);
+        const smallestRotation = Math.abs(180 - angle.shortestAngle().degrees);
+        if (smallestRotation >= 90) {
+          accelerationWeight = 0;
+          break;
+        } else if (smallestRotation > 0) {
+          accelerationWeight *= (1 - smallestRotation / 90);
+        }
+      }
     }
+    // console.log(accelerationWeight.toFixed(2));
 
-    // Correct player positions if they are overlapping
-    let player1: Player = this;
-    if (distance < 0) {
-      const corrected = player1.toCircle().collideWith(player2.toCircle());
-      player1 = player1.withPosition(corrected.a.position);
-      player2 = player2.withPosition(corrected.b.position);
-    }
-    if (true) {
-      return Pair.of(player1, player2);
-    }
-
-    // Get mass and velocity for each player
-    const m1 = player1.massKg;
-    const m2 = player2.massKg;
-    const v1 = player1.velocity;
-    const v2 = player2.velocity;
-
-    // Calculate distance between circle centers
-    const dx = player1.position.x - player2.position.x;
-    const dy = player1.position.y - player2.position.y;
-    const d = Math.sqrt(dx * dx + dy * dy);
-
-    // Calculate normal vector
-    const nx = dx / d;
-    const ny = dy / d;
-
-    // Calculate new velocities using 1D elastic collision equation
-    const vDotN = player1.getDotN(player2);
-    const j = -(1 + GameConstants.COLLISION_COEFFICIENT) * vDotN / (1 / m1 + 1 / m2);
-    const jx = j * nx;
-    const jy = j * ny;
-
-    const newV1 = Velocity.ofVector(v1.x + (jx / m1), v1.y + (jy / m1));
-    const newV2 = Velocity.ofVector(v2.x - (jx / m2), v2.y - (jy / m2));
-
-    // Calculate new positions to ensure minimum distance between players
-    const overlap = player1.radius + player2.radius - d;  // Calculate the overlap between circles
-    const correctionFactor = overlap / (d * (1/m1 + 1/m2)); // How much to move each circle
-
-    // Move player circles away from each other
-    const newPosX1 = player1.position.x + (correctionFactor * nx * (1/m1));
-    const newPosY1 = player1.position.y + (correctionFactor * ny * (1/m1));
-
-    const newPosX2 = player2.position.x - (correctionFactor * nx * (1/m2));
-    const newPosY2 = player2.position.y - (correctionFactor * ny * (1/m2));
-
-    // Generate new Position objects
-    const newPos1 = Position.of(newPosX1, newPosY1);
-    const newPos2 = Position.of(newPosX2, newPosY2);
-
-    // Return new players
-    const player1New = this.withVelocity(newV1).withPosition(newPos1);
-    const player2New = player2.withVelocity(newV2).withPosition(newPos2);
-    return Pair.of(player1New, player2New);
+    const maxAcceleration = Math.min(currentKph + GameConstants.ACCELERATION_STEP, GameConstants.MAX_SPEED_KPH);
+    const maxDeceleration = Math.max(currentKph - GameConstants.DECELERATION_STEP, 0);
+    const newKph = accelerationWeight * maxAcceleration + (1 - accelerationWeight) * maxDeceleration;
+    return Speed.ofKph(newKph);
   }
 
-  public getDotN(player2: Player): number {
-    return MathTools.getDotN(this.position, this.velocity, player2.position, player2.velocity);
+  private static calculateStoppingDistance(currentSpeed: number): number {
+    let speed = currentSpeed;
+    let distanceToStop = 0;
+    while (speed > 0) {
+      distanceToStop += speed / GameConstants.FPS; // Convert kph to m/s and multiply by time (1/60)
+      speed = Math.max(speed - GameConstants.DECELERATION_STEP, 0);
+    }
+    return distanceToStop * 1000 / 3600; // convert back to the unit you're using for distance
   }
 }

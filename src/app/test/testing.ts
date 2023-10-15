@@ -1,8 +1,10 @@
 import {OverFlowTest} from "./overflow-test";
+import {AngleTest} from "./angle-test";
 
 export class Testing {
 
   private static readonly TEST_CLASSES: any[] = [
+    AngleTest,
     OverFlowTest
   ]
 

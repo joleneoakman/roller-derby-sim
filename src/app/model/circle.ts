@@ -1,23 +1,23 @@
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {Line} from "./line";
 import {Pair} from "./pair";
 import {Angle} from "./angle";
 import {Shape} from "./shape";
 
 export class Circle implements Shape {
-  readonly position: Position;
+  readonly position: Vector;
   readonly radius: number;
 
-  constructor(position: Position, radius: number) {
+  constructor(position: Vector, radius: number) {
     this.position = position;
     this.radius = radius;
   }
 
-  public static of(position: Position, radius: number): Circle {
+  public static of(position: Vector, radius: number): Circle {
     return new Circle(position, radius);
   }
 
-  public withPosition(position: Position): Circle {
+  public withPosition(position: Vector): Circle {
     return new Circle(position, this.radius);
   }
 
@@ -33,16 +33,16 @@ export class Circle implements Shape {
     return this.distanceToPoint(circle.position) - circle.radius;
   }
 
-  public distanceToPoint(position: Position): number {
+  public distanceToPoint(position: Vector): number {
     return this.position.distanceTo(position) - this.radius;
   }
 
-  public containsPoint(position: Position): boolean {
+  public containsPoint(position: Vector): boolean {
     const distance = this.distanceToPoint(position);
     return distance <= 0;
   }
 
-  public getClosestPoint(position: Position): Position {
+  public getClosestPoint(position: Vector): Vector {
     const intersections = this.getIntersectionWithCenter(position);
     if (intersections.length === 0) {
       throw Error("No point found");
@@ -53,12 +53,12 @@ export class Circle implements Shape {
   /**
    * Calculate the angle between the target and the center of the arc.
    */
-  public getAngleOf(position: Position): Angle {
+  public getAngleOf(position: Vector): Angle {
     const p = this.getClosestPoint(position);
     return Angle.ofVector(p.minus(this.position));
   }
 
-  public getIntersectionWithCenter(position: Position): Position[] {
+  public getIntersectionWithCenter(position: Vector): Vector[] {
     if (this.position.distanceTo(position) === 0) {
       return [];
     }
@@ -71,12 +71,12 @@ export class Circle implements Shape {
    * - One point if the line is tangent to the circle
    * - Two points if the line intersects the circle
    */
-  public getIntersectionWithLine(line: Line): Position[] {
+  public getIntersectionWithLine(line: Line): Vector[] {
     const A = line.p1;
     const B = line.p2;
     const C = this.position;
 
-    const AB = Position.of(B.x - A.x, B.y - A.y);
+    const AB = Vector.of(B.x - A.x, B.y - A.y);
 
     const a = AB.x * AB.x + AB.y * AB.y;
     const b = 2 * (AB.x * (A.x - C.x) + AB.y * (A.y - C.y));
@@ -91,8 +91,8 @@ export class Circle implements Shape {
     const t1 = (-b - sqrtDiscriminant) / (2 * a);
     const t2 = (-b + sqrtDiscriminant) / (2 * a);
 
-    const pos1 = Position.of(A.x + t1 * AB.x, A.y + t1 * AB.y);
-    const pos2 = Position.of(A.x + t2 * AB.x, A.y + t2 * AB.y);
+    const pos1 = Vector.of(A.x + t1 * AB.x, A.y + t1 * AB.y);
+    const pos2 = Vector.of(A.x + t2 * AB.x, A.y + t2 * AB.y);
 
     if (discriminant == 0) {
       return [pos1];
@@ -137,8 +137,8 @@ export class Circle implements Shape {
     const x2 = circle2.x - ax * halfOverlap;
     const y2 = circle2.y - ay * halfOverlap;
 
-    const circleNew1 = circle1.withPosition(Position.of(x1, y1));
-    const circleNew2 = circle2.withPosition(Position.of(x2, y2));
+    const circleNew1 = circle1.withPosition(Vector.of(x1, y1));
+    const circleNew2 = circle2.withPosition(Vector.of(x2, y2));
     return Pair.of(circleNew1, circleNew2);
   }
 }

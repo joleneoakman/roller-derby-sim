@@ -1,18 +1,20 @@
 import {Player} from "./player";
 import {Track} from "./track";
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {PlayerSelection} from "./player-selection";
 import {Pack} from "./pack";
 import {Target} from "./target";
 
 export class GameState {
 
+  readonly frames: number;
   readonly track: Track;
   readonly players: Player[];
   readonly pack: Pack;
   readonly playerSelection?: PlayerSelection;
 
-  constructor(track: Track, players: Player[], pack: Pack, selection?: PlayerSelection) {
+  constructor(frames: number, track: Track, players: Player[], pack: Pack, selection?: PlayerSelection) {
+    this.frames = frames;
     this.players = players;
     this.track = track;
     this.pack = pack;
@@ -20,19 +22,23 @@ export class GameState {
   }
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(track, players, Pack.create(players, track), undefined);
+    return new GameState(0, track, players, Pack.create(players, track), undefined);
+  }
+
+  public withFrameRate(frames: number): GameState {
+    return new GameState(frames, this.track, this.players, this.pack, this.playerSelection);
   }
 
   public withPlayers(players: Player[]): GameState {
     const pack = Pack.create(players, this.track);
-    return new GameState(this.track, players, pack, this.playerSelection);
+    return new GameState(this.frames, this.track, players, pack, this.playerSelection);
   }
 
   public withSelection(index: number): GameState {
-    return new GameState(this.track, this.players, this.pack, PlayerSelection.of(index));
+    return new GameState(this.frames, this.track, this.players, this.pack, PlayerSelection.of(index));
   }
 
-  public withSelectedTargetPosition(position: Position): GameState {
+  public withSelectedTargetPosition(position: Vector): GameState {
     if (this.playerSelection === undefined) {
       return this;
     }
@@ -55,16 +61,16 @@ export class GameState {
     }));
   }
 
-  public select(position: Position): GameState {
+  public select(position: Vector): GameState {
      const index = this.findPlayerIndexAt(position);
      return this.withSelection(index);
   }
 
   public deselect(): GameState {
-    return new GameState(this.track, this.players, this.pack, undefined);
+    return new GameState(this.frames, this.track, this.players, this.pack, undefined);
   }
 
-  public findPlayerIndexAt(position: Position): number {
+  public findPlayerIndexAt(position: Vector): number {
     const count = this.players.length;
     for (let i = 0; i < count; i++) {
       const player = this.players[i];
@@ -111,6 +117,6 @@ export class GameState {
       }
     }
     return this.withPlayers(playersAfterBounds);*/
-    return this.withPlayers(playersAfterMove);
+    return this.withFrameRate(this.frames + 1).withPlayers(playersAfterMove);
   }
 }

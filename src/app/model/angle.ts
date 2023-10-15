@@ -1,4 +1,4 @@
-import {Position} from "./position";
+import {Vector} from "./vector";
 
 /**
  * Angle starts at 0 at the right, and increases in clockwise direction.
@@ -23,6 +23,10 @@ export class Angle {
     this.radians = Angle.normalize(radians);
   }
 
+  //
+  // Create
+  //
+
   public static ofRadians(radians: number): Angle {
     return new Angle(radians);
   }
@@ -31,21 +35,24 @@ export class Angle {
     return new Angle(degrees * Angle.VALUE_PI_DIVIDED_BY_180);
   }
 
-  public static ofVector(pos: Position): Angle {
-    return Angle.ofRadians(Math.atan2(pos.y, pos.x));
+  public static ofVector(v: Vector): Angle {
+    return Angle.ofRadians(Math.atan2(v.y, v.x));
   }
+
+  public static ofVectors(side1: Vector, center: Vector, side2: Vector): Angle {
+    const v1 = side1.minus(center);
+    const v2 = side2.minus(center);
+    const angle1 = Angle.ofVector(v1);
+    const angle2 = Angle.ofVector(v2);
+    return angle1.minus(angle2);
+  }
+
+  //
+  // Getters
+  //
 
   public get degrees(): number {
     return this.radians * Angle.VALUE_180_DIVIDED_BY_PI;
-  }
-
-  plus(radians: number): Angle {
-    return Angle.ofRadians(this.radians + radians);
-  }
-
-  public angleTo(other: Angle): Angle {
-    const diff = Angle.normalize(this.radians - other.radians);
-    return Angle.ofRadians(diff);
   }
 
   /**
@@ -63,6 +70,31 @@ export class Angle {
       // Wraps around, so invert the check
       return angle >= start || angle <= end;
     }
+  }
+
+  /**
+   * Returns the smallest angle, either this angle or 360 - this angle.
+   */
+  public shortestAngle(): Angle {
+    const diff = Math.min(this.radians, Angle.VALUE_PI_TIMES_2 - this.radians);
+    return Angle.ofRadians(diff);
+  }
+
+  //
+  // Setters
+  //
+
+  public plusRadians(radians: number): Angle {
+    return Angle.ofRadians(this.radians + radians);
+  }
+
+  public minus(other: Angle): Angle {
+    return Angle.ofRadians(this.radians - other.radians);
+  }
+
+  public angleTo(other: Angle): Angle {
+    const diff = Angle.normalize(this.radians - other.radians);
+    return Angle.ofRadians(diff);
   }
 
   /**

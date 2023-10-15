@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@an
 import {Renderer} from "./renderer/renderer";
 import {Observable} from "rxjs";
 import {GameState} from "./model/game-state";
-import {Position} from "./model/position";
+import {Vector} from "./model/vector";
 import {GameConstants} from "./game/game-constants";
 import {GameStateService} from "./game/game-state.service";
 
@@ -18,7 +18,7 @@ export class AppComponent implements AfterViewInit {
   public state$: Observable<GameState>;
 
   constructor(private gameStateService: GameStateService) {
-    this.state$ = gameStateService.observe();
+    this.state$ = gameStateService.observeState();
   }
 
   ngAfterViewInit() {
@@ -39,7 +39,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   public onClick(event: MouseEvent) {
-    const clientPos = Position.of(event.clientX, event.clientY);
+    const clientPos = Vector.of(event.clientX, event.clientY);
     const normalizedPos = this.normalizePoint(clientPos);
     console.warn(event);
     if (event.button === 0) {
@@ -69,9 +69,9 @@ export class AppComponent implements AfterViewInit {
     renderer.drawScene(state);
   }
 
-  private normalizePoint(position: Position): Position {
+  private normalizePoint(position: Vector): Vector {
     const canvas = this.canvas?.nativeElement;
     const scale = canvas.width / GameConstants.CANVAS_WIDTH_IN_METERS;
-    return Position.of(position.x / scale, position.y / scale);
+    return Vector.of(position.x / scale, position.y / scale);
   }
 }

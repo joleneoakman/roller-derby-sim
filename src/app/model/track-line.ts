@@ -2,7 +2,7 @@ import {Line} from "./line";
 import {Arc} from "./arc";
 import {Circle} from "./circle";
 import {Angle} from "./angle";
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {GameConstants} from "../game/game-constants";
 import {TrackLineShape} from "./track-line-shape";
 import {Quad} from "./quad";
@@ -42,7 +42,7 @@ export class TrackLine implements TrackLineShape {
   /**
    * Returns true if the point is inside the enclosing space of the track line's shape.
    */
-  public containsPoint(p: Position): boolean {
+  public containsPoint(p: Vector): boolean {
     // Check if point is inside the center quad
     const quad = Quad.of(this.bottomLine.p1, this.bottomLine.p2, this.topLine.p1, this.topLine.p2);
     const containsQuadPoint = quad.containsPoint(p);
@@ -64,7 +64,7 @@ export class TrackLine implements TrackLineShape {
    * Returns the start point of the track line. This is a point on the bottom line that lies exactly 30 distance
    * left of the bottom line's p2 (where the line is defined by poins p1 and p2).
    */
-  public get startPoint(): Position {
+  public get startPoint(): Vector {
     const dx = this.bottomLine.p2.x - this.bottomLine.p1.x;
     const dy = this.bottomLine.p2.y - this.bottomLine.p1.y;
 
@@ -76,7 +76,7 @@ export class TrackLine implements TrackLineShape {
     const offsetX = GameConstants.THIRTY_FEET * normalizedX;
     const offsetY = GameConstants.THIRTY_FEET * normalizedY;
 
-    return new Position(this.bottomLine.p2.x - offsetX, this.bottomLine.p2.y - offsetY);
+    return Vector.of(this.bottomLine.p2.x - offsetX, this.bottomLine.p2.y - offsetY);
   }
 
   /**
@@ -94,12 +94,12 @@ export class TrackLine implements TrackLineShape {
     return dTop + dBottom + dLeft + dRight;
   }
 
-  getDistanceAlong(target: Position): number {
+  getDistanceAlong(target: Vector): number {
     return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
-  public getClosestPointTo(position: Position): Position {
-    const candidates: Position[] = [];
+  public getClosestPointTo(position: Vector): Vector {
+    const candidates: Vector[] = [];
     candidates.push(this.topLine.getClosestPointTo(position));
     candidates.push(this.bottomLine.getClosestPointTo(position));
     candidates.push(this.leftArc.getClosestPointTo(position));
@@ -117,7 +117,7 @@ export class TrackLine implements TrackLineShape {
     return result;
   }
 
-  public pointAtDistance(distance: number): Position {
+  public pointAtDistance(distance: number): Vector {
     const totalDistance = this.distance;
     const percentage = distance / totalDistance;
     return this.getAbsolutePositionOf(percentage);
@@ -128,7 +128,7 @@ export class TrackLine implements TrackLineShape {
    * Values between 0 and 1 are always on the shape.
    * Given that the track line is a continuous shape, values outside of these bounds are normalized to 0 and 1.
    */
-  public getAbsolutePositionOf(relativeDistance: number): Position {
+  public getAbsolutePositionOf(relativeDistance: number): Vector {
     // Normalize the relativeDistance
     relativeDistance = (relativeDistance + 1) % 1;
 
@@ -174,7 +174,7 @@ export class TrackLine implements TrackLineShape {
   /**
    * Returns the relativeDistance of the given target position between start (0) and finish (1) along the track line.
    */
-  public getRelativeDistanceAlong(target: Position): number {
+  public getRelativeDistanceAlong(target: Vector): number {
     return this.getRelativeDistanceBetween(this.startPoint, target);
   }
 
@@ -182,7 +182,7 @@ export class TrackLine implements TrackLineShape {
    * Returns the relativeDistance of the given target position along the track line, starting at the given start position.
    * The traveled percentage is calculated in counter-clockwise direction and is between 0 (inclusive) and 1 (exclusive).
    */
-  public getRelativeDistanceBetween(startPoint: Position, target: Position): number {
+  public getRelativeDistanceBetween(startPoint: Vector, target: Vector): number {
     const p2 = this.getClosestPointTo(target);
 
     // Find shapes of p1 and p2 in order
@@ -219,7 +219,7 @@ export class TrackLine implements TrackLineShape {
   /**
    * Returns the index of the shape that contains the given point.
    */
-  public findShapeIndexOf(p1: Position) {
+  public findShapeIndexOf(p1: Vector) {
     if (p1.equals(this.startPoint)) {
       return 0;
     }
@@ -241,7 +241,7 @@ export class TrackLine implements TrackLineShape {
   /**
    * Returns an array of shapes that cover a part of the track based on the given relative back and front positions.
    */
-  public getShapes(back: Position, front: Position): TrackLineShape[] {
+  public getShapes(back: Vector, front: Vector): TrackLineShape[] {
     // Iterate through shapes to assemble parts
     const backIndex = this.findShapeIndexOf(back);
     const frontIndex = this.findShapeIndexOf(front);
@@ -306,13 +306,13 @@ export class TrackLine implements TrackLineShape {
     return this.findShapeIndexOf(position);
   }
 
-  public getIntersectionWith(line: Line, shapeIndex: number): Position {
+  public getIntersectionWith(line: Line, shapeIndex: number): Vector {
     // Calculate for line
     const shape = this.shapes[shapeIndex];
     if (shape instanceof Line) {
       const x = line.p1.x;
       const y = (shape as Line).resolveY(x);
-      return Position.of(x, y);
+      return Vector.of(x, y);
     }
 
     // Calculate for arc

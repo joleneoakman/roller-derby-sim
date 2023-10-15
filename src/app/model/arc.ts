@@ -1,9 +1,9 @@
-import {Position} from "./position";
 import {Angle} from "./angle";
 import {Circle} from "./circle";
 import {TrackLineShape} from "./track-line-shape";
 import {Line} from "./line";
 import {MathTools} from "../util/math-tools";
+import {Vector} from "./vector";
 
 export class Arc implements TrackLineShape {
   readonly circle: Circle;
@@ -20,7 +20,7 @@ export class Arc implements TrackLineShape {
     return new Arc(circle, startAngle, endAngle);
   }
 
-  public get position(): Position {
+  public get position(): Vector {
     return this.circle.position;
   }
 
@@ -32,19 +32,19 @@ export class Arc implements TrackLineShape {
     return this.startAngle.angleTo(this.endAngle).radians * this.radius;
   }
 
-  public get p1(): Position {
+  public get p1(): Vector {
     return this.getPointAtAngle(this.startAngle);
   }
 
-  public get p2(): Position {
+  public get p2(): Vector {
     return this.getPointAtAngle(this.endAngle);
   }
 
-  public getDistanceAlong(target: Position): number {
+  public getDistanceAlong(target: Vector): number {
     return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
-  public getIntersectionWith(line: Line): Position {
+  public getIntersectionWith(line: Line): Vector {
     const start = this.getPointAtAngle(this.startAngle);
     const end = this.getPointAtAngle(this.endAngle);
     const intersections = this.circle.getIntersectionWithLine(line)
@@ -52,7 +52,7 @@ export class Arc implements TrackLineShape {
         const angle = Angle.ofVector(i.minus(this.position));
         return angle.isBetween(this.startAngle, this.endAngle);
       });
-    const candidates: Position[] = [
+    const candidates: Vector[] = [
       start,
       end,
       ...intersections,
@@ -60,7 +60,7 @@ export class Arc implements TrackLineShape {
     return candidates.reduce((prev, curr) => prev.distanceTo(line.p1) < curr.distanceTo(line.p1) ? prev : curr);
   }
 
-  public getClosestPointTo(p: Position): Position {
+  public getClosestPointTo(p: Vector): Vector {
     const start = this.getPointAtAngle(this.startAngle);
     const end = this.getPointAtAngle(this.endAngle);
     const intersections = this.circle.getIntersectionWithCenter(p)
@@ -68,7 +68,7 @@ export class Arc implements TrackLineShape {
         const angle = Angle.ofVector(i.minus(this.position));
         return angle.isBetween(this.startAngle, this.endAngle);
       });
-    const candidates: Position[] = [
+    const candidates: Vector[] = [
       start,
       end,
       ...intersections,
@@ -76,10 +76,10 @@ export class Arc implements TrackLineShape {
     return candidates.reduce((prev, curr) => prev.distanceTo(p) < curr.distanceTo(p) ? prev : curr);
   }
 
-  getPointAtAngle(angle: Angle): Position {
+  getPointAtAngle(angle: Angle): Vector {
     const x = this.position.x + this.radius * Math.cos(angle.radians);
     const y = this.position.y + this.radius * Math.sin(angle.radians);
-    return Position.of(x, y);
+    return Vector.of(x, y);
   }
 
   /**
@@ -87,16 +87,16 @@ export class Arc implements TrackLineShape {
    * Values between 0 and 1 are always on the shape.
    * Values outside of these bounds are normalized to 0 and 1.
    */
-  public getAbsolutePositionOf(relativeDistance: number): Position {
+  public getAbsolutePositionOf(relativeDistance: number): Vector {
     relativeDistance = MathTools.limit(relativeDistance, 0, 1)
     const diff = this.startAngle.angleTo(this.endAngle);
-    return this.getPointAtAngle(this.startAngle.plus(diff.radians * relativeDistance));
+    return this.getPointAtAngle(this.startAngle.plusRadians(diff.radians * relativeDistance));
   }
 
   /**
    * Returns the percentage from the start position of the shape to the target position.
    */
-  public getRelativeDistanceAlong(target: Position): number {
+  public getRelativeDistanceAlong(target: Vector): number {
     const p = this.getClosestPointTo(target);
 
     // Calculate the angle between the target and the center of the circle
@@ -115,7 +115,7 @@ export class Arc implements TrackLineShape {
   /**
    * Calculate the angle between the target and the center of the arc, limited to the angle of the arc.
    */
-  public getAngleOf(position: Position): Angle {
+  public getAngleOf(position: Vector): Angle {
     const result = this.circle.getAngleOf(position);
 
     // Todo: limit angle to arc

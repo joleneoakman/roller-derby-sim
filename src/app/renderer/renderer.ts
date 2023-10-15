@@ -4,7 +4,7 @@ import {GameState} from "../model/game-state";
 import {GameConstants} from "../game/game-constants";
 import {Team} from "../model/team";
 import {Stroke} from "./stroke";
-import {Position} from "../model/position";
+import {Vector} from "../model/vector";
 import {Arc} from "../model/arc";
 import {TrackLine} from "../model/track-line";
 import {Circle} from "../model/circle";
@@ -15,10 +15,11 @@ import {Quad} from "../model/quad";
 import {Triangle} from "../model/triangle";
 import {Line} from "../model/line";
 import {Target} from "../model/target";
+import {Speed} from "../model/speed";
 
 export class Renderer {
 
-  public static debugPoints: Position[] = [];
+  public static debugPoints: Vector[] = [];
 
   private readonly ctx: CanvasRenderingContext2D;
   private readonly scale: number;
@@ -34,8 +35,8 @@ export class Renderer {
 
   drawScene(state: GameState) {
     // Reset
-    this.ctx.clearRect(GameConstants.ORIGIN.x, GameConstants.ORIGIN.y, this.width, this.height);
-    this.drawRect(GameConstants.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_FILL);
+    this.ctx.clearRect(Vector.ORIGIN.x, Vector.ORIGIN.y, this.width, this.height);
+    this.drawRect(Vector.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_FILL);
 
     // Track
     const track = state.track;
@@ -72,9 +73,9 @@ export class Renderer {
 
   private drawRelativeTrack(relativeTrack: Rectangle, tenFeetLineWidth: number) {
     const {x, y, width: w, height: h} = relativeTrack;
-    this.drawRect(Position.of(this.width / this.scale - w * 3 - GameConstants.ONE_FOOT, 0), w * 3, this.height / this.scale, Fill.of('black'));
-    this.drawRect(Position.of(this.width / this.scale - w * 3, 0), w * 3, this.height / this.scale, GameConstants.OUT_OF_BOUNDS_FILL);
-    this.drawRect(Position.of(x, y), w, h, Fill.of(GameConstants.INBOUNDS_COLOR), Stroke.of(GameConstants.TRACK_STROKE_COLOR, 1));
+    this.drawRect(Vector.of(this.width / this.scale - w * 3 - GameConstants.ONE_FOOT, 0), w * 3, this.height / this.scale, Fill.of('black'));
+    this.drawRect(Vector.of(this.width / this.scale - w * 3, 0), w * 3, this.height / this.scale, GameConstants.OUT_OF_BOUNDS_FILL);
+    this.drawRect(Vector.of(x, y), w, h, Fill.of(GameConstants.INBOUNDS_COLOR), Stroke.of(GameConstants.TRACK_STROKE_COLOR, 1));
     this.drawRelativeTrackLine(0.25, relativeTrack);
     this.drawRelativeTrackLine(0.50, relativeTrack);
     this.drawRelativeTrackLine(0.75, relativeTrack);
@@ -84,8 +85,8 @@ export class Renderer {
     for (let i = 1; i < GameConstants.TEN_FEET_LINE_COUNT; i++) {
 
       const currentLineWidth = i == 3 ? w : tenFeetLineWidth;
-      const left = Position.of(x + w / 2 - currentLineWidth / 2, y + h - step * i);
-      const right = Position.of(x + w / 2 + currentLineWidth / 2, y + h - step * i);
+      const left = Vector.of(x + w / 2 - currentLineWidth / 2, y + h - step * i);
+      const right = Vector.of(x + w / 2 + currentLineWidth / 2, y + h - step * i);
       this.drawLine(left, right, stroke);
     }
   }
@@ -111,7 +112,7 @@ export class Renderer {
 
   private drawRelativePackPart(relativeTrack: Rectangle, start: number, end: number) {
     const rect = Rectangle.of(
-      Position.of(relativeTrack.x, relativeTrack.y + relativeTrack.height * (1 - end)),
+      Vector.of(relativeTrack.x, relativeTrack.y + relativeTrack.height * (1 - end)),
       relativeTrack.width,
       relativeTrack.height * (end - start));
     this.drawRect(rect.position, rect.width, rect.height, Fill.of(GameConstants.PACK_COLOR));
@@ -119,12 +120,12 @@ export class Renderer {
 
   private drawRelativeTrackLine(percentage: number, rect: Rectangle) {
     const x1 = rect.x * (1 - percentage) + (rect.x + rect.width) * percentage;
-    this.drawLine(Position.of(x1, rect.y), Position.of(x1, rect.y + rect.height), Stroke.of(GameConstants.TRACK_LANE_COLOR, 1));
+    this.drawLine(Vector.of(x1, rect.y), Vector.of(x1, rect.y + rect.height), Stroke.of(GameConstants.TRACK_LANE_COLOR, 1));
   }
 
-  private drawRelativePlayer(relativeTrack: Rectangle, player: Player, relativePosition: Position, selected: boolean) {
+  private drawRelativePlayer(relativeTrack: Rectangle, player: Player, relativePosition: Vector, selected: boolean) {
     const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false);
-    const relativeCircle = Circle.of(Position.of(relativeTrack.x + relativeTrack.width * relativePosition.x, relativeTrack.y + relativeTrack.height * (1 - relativePosition.y)), player.radius / 2.5);
+    const relativeCircle = Circle.of(Vector.of(relativeTrack.x + relativeTrack.width * relativePosition.x, relativeTrack.y + relativeTrack.height * (1 - relativePosition.y)), player.radius / 2.5);
     this.drawCircle(relativeCircle, Fill.of(color), Stroke.of(strokeColor, GameConstants.PLAYER_OUTLINE_WIDTH));
   }
 
@@ -149,7 +150,7 @@ export class Renderer {
       this.drawTrackLine(track.innerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.trackLineAt(0.5), undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.outerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
-      this.drawTrackLine(track.packLine, undefined, Stroke.of("red", 1, true), GameConstants.DEBUG_TRACK_LINES);
+      this.drawTrackLine(track.packLine, undefined, Stroke.of("#ff000055", 1), GameConstants.DEBUG_TRACK_LINES);
 
       const laneOutline = Stroke.of(GameConstants.TRACK_LANE_COLOR, 1);
       for (let i = 1; i < 4; i++) {
@@ -229,17 +230,21 @@ export class Renderer {
       this.drawLine(a.position, b.position, lineStroke);
     }
 
-    // Draw player circle
-    this.drawTarget(player.radius, player.current, player.team, selected, false);
-
     // Draw target circles (on select)
     for (let i = 0; showTargets && i < player.targets.length; i++) {
       this.drawTarget(player.radius, player.targets[i], player.team, selected, true);
     }
 
+    // Draw player circle
+    this.drawTarget(player.radius, player.current, player.team, selected, false);
+
+    // Draw angle
+    const direction = player.current.velocity.withKph(Speed.ofKph(100));
+    this.drawLine(position, position.plus(direction.vector), Stroke.of('black', 1));
+
     // Draw debug coordinates
-    this.drawText(position.plus(Position.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), lineStroke);
-    this.drawText(position.plus(Position.of(0, 1.2)), '' + player.relativePosition(track).x.toFixed(2) + ', ' + player.relativePosition(track).y.toFixed(2), lineStroke);
+    this.drawText(position.plus(Vector.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), lineStroke);
+    this.drawText(position.plus(Vector.of(0, 1.2)), '' + player.velocity.angle.degrees.toFixed(2) + ', ' + player.velocity.speed.kph.toFixed(2), lineStroke);
   }
 
   private drawTarget(radius: number, target: Target, team: Team, selected: boolean, isTarget: boolean) {
@@ -249,14 +254,15 @@ export class Renderer {
 
     // Circle
     const position = target.position;
-    this.drawCircle(Circle.of(position, radius), playerFill, playerStroke);
+    const finalRadius = isTarget ? radius / 2.5 : radius;
+    this.drawCircle(Circle.of(position, finalRadius), playerFill, playerStroke);
 
     // Direction indicator
     const velocity = target.velocity;
-    this.drawLine(position, Position.of(position.x + (velocity.x * 10), position.y + (velocity.y * 10)), Stroke.of('black', 1));
+    this.drawLine(position, Vector.of(position.x + (velocity.x * 10), position.y + (velocity.y * 10)), Stroke.of('black', 1));
   }
 
-  private drawText(position: Position, text: string, stroke: Stroke) {
+  private drawText(position: Vector, text: string, stroke: Stroke) {
     this.ctx.beginPath();
     this.ctx.font = "12px Arial";
     this.ctx.fillStyle = stroke.color;
@@ -277,7 +283,7 @@ export class Renderer {
     }
   }
 
-  private drawPoint(position: Position, fill?: Fill, stroke?: Stroke) {
+  private drawPoint(position: Vector, fill?: Fill, stroke?: Stroke) {
     this.drawCircle(Circle.of(position, 0.08), fill, stroke);
   }
 
@@ -291,7 +297,7 @@ export class Renderer {
     this.ctx.closePath();
   }
 
-  private drawQuad(pos1: Position, pos2: Position, pos3: Position, pos4: Position, fill?: Fill, stroke?: Stroke) {
+  private drawQuad(pos1: Vector, pos2: Vector, pos3: Vector, pos4: Vector, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
     this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
     this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
@@ -302,7 +308,7 @@ export class Renderer {
     this.stroke(stroke);
   }
 
-  private drawRect(pos: Position, width: number, height: number, fill?: Fill, stroke?: Stroke) {
+  private drawRect(pos: Vector, width: number, height: number, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
     this.ctx.rect(pos.x * this.scale, pos.y * this.scale, width * this.scale, height * this.scale);
     this.fill(fill);
@@ -310,7 +316,7 @@ export class Renderer {
     this.ctx.closePath();
   }
 
-  private drawLine(pos1: Position, pos2: Position, stroke: Stroke) {
+  private drawLine(pos1: Vector, pos2: Vector, stroke: Stroke) {
     this.ctx.beginPath();
     this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
     this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
@@ -318,7 +324,7 @@ export class Renderer {
     this.ctx.closePath();
   }
 
-  private drawTriangle(pos1: Position, pos2: Position, pos3: Position, fill?: Fill, stroke?: Stroke) {
+  private drawTriangle(pos1: Vector, pos2: Vector, pos3: Vector, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
     this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
     this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
@@ -356,7 +362,7 @@ if (!fill) {
     const w = h * trackRatio;
     const x = width / scale - w * 2;
     const y = GameConstants.ONE_FOOT;
-    return Rectangle.of(Position.of(x, y), w, h);
+    return Rectangle.of(Vector.of(x, y), w, h);
   }
 
   private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean): {color: string, strokeColor: string} {

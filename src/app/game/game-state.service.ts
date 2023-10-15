@@ -3,9 +3,9 @@ import {Track} from "../model/track";
 import {Player} from "../model/player";
 import {Team} from "../model/team";
 import {PlayerType} from "../model/player-type";
-import {Position} from "../model/position";
+import {Vector} from "../model/vector";
 import {Velocity} from "../model/velocity";
-import {BehaviorSubject, Subject} from "rxjs";
+import {BehaviorSubject, Observable, Subject} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Pair} from "../model/pair";
 import {GameConstants} from "./game-constants";
@@ -27,11 +27,12 @@ export class GameStateService {
     Testing.runAll();
     setInterval(() => {
       this.state$.next(this.state);
+      this.state = this.state.withFrameRate(0);
     }, 1000);
   }
 
-  public observe(): Subject<GameState> {
-    return this.state$;
+  public observeState(): Observable<GameState> {
+    return this.state$.asObservable();
   }
 
   public update(reducer: (state: GameState) => GameState): GameState {
@@ -48,26 +49,28 @@ export class GameStateService {
   }
 
   private static onePlayer(track: Track): Player[] {
-    const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
-    const player = Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Position.of(0.15, 0.1)), velocity));
+    const velocity = Velocity.of(Speed.ZERO, Angle.ofDegrees(180));
+    const player = Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.4, 0.50)), velocity));
     return [
-      player.addTarget(Target.of(track.getAbsolutePosition(Position.of(0.3, 0.19)))),
+      player
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.6))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.7)))),
     ]
   }
 
   private static initialDerbyTeams(): Player[] {
     const width = GameConstants.CANVAS_WIDTH_IN_METERS;
     return [
-      Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(Position.of(1, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.PIVOT, 100, Target.of(Position.of(2, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Position.of(3, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Position.of(4, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Position.of(5, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.JAMMER, 100, Target.of(Position.of(width - 1, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.PIVOT, 100, Target.of(Position.of(width - 2, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Position.of(width - 3, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Position.of(width - 4, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Position.of(width - 5, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(Vector.of(1, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.PIVOT, 100, Target.of(Vector.of(2, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(3, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(4, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(5, 1), Velocity.ZERO)),
+      Player.of(Team.B, PlayerType.JAMMER, 100, Target.of(Vector.of(width - 1, 1), Velocity.ZERO)),
+      Player.of(Team.B, PlayerType.PIVOT, 100, Target.of(Vector.of(width - 2, 1), Velocity.ZERO)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 3, 1), Velocity.ZERO)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 4, 1), Velocity.ZERO)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 5, 1), Velocity.ZERO)),
     ];
   }
 
@@ -95,7 +98,7 @@ export class GameStateService {
   }
 
   private static initialPlayers(count: number): Player[] {
-    const positionsAndAngles = this.generatePointsOnCircle(Position.of(35, 6), 3, 6);
+    const positionsAndAngles = this.generatePointsOnCircle(Vector.of(35, 6), 3, 6);
     const result: Player[] = [];
     for (let i = 0; i < count; i++) {
       const position = positionsAndAngles.a[i];
@@ -105,15 +108,15 @@ export class GameStateService {
     return result;
   }
 
-  private static generatePointsOnCircle(center: Position, radius: number, numPoints: number): Pair<Position[], Angle[]> {
-    const points: Position[] = [];
+  private static generatePointsOnCircle(center: Vector, radius: number, numPoints: number): Pair<Vector[], Angle[]> {
+    const points: Vector[] = [];
     const angles: Angle[] = [];
 
     for (let i = 0; i < numPoints; i++) {
       const angle = (i * 2 * Math.PI) / numPoints;
       const x = center.x + radius * Math.cos(angle);
       const y = center.y + radius * Math.sin(angle);
-      points.push(Position.of(x, y));
+      points.push(Vector.of(x, y));
       angles.push(Angle.ofDegrees(180 - i * 360 / numPoints));
     }
 

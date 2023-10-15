@@ -1,19 +1,19 @@
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {Shape} from "./shape";
 
 export class Rectangle implements Shape {
 
-  readonly position: Position;
+  readonly position: Vector;
   readonly width: number;
   readonly height: number;
 
-  constructor(position: Position, width: number, height: number) {
+  constructor(position: Vector, width: number, height: number) {
     this.position = position;
     this.width = width;
     this.height = height;
   }
 
-  public static of(position: Position, width: number, height: number): Rectangle {
+  public static of(position: Vector, width: number, height: number): Rectangle {
     return new Rectangle(position, width, height);
   }
 
@@ -25,7 +25,7 @@ export class Rectangle implements Shape {
     return this.position.y;
   }
 
-  public getCenterPoint(): Position {
-    return Position.of(this.x + this.width / 2, this.y + this.height / 2);
+  public getCenterPoint(): Vector {
+    return Vector.of(this.x + this.width / 2, this.y + this.height / 2);
   }
 }

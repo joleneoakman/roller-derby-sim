@@ -1,4 +1,5 @@
 <canvas #canvas (mousedown)="onClick($event)" (contextmenu)="$event.preventDefault()"></canvas>
+<div style="position: fixed; left: 10px; top: 5px; height: 20px;">{{ (state$ | async)?.frames }} fps</div>
 <!--<pre style="width:22%; height: 100%; left: 78%; position: absolute">
   {{ (state$ | async) | json }}
 </pre>-->

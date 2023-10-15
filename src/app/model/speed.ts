@@ -1,5 +1,5 @@
 import {GameConstants} from "../game/game-constants";
-import {Position} from "./position";
+import {Vector} from "./vector";
 
 export class Speed {
 
@@ -20,7 +20,7 @@ export class Speed {
     return new Speed(kph);
   }
 
-  public static ofVector(point: Position): Speed {
+  public static ofVector(point: Vector): Speed {
     // Calculate the speed in meters per frame
     const speedMpf = point.distance;
 

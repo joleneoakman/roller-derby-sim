@@ -1,22 +1,22 @@
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {Shape} from "./shape";
 
 export class Triangle implements Shape {
-  readonly p1: Position;
-  readonly p2: Position;
-  readonly p3: Position;
+  readonly p1: Vector;
+  readonly p2: Vector;
+  readonly p3: Vector;
 
-  constructor(p1: Position, p2: Position, p3: Position) {
+  constructor(p1: Vector, p2: Vector, p3: Vector) {
     this.p1 = p1;
     this.p2 = p2;
     this.p3 = p3;
   }
 
-  public static of(p1: Position, p2: Position, p3: Position): Triangle {
+  public static of(p1: Vector, p2: Vector, p3: Vector): Triangle {
     return new Triangle(p1, p2, p3);
   }
 
-  public containsPoint(point: Position): boolean {
+  public containsPoint(point: Vector): boolean {
     const { p1, p2, p3 } = this;
     const areaOrig = Triangle.of(p1, p2, p3).area;
     const area1 = Triangle.of(point, p2, p3).area;

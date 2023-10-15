@@ -1,17 +1,17 @@
-import {Position} from "./position";
+import {Vector} from "./vector";
 import {TrackLineShape} from "./track-line-shape";
 import {MathTools} from "../util/math-tools";
 
 export class Line implements TrackLineShape {
-  readonly p1: Position;
-  readonly p2: Position;
+  readonly p1: Vector;
+  readonly p2: Vector;
 
-  constructor(p1: Position, p2: Position) {
+  constructor(p1: Vector, p2: Vector) {
     this.p1 = p1;
     this.p2 = p2;
   }
 
-  public static of(p1: Position, p2: Position): Line {
+  public static of(p1: Vector, p2: Vector): Line {
     return new Line(p1, p2);
   }
 
@@ -19,11 +19,11 @@ export class Line implements TrackLineShape {
     return Math.sqrt(Math.pow(this.p1.x - this.p2.x, 2) + Math.pow(this.p1.y - this.p2.y, 2));
   }
 
-  public getDistanceAlong(target: Position): number {
+  public getDistanceAlong(target: Vector): number {
     return this.getRelativeDistanceAlong(target) * this.distance;
   }
 
-  public getClosestPointTo(p: Position): Position {
+  public getClosestPointTo(p: Vector): Vector {
     const p1 = this.p1;
     const p2 = this.p2;
     const lineLen = p1.distanceTo(p2);
@@ -33,7 +33,7 @@ export class Line implements TrackLineShape {
 
     const closestX = p1.x + tClamped * (p2.x - p1.x);
     const closestY = p1.y + tClamped * (p2.y - p1.y);
-    return Position.of(closestX, closestY);
+    return Vector.of(closestX, closestY);
   }
 
   /**
@@ -45,17 +45,17 @@ export class Line implements TrackLineShape {
    * - values > 1 being on the line p2 to infinity
    * - values < 0 being on the line p1 to infinity
    */
-  public getAbsolutePositionOf(percentage: number): Position {
+  public getAbsolutePositionOf(percentage: number): Vector {
     const x = this.p1.x * (1 - percentage) + this.p2.x * (percentage);
     const y = this.p1.y * (1 - percentage) + this.p2.y * (percentage);
-    return new Position(x, y);
+    return Vector.of(x, y);
   };
 
   /**
    * Returns the percentage (0..1) from the start position (p1) of line to the target position.
    * The target position must be on the line between p1 and p2.
    */
-  public getRelativeDistanceAlong(target: Position): number {
+  public getRelativeDistanceAlong(target: Vector): number {
     if (target.equals(this.p1)) {
       return 0;
     }
