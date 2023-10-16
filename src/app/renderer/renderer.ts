@@ -16,24 +16,53 @@ import {Triangle} from "../model/triangle";
 import {Line} from "../model/line";
 import {Target} from "../model/target";
 import {Speed} from "../model/speed";
+import {GameStateService} from "../game/game-state.service";
 
 export class Renderer {
 
   public static debugPoints: Vector[] = [];
+  public static debugText: string[] = [];
 
+  private readonly gameStateService: GameStateService;
   private readonly ctx: CanvasRenderingContext2D;
-  private readonly scale: number;
-  private readonly width: number;
-  private readonly height: number;
 
-  constructor(ctx: CanvasRenderingContext2D, scale: number, width: number, height: number) {
+  private scale: number;
+  private width: number;
+  private height: number;
+
+  private readonly interval = 1000 / GameConstants.FPS;
+  private now: number = Date.now();
+  private then: number = Date.now();
+  private delta: number = 0;
+
+  constructor(gameStateService: GameStateService, ctx: CanvasRenderingContext2D, width: number, height: number) {
+    this.gameStateService = gameStateService;
     this.ctx = ctx;
-    this.scale = scale;
+    this.scale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
     this.width = width;
     this.height = height;
   }
 
-  drawScene(state: GameState) {
+  public setCanvasSize(width: number, height: number): void {
+    this.scale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
+    this.width = width;
+    this.height = height;
+  }
+
+  public start(): void {
+    requestAnimationFrame(() => this.start());
+
+    this.now = Date.now();
+    this.delta = this.now - this.then;
+    if (this.delta > this.interval) {
+      this.then = this.now - (this.delta % this.interval);
+
+      const state = this.gameStateService.update(state => state.recalculate());
+      this.drawScene(state);
+    }
+  }
+
+  public drawScene(state: GameState): void {
     // Reset
     this.ctx.clearRect(Vector.ORIGIN.x, Vector.ORIGIN.y, this.width, this.height);
     this.drawRect(Vector.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_FILL);
@@ -69,6 +98,7 @@ export class Renderer {
 
     // Debug
     Renderer.debugPoints.forEach(p => this.drawCircle(Circle.of(p, 0.1), Fill.of(GameConstants.DEBUG_POINT_COLOR)));
+    Renderer.debugText.forEach((text, i) => this.drawText(Vector.of(1, 1.5 + i * 0.47), text, Stroke.of('black', 1)));
   }
 
   private drawRelativeTrack(relativeTrack: Rectangle, tenFeetLineWidth: number) {
@@ -264,7 +294,7 @@ export class Renderer {
 
   private drawText(position: Vector, text: string, stroke: Stroke) {
     this.ctx.beginPath();
-    this.ctx.font = "12px Arial";
+    this.ctx.font = "16px Arial";
     this.ctx.fillStyle = stroke.color;
     this.ctx.fillText(text, position.x * this.scale, position.y * this.scale);
     this.ctx.closePath();

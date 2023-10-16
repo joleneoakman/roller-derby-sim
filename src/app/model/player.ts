@@ -8,6 +8,7 @@ import {Track} from "./track";
 import {Target} from "./target";
 import {Angle} from "./angle";
 import {Speed} from "./speed";
+import {Renderer} from "../renderer/renderer";
 
 export class Player {
 
@@ -114,7 +115,10 @@ export class Player {
   public moveTowardsTarget(): Player {
     // Target reached!
     const target = this.targets.length > 0 ? this.targets[0] : undefined;
-    if (target && this.position.distanceTo(target.position) < 0.05) {
+    const currentKph = this.velocity.speed.kph;
+    const speedRatio = Math.min(currentKph / GameConstants.MAX_SPEED_KPH, GameConstants.MAX_SPEED_KPH);
+    const targetSize = 0.05 * (1 - speedRatio) + 1.5 * speedRatio;
+    if (target && this.position.distanceTo(target.position) < targetSize) {
       return this.markTargetAsReached().moveTowardsTarget();
     }
 
@@ -138,12 +142,15 @@ export class Player {
       return current.velocity.angle;
     }
     const currentAngle = current.velocity.angle;
+    const currentKph = current.velocity.speed.kph;
     const normalizedTarget = targetPosition.minus(current.position);
     if (normalizedTarget.isOrigin()) {
       return currentAngle;
     }
     const targetAngle = Angle.ofVector(normalizedTarget);
-    return currentAngle.turnTowards(targetAngle, GameConstants.MAX_TURN_PER_FRAME);
+    const turnWeight = Math.pow(Math.min(currentKph, GameConstants.MAX_SPEED_KPH) / GameConstants.MAX_SPEED_KPH, 0.35);
+    const turnStep = GameConstants.TURN_PER_FRAME_AT_MAX * turnWeight + GameConstants.TURN_PER_FRAME_AT_MIN * (1 - turnWeight);
+    return currentAngle.turnTowards(targetAngle, turnStep);
   }
 
   /**
@@ -186,7 +193,8 @@ export class Player {
       if (smallestRotation > 90) {
         accelerationWeight = 0;
       } else if (smallestRotation > 0) {
-        accelerationWeight *= (1 - smallestRotation / 90);
+        const playerAngleAdjustment = Math.pow(1 - smallestRotation / 90, 1 / 3);
+        accelerationWeight *= playerAngleAdjustment;
       }
 
       // Check next targets to see if we need to slow down
@@ -210,13 +218,13 @@ export class Player {
           accelerationWeight = 0;
           break;
         } else if (smallestRotation > 0) {
-          accelerationWeight *= (1 - smallestRotation / 90);
+          const nextTargetAngleAdjustment = Math.pow(1 - smallestRotation / 90, 1 / 3);
+          accelerationWeight *= nextTargetAngleAdjustment;
         }
       }
     }
-    // console.log(accelerationWeight.toFixed(2));
-
-    const maxAcceleration = Math.min(currentKph + GameConstants.ACCELERATION_STEP, GameConstants.MAX_SPEED_KPH);
+    const accelerationStep = currentKph < 7 ? GameConstants.ACCELERATION_STEP * 5 : GameConstants.ACCELERATION_STEP;
+    const maxAcceleration = Math.min(currentKph + accelerationStep, GameConstants.MAX_SPEED_KPH);
     const maxDeceleration = Math.max(currentKph - GameConstants.DECELERATION_STEP, 0);
     const newKph = accelerationWeight * maxAcceleration + (1 - accelerationWeight) * maxDeceleration;
     return Speed.ofKph(newKph);

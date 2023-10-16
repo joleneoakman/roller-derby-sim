@@ -11,19 +11,29 @@ export class GameConstants {
   //
   // Rendering
   //
-  public static readonly FPS = 60;
+  public static readonly FPS = 120;
 
   //
   // Physics
   //
-  public static readonly MAX_SPEED_KPH = 15;
-  public static readonly ZERO_TO_MAX_IN_SECONDS = 10;
-  public static readonly MAX_TO_ZERO_IN_SECONDS = 4;
-  public static readonly COLLISION_COEFFICIENT = 1; // 0 - 1
-  public static readonly MAX_TURN_PER_FRAME = 1;
 
+  // Speed
+  public static readonly MAX_SPEED_KPH = 30;
+  public static readonly ZERO_TO_MAX_IN_SECONDS = 4;
+  public static readonly MAX_TO_ZERO_IN_SECONDS = 2;
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
+
+  // Turning
+  public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MIN = 0.2;
+  public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MAX = 7;
+  public static readonly DEGREES_TURN_PER_SECONDS_AT_MIN = 180 / GameConstants.SECONDS_TO_TURN_180_DEGREES_AT_MIN;
+  public static readonly DEGREES_TURN_PER_SECONDS_AT_MAX = 180 / GameConstants.SECONDS_TO_TURN_180_DEGREES_AT_MAX;
+  public static readonly TURN_PER_FRAME_AT_MIN = GameConstants.DEGREES_TURN_PER_SECONDS_AT_MIN / GameConstants.FPS;
+  public static readonly TURN_PER_FRAME_AT_MAX = GameConstants.DEGREES_TURN_PER_SECONDS_AT_MAX / GameConstants.FPS;
+
+  // Collisions
+  public static readonly COLLISION_COEFFICIENT = 1; // 0 - 1
 
   //
   // Measurements

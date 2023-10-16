@@ -17,6 +17,8 @@ export class AppComponent implements AfterViewInit {
 
   public state$: Observable<GameState>;
 
+  private renderer?: Renderer;
+
   constructor(private gameStateService: GameStateService) {
     this.state$ = gameStateService.observeState();
   }
@@ -26,7 +28,11 @@ export class AppComponent implements AfterViewInit {
     window.addEventListener('resize', () => {
       this.resize();
     });
-    this.gameLoop();
+
+    const canvas = this.canvas?.nativeElement;
+    const ctx = canvas.getContext('2d');
+    this.renderer = new Renderer(this.gameStateService, ctx, canvas.width, canvas.height);
+    this.renderer.start();
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -53,20 +59,7 @@ export class AppComponent implements AfterViewInit {
     const canvas = this.canvas?.nativeElement;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  }
-
-  private gameLoop(): void {
-    const canvas = this.canvas?.nativeElement;
-    const ctx = canvas.getContext('2d');
-    const scale = canvas.width / GameConstants.CANVAS_WIDTH_IN_METERS;
-    const renderer = new Renderer(ctx, scale, canvas.width, canvas.height);
-    this.renderScene(renderer);
-    requestAnimationFrame(() => this.gameLoop());
-  }
-
-  private renderScene(renderer: Renderer) {
-    const state = this.gameStateService.update(state => state.recalculate());
-    renderer.drawScene(state);
+    this.renderer?.setCanvasSize(canvas.width, canvas.height);
   }
 
   private normalizePoint(position: Vector): Vector {

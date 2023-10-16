@@ -49,12 +49,20 @@ export class GameStateService {
   }
 
   private static onePlayer(track: Track): Player[] {
-    const velocity = Velocity.of(Speed.ZERO, Angle.ofDegrees(180));
-    const player = Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.4, 0.50)), velocity));
+    const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
+    const player = Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0)), velocity));
     return [
       player
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.1))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.2))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.3))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.4))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.5))))
         .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.6))))
-        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.7)))),
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.7))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.8))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.9))))
+        .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 1)))),
     ]
   }
 

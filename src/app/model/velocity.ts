@@ -86,7 +86,7 @@ export class Velocity {
       ? Math.min(targetVelocity.speed.kph, this.speed.kph + GameConstants.ACCELERATION_STEP)
       : Math.max(targetVelocity.speed.kph, this.speed.kph - GameConstants.DECELERATION_STEP);
 
-    const newAngle = this.angle.turnTowards(targetVelocity.angle, GameConstants.MAX_TURN_PER_FRAME);
+    const newAngle = this.angle.turnTowards(targetVelocity.angle, GameConstants.TURN_PER_FRAME_AT_MAX);
 
     // Done
     return Velocity.of(Speed.ofKph(kph), newAngle);
