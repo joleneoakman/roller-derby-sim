@@ -84,7 +84,10 @@ export class Pack {
     // Exclude players that are not applicable for pack
     const applicablePlayers: boolean[] = [];
     for (let i = 0; i < count; i++) {
-      applicablePlayers[i] = players[i].isInBounds(track);
+      const player = players[i];
+      const isInBounds = player.isInBounds(track);
+      const isJammer = player.isJammer();
+      applicablePlayers[i] = isInBounds && !isJammer;
     }
 
     // Calculate which players within ten feet of each other

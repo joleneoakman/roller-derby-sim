@@ -15,8 +15,9 @@ import {Quad} from "../model/quad";
 import {Triangle} from "../model/triangle";
 import {Line} from "../model/line";
 import {Target} from "../model/target";
-import {Speed} from "../model/speed";
 import {GameStateService} from "../game/game-state.service";
+import {PlayerType} from "../model/player-type";
+import {Angle} from "../model/angle";
 
 export class Renderer {
 
@@ -105,7 +106,7 @@ export class Renderer {
     const {x, y, width: w, height: h} = relativeTrack;
     this.drawRect(Vector.of(this.width / this.scale - w * 3 - GameConstants.ONE_FOOT, 0), w * 3, this.height / this.scale, Fill.of('black'));
     this.drawRect(Vector.of(this.width / this.scale - w * 3, 0), w * 3, this.height / this.scale, GameConstants.OUT_OF_BOUNDS_FILL);
-    this.drawRect(Vector.of(x, y), w, h, Fill.of(GameConstants.INBOUNDS_COLOR), Stroke.of(GameConstants.TRACK_STROKE_COLOR, 1));
+    this.drawRect(Vector.of(x, y), w, h, Fill.of(GameConstants.INBOUNDS_COLOR), GameConstants.TRACK_STROKE);
     this.drawRelativeTrackLine(0.25, relativeTrack);
     this.drawRelativeTrackLine(0.50, relativeTrack);
     this.drawRelativeTrackLine(0.75, relativeTrack);
@@ -176,7 +177,7 @@ export class Renderer {
 
     // Debug info
     if (GameConstants.DEBUG_BOUNDS) {
-      const debugStroke = Stroke.of(GameConstants.TRACK_DEBUG_COLOR, 1);
+      const debugStroke = GameConstants.TRACK_DEBUG_STROKE;
       this.drawTrackLine(track.innerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.trackLineAt(0.5), undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.outerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
@@ -248,11 +249,9 @@ export class Renderer {
   }
 
   private drawPlayer(player: Player, track: Track, selected: boolean) {
-    const position = player.position;
-
     // Draw target lines (on select)
     const showTargets = selected;
-    const strokeColor = player.team === Team.A ? GameConstants.TEAM_A_STROKE_COLOR : GameConstants.TEAM_B_STROKE_COLOR;
+    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false);
     const lineStroke = Stroke.of(strokeColor, 0.5, true);
     for (let i = 0; showTargets && i < player.targets.length; i++) {
       const a = i === 0 ? player.current : player.targets[i - 1];
@@ -268,13 +267,63 @@ export class Renderer {
     // Draw player circle
     this.drawTarget(player.radius, player.current, player.team, selected, false);
 
+    // Draw player symbol
+    const circleStroke = Stroke.of(strokeColor, 1);
+    const symbolCircle = Circle.of(player.position, player.radius * 0.5);
+    const angle = player.velocity.angle;
+    this.drawPlayerSymbol(symbolCircle, angle, player.type);
+    this.drawCircle(symbolCircle, undefined, circleStroke);
+
     // Draw angle
-    const direction = player.current.velocity.withKph(Speed.ofKph(100));
-    this.drawLine(position, position.plus(direction.vector), Stroke.of('black', 1));
+    const angleCircle = Circle.of(player.position, player.radius * 0.6);
+    this.drawPlayerAngle(angleCircle, player.toCircle(), angle);
 
     // Draw debug coordinates
-    this.drawText(position.plus(Vector.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), lineStroke);
-    this.drawText(position.plus(Vector.of(0, 1.2)), '' + player.velocity.angle.degrees.toFixed(2) + ', ' + player.velocity.speed.kph.toFixed(2), lineStroke);
+    if (selected) {
+      const position = player.position;
+      const textStroke = GameConstants.TEXT_STROKE;
+      this.drawText(position.plus(Vector.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), textStroke);
+      this.drawText(position.plus(Vector.of(0, 1.2)), '' + player.velocity.angle.degrees.toFixed(2) + ', ' + player.velocity.speed.kph.toFixed(2), textStroke);
+    }
+  }
+
+  private drawPlayerSymbol(circle: Circle, angle: Angle, type: PlayerType) {
+    switch (type) {
+      case PlayerType.JAMMER:
+        this.drawJammerStar(circle, angle);
+        break;
+      case PlayerType.PIVOT:
+        this.drawPivotLine(circle, angle);
+        break;
+    }
+  }
+
+  private drawJammerStar(circleOut: Circle, angle: Angle) {
+    const circleIn = Circle.of(circleOut.position, circleOut.radius * 0.5);
+    for (let i = 0; i < 5; i++) {
+      const angleCenter = Angle.ofDegrees(i * 72).plus(angle);
+      const angle1 = angleCenter.minusDegrees(36);
+      const angle2 = angleCenter.plusDegrees(36);
+      const pCenter = circleOut.getPositionAt(angleCenter);
+      const p1 = circleIn.getPositionAt(angle1);
+      const p2 = circleIn.getPositionAt(angle2);
+      this.drawTriangle(p1, pCenter, p2, GameConstants.PLAYER_SYMBOL_FILL);
+    }
+    this.drawCircle(circleIn, GameConstants.PLAYER_SYMBOL_FILL);
+  }
+
+  private drawPlayerAngle(circleIn: Circle, circleOut: Circle, angle: Angle) {
+    const arc = Arc.of(circleIn, angle.minusDegrees(15), angle.plusDegrees(15));
+    const center = circleOut.getPositionAt(angle);
+    this.drawTriangle(arc.p1, center, arc.p2, GameConstants.PLAYER_SYMBOL_FILL);
+  }
+
+  private drawPivotLine(circle: Circle, angle: Angle) {
+    const arc1 = Arc.of(circle, angle.minusDegrees(15), angle.plusDegrees(15));
+    const arc2 = Arc.of(circle, angle.minusDegrees(180 + 15), angle.plusDegrees(180 + 15));
+    this.drawArc(arc1, GameConstants.PLAYER_SYMBOL_FILL);
+    this.drawArc(arc2, GameConstants.PLAYER_SYMBOL_FILL);
+    this.drawQuad(arc1.p1, arc1.p2, arc2.p1, arc2.p2, GameConstants.PLAYER_SYMBOL_FILL);
   }
 
   private drawTarget(radius: number, target: Target, team: Team, selected: boolean, isTarget: boolean) {
@@ -286,10 +335,6 @@ export class Renderer {
     const position = target.position;
     const finalRadius = isTarget ? radius / 2.5 : radius;
     this.drawCircle(Circle.of(position, finalRadius), playerFill, playerStroke);
-
-    // Direction indicator
-    const velocity = target.velocity;
-    this.drawLine(position, Vector.of(position.x + (velocity.x * 10), position.y + (velocity.y * 10)), Stroke.of('black', 1));
   }
 
   private drawText(position: Vector, text: string, stroke: Stroke) {

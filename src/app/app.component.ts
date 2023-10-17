@@ -47,7 +47,6 @@ export class AppComponent implements AfterViewInit {
   public onClick(event: MouseEvent) {
     const clientPos = Vector.of(event.clientX, event.clientY);
     const normalizedPos = this.normalizePoint(clientPos);
-    console.warn(event);
     if (event.button === 0) {
       this.gameStateService.update(state => state.select(normalizedPos));
     } else if (event.button === 2) {

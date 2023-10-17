@@ -8,7 +8,6 @@ import {Track} from "./track";
 import {Target} from "./target";
 import {Angle} from "./angle";
 import {Speed} from "./speed";
-import {Renderer} from "../renderer/renderer";
 
 export class Player {
 
@@ -46,7 +45,7 @@ export class Player {
   }
 
   //
-  // With
+  // Setters
   //
 
   public withMotion(motion: Target): Player {
@@ -78,6 +77,32 @@ export class Player {
     return this.withTargets([]);
   }
 
+  public moveTowardsTarget(): Player {
+    // Target reached!
+    const target = this.targets.length > 0 ? this.targets[0] : undefined;
+    const currentKph = this.velocity.speed.kph;
+    const speedRatio = Math.min(currentKph / GameConstants.MAX_SPEED_KPH, GameConstants.MAX_SPEED_KPH);
+    const targetSize = 0.05 * (1 - speedRatio) + 1.5 * speedRatio;
+    if (target && this.position.distanceTo(target.position) < targetSize) {
+      return this.markTargetAsReached().moveTowardsTarget();
+    }
+
+    // Adjust angle
+    const newAngle = Player.calculateAdjustedAngle(this.current, target?.position);
+
+    // Adjust speed
+    const newSpeed = Player.calculateAdjustedSpeed(this.current, this.targets);
+    // Do move
+    const newVelocity = Velocity.of(newSpeed, newAngle);
+    const newPosition = this.position.plus(this.velocity.vector);
+    return this.withVelocity(newVelocity).withPosition(newPosition);
+  }
+
+  public collideWith(other: Player): [Player, Player] {
+    const updatedPlayers = Player.calculateStaticCollision(this, other);
+    return Player.calculateDynamicCollision(updatedPlayers[0], updatedPlayers[1]);
+  }
+
   //
   // Getters
   //
@@ -98,13 +123,12 @@ export class Player {
     return this.current.relativePosition(track);
   }
 
-
-  //
-  // Calculations
-  //
-
   public distanceTo(other: Player): number {
     return this.toCircle().distanceTo(other.toCircle());
+  }
+
+  public collidesWith(other: Player): boolean {
+    return this.toCircle().collidesWith(other.toCircle());
   }
 
   public isInBounds(track: Track): boolean {
@@ -112,25 +136,8 @@ export class Player {
     return relativePosition.x >= 0 && relativePosition.x <= 1;
   }
 
-  public moveTowardsTarget(): Player {
-    // Target reached!
-    const target = this.targets.length > 0 ? this.targets[0] : undefined;
-    const currentKph = this.velocity.speed.kph;
-    const speedRatio = Math.min(currentKph / GameConstants.MAX_SPEED_KPH, GameConstants.MAX_SPEED_KPH);
-    const targetSize = 0.05 * (1 - speedRatio) + 1.5 * speedRatio;
-    if (target && this.position.distanceTo(target.position) < targetSize) {
-      return this.markTargetAsReached().moveTowardsTarget();
-    }
-
-    // Adjust angle
-    const newAngle = Player.calculateAdjustedAngle(this.current, target?.position);
-
-    // Adjust speed
-    const newSpeed = Player.calculateAdjustedSpeed(this.current, this.targets);
-    // Do move
-    const newVelocity = Velocity.of(newSpeed, newAngle);
-    const newPosition = this.position.plus(this.velocity.vector);
-    return this.withVelocity(newVelocity).withPosition(newPosition);
+  public isJammer() {
+    return this.type === PlayerType.JAMMER;
   }
 
   //
@@ -172,10 +179,6 @@ export class Player {
    * 1. All targets processed.
    * 2. Distance to n-th target is greater than stopping distance.
    * 3. Max accelerationWeight becomes 0.
-   *
-   * @param {Target} current - Current position and velocity of the player.
-   * @param {Target[]} targets - Array of future targets.
-   * @returns {Speed} - The new adjusted speed.
    */
   private static calculateAdjustedSpeed(current: Target, targets: Target[]): Speed {
     const currentKph = current.velocity.speed.kph;
@@ -223,7 +226,9 @@ export class Player {
         }
       }
     }
-    const accelerationStep = currentKph < 7 ? GameConstants.ACCELERATION_STEP * 5 : GameConstants.ACCELERATION_STEP;
+
+    let accelerationStep = currentKph < 5 ? GameConstants.ACCELERATION_STEP * 20 : GameConstants.ACCELERATION_STEP;
+    accelerationStep = currentKph < 10 ? GameConstants.ACCELERATION_STEP * 4 : accelerationStep;
     const maxAcceleration = Math.min(currentKph + accelerationStep, GameConstants.MAX_SPEED_KPH);
     const maxDeceleration = Math.max(currentKph - GameConstants.DECELERATION_STEP, 0);
     const newKph = accelerationWeight * maxAcceleration + (1 - accelerationWeight) * maxDeceleration;
@@ -238,5 +243,37 @@ export class Player {
       speed = Math.max(speed - GameConstants.DECELERATION_STEP, 0);
     }
     return distanceToStop * 1000 / 3600; // convert back to the unit you're using for distance
+  }
+
+  /**
+   * This method adjusts the position of the players so that they're not overlapping.
+   */
+  private static calculateStaticCollision(player1: Player, player2: Player): [Player, Player] {
+    const distanceBetweenCenters = player1.position.distanceTo(player2.position);
+    const sumOfRadii = player1.radius + player2.radius;
+
+    if (distanceBetweenCenters >= sumOfRadii) {
+      return [player1, player2];  // No collision
+    }
+
+    const overlap = sumOfRadii - distanceBetweenCenters;
+    const direction = player2.position.minus(player1.position).normalize();
+
+    // Adjust positions
+    const player1NewPosition = player1.position.minus(direction.scale(overlap / 2));
+    const player2NewPosition = player2.position.plus(direction.scale(overlap / 2));
+
+    const updatedPlayer1 = player1.withPosition(player1NewPosition);
+    const updatedPlayer2 = player2.withPosition(player2NewPosition);
+
+    return [updatedPlayer1, updatedPlayer2];
+  }
+
+  /**
+   * This method will adjust the velocity of the players to simulate impact, based on speed, angle and mass.
+   */
+  private static calculateDynamicCollision(player1: Player, player2: Player): [Player, Player] {
+    // Todo 2
+    return [player1, player2];
   }
 }

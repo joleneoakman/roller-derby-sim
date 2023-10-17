@@ -84,12 +84,28 @@ export class Angle {
   // Setters
   //
 
+  public plus(other: Angle): Angle {
+    return Angle.ofRadians(this.radians + other.radians);
+  }
+
   public plusRadians(radians: number): Angle {
     return Angle.ofRadians(this.radians + radians);
   }
 
+  public plusDegrees(degrees: number): Angle {
+    return Angle.ofDegrees(this.degrees + degrees);
+  }
+
   public minus(other: Angle): Angle {
     return Angle.ofRadians(this.radians - other.radians);
+  }
+
+  public minusRadians(radians: number): Angle {
+    return this.plusRadians(-radians);
+  }
+
+  public minusDegrees(degrees: number): Angle {
+    return this.plusDegrees(-degrees);
   }
 
   public angleTo(other: Angle): Angle {

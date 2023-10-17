@@ -50,6 +50,12 @@ export class Circle implements Shape {
     return intersections.reduce((prev, curr) => prev.distanceTo(position) < curr.distanceTo(position) ? prev : curr);
   }
 
+  public getPositionAt(angle: Angle): Vector {
+    const x = this.position.x + this.radius * Math.cos(angle.radians);
+    const y = this.position.y + this.radius * Math.sin(angle.radians);
+    return Vector.of(x, y);
+  }
+
   /**
    * Calculate the angle between the target and the center of the arc.
    */

@@ -43,9 +43,9 @@ export class GameStateService {
   private static initialState(): GameState {
     const track = Track.create();
     // const players = GameStateService.initialSomePlayerAtPackLine(track);
-    const players = GameStateService.onePlayer(track);
-    // const players = GameStateService.initialDerbyTeams();
-    return GameState.of(track, players).withSelection(0);
+    // const players = GameStateService.onePlayer(track);
+    const players = GameStateService.initialDerbyTeams(track);
+    return GameState.of(track, players);
   }
 
   private static onePlayer(track: Track): Player[] {
@@ -66,19 +66,19 @@ export class GameStateService {
     ]
   }
 
-  private static initialDerbyTeams(): Player[] {
-    const width = GameConstants.CANVAS_WIDTH_IN_METERS;
+  private static initialDerbyTeams(track: Track): Player[] {
+    const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
     return [
-      Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(Vector.of(1, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.PIVOT, 100, Target.of(Vector.of(2, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(3, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(4, 1), Velocity.ZERO)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(Vector.of(5, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.JAMMER, 100, Target.of(Vector.of(width - 1, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.PIVOT, 100, Target.of(Vector.of(width - 2, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 3, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 4, 1), Velocity.ZERO)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(Vector.of(width - 5, 1), Velocity.ZERO)),
+      Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.98)), velocity)),
+      Player.of(Team.A, PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.14)), velocity)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.04)), velocity)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.02)), velocity)),
+      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.06)), velocity)),
+      Player.of(Team.B, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.98)), velocity)),
+      Player.of(Team.B, PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.12)), velocity)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.05)), velocity)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.04)), velocity)),
+      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.7, 0.04)), velocity)),
     ];
   }
 

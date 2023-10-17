@@ -83,40 +83,73 @@ export class GameState {
   }
 
   public recalculate(): GameState {
-    const playersAfterMove = this.players.map(player => player.moveTowardsTarget());
+    const playersAfterObjectives = GameState.calculateObjectives(this.players, this.track);
+    const playersAfterMove = GameState.calculateMovements(playersAfterObjectives);
+    const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
+    return this.withFrameRate(this.frames + 1).withPlayers(playersAfterCollisions);
+  }
 
-    // Calculate new player velocities based on objectives
-    // Todo: implement
+  private static calculateObjectives(players: Player[], track: Track): Player[] {
+    // Todo (temp: let them do laps)
+    return GameState.calculateObjectivesForJammers(players, track);
+  }
 
-    // Calculate new player positions and velocities after collisions
-    /*const count = this.players.length;
-    const playersAfterBlocks: Player[] = [...playersAfterMove];
+  private static calculateMovements(players: Player[]): Player[] {
+    return players.map(player => player.moveTowardsTarget());
+  }
+
+  private static calculateCollisions(players: Player[]): Player[] {
+    const result: Player[] = [...players];
+    const count = players.length;
     for (let i = 0; i < count; i++) {
-      const playerAfterMove1 = playersAfterBlocks[i];
-      for (let j = i + 1; j < count; j++) {
-        const playerAfterMove2 = playersAfterBlocks[j];
-        const collided = playerAfterMove1.collideWith(playerAfterMove2);
-        playersAfterBlocks[i] = collided.a;
-        playersAfterBlocks[j] = collided.b;
+      const player = result[i];
+      for (let j = 0; j < count; j++) {
+        const other = result[j];
+        if (i !== j && player.collidesWith(other)) {
+          const [player1, player2] = player.collideWith(other);
+          result[i] = player1;
+          result[j] = player2;
+        }
       }
     }
+    return result;
+  }
 
-    // Calculate player - track collisions (and compensate)
-    const playersAfterBounds: Player[] = new Array(count);
-    for (let i = 0; i < count; i++) {
-      const oldPlayer = this.players[i];
-      const newPlayer = playersAfterBlocks[i];
-      const containsOld = oldPlayer.isInBounds(this.track);
-      const containsNew = newPlayer.isInBounds(this.track);
+  //
+  // Debug methods
+  //
 
-      if (!containsNew) {
-        const targetPoint = this.track.getClosestPointOnTrackLine(newPlayer, 0.5);
-        playersAfterBounds[i] = newPlayer.turnTowards(targetPoint);
+  private static calculateObjectsLapsForAll(players: Player[], track: Track): Player[] {
+    const result = [...players];
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      const inBounds = player.isInBounds(track);
+      if (inBounds) {
+        const relativePosition = player.relativePosition(track);
+        const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
+        result[i] = player.withTargets([Target.of(targetPosition)]);
       } else {
-        playersAfterBounds[i] = newPlayer;
+        const targetPosition = track.getClosestPointOnTrackLine(player, 0.5);
+        result[i] = player.withTargets([Target.of(targetPosition)]);
       }
     }
-    return this.withPlayers(playersAfterBounds);*/
-    return this.withFrameRate(this.frames + 1).withPlayers(playersAfterMove);
+    return result;
+  }
+
+  private static calculateObjectivesForJammers(players: Player[], track: Track): Player[] {
+    const result = [...players];
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      const inBounds = player.isInBounds(track);
+      if (inBounds && player.isJammer()) {
+        const relativePosition = player.relativePosition(track);
+        const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
+        result[i] = player.withTargets([Target.of(targetPosition)]);
+      } else if (!inBounds) {
+        const targetPosition = track.getClosestPointOnTrackLine(player, 0.5);
+        result[i] = player.withTargets([Target.of(targetPosition)]);
+      }
+    }
+    return result;
   }
 }

@@ -51,7 +51,15 @@ export class Vector {
     return Vector.of(this.x - v.x, this.y - v.y);
   }
 
-  public times(factor: number): Vector {
+  public scale(factor: number): Vector {
     return Vector.of(this.x * factor, this.y * factor);
+  }
+
+  public normalize(): Vector {
+    const length = Math.sqrt(this.x * this.x + this.y * this.y);
+    if (length === 0) {
+      return Vector.of(0, 0);
+    }
+    return Vector.of(this.x / length, this.y / length);
   }
 }
