@@ -1,6 +1,6 @@
 import {Testing} from "./testing";
-import {Angle} from "../model/angle";
-import {Vector} from "../model/vector";
+import {Angle} from "../model/geometry/angle";
+import {Vector} from "../model/geometry/vector";
 
 export class AngleTest {
 

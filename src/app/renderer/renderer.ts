@@ -4,20 +4,20 @@ import {GameState} from "../model/game-state";
 import {GameConstants} from "../game/game-constants";
 import {Team} from "../model/team";
 import {Stroke} from "./stroke";
-import {Vector} from "../model/vector";
-import {Arc} from "../model/arc";
+import {Vector} from "../model/geometry/vector";
+import {Arc} from "../model/geometry/arc";
 import {TrackLine} from "../model/track-line";
-import {Circle} from "../model/circle";
+import {Circle} from "../model/geometry/circle";
 import {Pack} from "../model/pack";
-import {Rectangle} from "../model/rectangle";
+import {Rectangle} from "../model/geometry/rectangle";
 import {Fill} from "./fill";
-import {Quad} from "../model/quad";
-import {Triangle} from "../model/triangle";
-import {Line} from "../model/line";
+import {Quad} from "../model/geometry/quad";
+import {Triangle} from "../model/geometry/triangle";
+import {Line} from "../model/geometry/line";
 import {Target} from "../model/target";
 import {GameStateService} from "../game/game-state.service";
 import {PlayerType} from "../model/player-type";
-import {Angle} from "../model/angle";
+import {Angle} from "../model/geometry/angle";
 
 export class Renderer {
 

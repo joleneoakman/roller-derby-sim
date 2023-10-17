@@ -1,4 +1,4 @@
-import {GameConstants} from "../game/game-constants";
+import {GameConstants} from "../../game/game-constants";
 import {Vector} from "./vector";
 
 export class Speed {

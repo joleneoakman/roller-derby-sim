@@ -1,8 +1,8 @@
 import {Angle} from "./angle";
 import {Circle} from "./circle";
-import {TrackLineShape} from "./track-line-shape";
+import {TrackLineShape} from "../track-line-shape";
 import {Line} from "./line";
-import {MathTools} from "../util/math-tools";
+import {MathTools} from "../../util/math-tools";
 import {Vector} from "./vector";
 
 export class Arc implements TrackLineShape {

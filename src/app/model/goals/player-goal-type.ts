@@ -1,0 +1,7 @@
+export enum PlayerGoalType {
+  RETURN_IN_BOUNDS,
+  JAMMER_JUKE,
+  JAMMER_DO_LAPS,
+  BLOCKER_BLOCK,
+  BLOCKER_OFFENSE,
+}

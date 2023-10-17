@@ -13,7 +13,7 @@ export class Overflow {
     this.max = max;
   }
 
-  public static of(value: number, max: number): Overflow {
+  public static of(value: number, max: number = 1): Overflow {
     if (value < 0 || value > max) {
       value = (value + max) % max;
     }
@@ -73,6 +73,10 @@ export class Overflow {
       return diff > 0;
     }
     return diff <= 0;
+  }
+
+  public isBehind(other: Overflow): boolean {
+    return !this.isInFrontOf(other);
   }
 
   /**

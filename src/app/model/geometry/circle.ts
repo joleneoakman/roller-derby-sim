@@ -1,6 +1,6 @@
 import {Vector} from "./vector";
 import {Line} from "./line";
-import {Pair} from "./pair";
+import {Pair} from "../pair";
 import {Angle} from "./angle";
 import {Shape} from "./shape";
 

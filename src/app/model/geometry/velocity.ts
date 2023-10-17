@@ -1,4 +1,4 @@
-import {GameConstants} from "../game/game-constants";
+import {GameConstants} from "../../game/game-constants";
 import {Angle} from "./angle";
 import {Speed} from "./speed";
 import {Vector} from "./vector";

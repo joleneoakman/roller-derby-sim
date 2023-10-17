@@ -1,6 +1,6 @@
 import {Vector} from "./vector";
-import {TrackLineShape} from "./track-line-shape";
-import {MathTools} from "../util/math-tools";
+import {TrackLineShape} from "../track-line-shape";
+import {MathTools} from "../../util/math-tools";
 
 export class Line implements TrackLineShape {
   readonly p1: Vector;

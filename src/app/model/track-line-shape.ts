@@ -1,5 +1,5 @@
-import {Vector} from "./vector";
-import {Shape} from "./shape";
+import {Vector} from "./geometry/vector";
+import {Shape} from "./geometry/shape";
 
 export interface TrackLineShape extends Shape {
 

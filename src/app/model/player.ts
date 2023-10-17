@@ -1,36 +1,42 @@
 import {Team} from "./team";
 import {PlayerType} from "./player-type";
-import {Velocity} from "./velocity";
-import {Circle} from "./circle";
-import {Vector} from "./vector";
+import {Velocity} from "./geometry/velocity";
+import {Circle} from "./geometry/circle";
+import {Vector} from "./geometry/vector";
 import {GameConstants} from "../game/game-constants";
 import {Track} from "./track";
 import {Target} from "./target";
-import {Angle} from "./angle";
-import {Speed} from "./speed";
+import {Angle} from "./geometry/angle";
+import {Speed} from "./geometry/speed";
+import {PlayerGoal} from "./goals/player-goal";
+import {PlayerGoalType} from "./goals/player-goal-type";
+import {PlayerId} from "./player-id";
+import {Overflow} from "./overflow";
 
 export class Player {
 
   // Fixed data
-  readonly team: Team;
-  readonly type: PlayerType;
+  readonly id: PlayerId;
   readonly massKg: number;
   readonly radius: number = GameConstants.PLAYER_RADIUS;
 
   // Motion data
   readonly current: Target;
-  readonly targets: Target[] = [];
+  readonly targets: Target[];
 
-  private constructor(team: Team,
-                      type: PlayerType,
+  // Goals
+  readonly goals: PlayerGoal[];
+
+  private constructor(id: PlayerId,
                       massKg: number,
                       current: Target,
-                      targets: Target[]) {
-    this.team = team;
-    this.type = type;
+                      targets: Target[],
+                      goals: PlayerGoal[]) {
+    this.id = id;
     this.massKg = massKg;
     this.current = current;
     this.targets = targets;
+    this.goals = goals;
   }
 
   //
@@ -38,10 +44,12 @@ export class Player {
   //
 
   public static of(team: Team,
+                   number: string,
+                   name: string,
                    type: PlayerType,
                    massKg: number,
                    current: Target): Player {
-    return new Player(team, type, massKg, current, []);
+    return new Player(PlayerId.of(team, number, name, type), massKg, current, [], []);
   }
 
   //
@@ -49,7 +57,7 @@ export class Player {
   //
 
   public withMotion(motion: Target): Player {
-    return new Player(this.team, this.type, this.massKg, motion, this.targets);
+    return new Player(this.id, this.massKg, motion, this.targets, this.goals);
   }
 
   public withPosition(position: Vector): Player {
@@ -60,8 +68,12 @@ export class Player {
     return this.withMotion(this.current.withVelocity(velocity));
   }
 
+  public withTarget(target: Target): Player {
+    return this.withTargets([target]);
+  }
+
   public withTargets(targets: Target[]): Player {
-    return new Player(this.team, this.type, this.massKg, this.current, targets);
+    return new Player(this.id, this.massKg, this.current, targets, this.goals);
   }
 
   public addTarget(motion: Target): Player {
@@ -75,6 +87,22 @@ export class Player {
 
   public clearTargets(): Player {
     return this.withTargets([]);
+  }
+
+  private withGoals(goals: PlayerGoal[]): Player {
+    return new Player(this.id, this.massKg, this.current, this.targets, goals);
+  }
+
+  public markGoalAsDone(type: PlayerGoalType): Player {
+    const newGoals = this.goals.filter(g => g.type !== type);
+    return this.withGoals(newGoals);
+  }
+
+  public addGoal(goal: PlayerGoal, duplicate: boolean = false): Player {
+    if (duplicate || !this.hasGoal(goal.type)) {
+      return this.withGoals([goal, ...this.goals]);
+    }
+    return this;
   }
 
   public moveTowardsTarget(): Player {
@@ -131,13 +159,56 @@ export class Player {
     return this.toCircle().collidesWith(other.toCircle());
   }
 
+  public isOnInsideTrack(track: Track): boolean {
+    const relativePosition = this.relativePosition(track);
+    return relativePosition.x < 0;
+  }
+
   public isInBounds(track: Track): boolean {
     const relativePosition = this.relativePosition(track);
     return relativePosition.x >= 0 && relativePosition.x <= 1;
   }
 
+  public get team(): Team {
+    return this.id.team;
+  }
+
+  public get number(): string {
+    return this.id.number;
+  }
+
+  public get name(): string {
+    return this.id.name;
+  }
+
+  public get type(): PlayerType {
+    return this.id.type;
+  }
+
   public isJammer() {
-    return this.type === PlayerType.JAMMER;
+    return this.id.type === PlayerType.JAMMER;
+  }
+
+  public isBlocker() {
+    return this.id.type !== PlayerType.JAMMER;
+  }
+
+  public isPivot() {
+    return this.id.type === PlayerType.PIVOT;
+  }
+
+  public hasGoal(type: PlayerGoalType): boolean {
+    return this.goals.some(g => g.type === type);
+  }
+
+  public isInFrontOf(other: Player, track: Track): boolean {
+    const player1 = Overflow.of(this.relativePosition(track).y);
+    const player2 = Overflow.of(other.relativePosition(track).y);
+    return player1.isInFrontOf(player2);
+  }
+
+  public isBehind(other: Player, track: Track): boolean {
+    return !this.isInFrontOf(other, track);
   }
 
   //

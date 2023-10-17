@@ -1,9 +1,11 @@
 import {Player} from "./player";
 import {Track} from "./track";
-import {Vector} from "./vector";
+import {Vector} from "./geometry/vector";
 import {PlayerSelection} from "./player-selection";
 import {Pack} from "./pack";
 import {Target} from "./target";
+import {PlayerGoalReturnInBounds} from "./goals/player-goal-return-in-bounds";
+import {PlayerGoalJammerDoLaps} from "./goals/player-goal-jammer-do-laps";
 
 export class GameState {
 
@@ -83,15 +85,42 @@ export class GameState {
   }
 
   public recalculate(): GameState {
-    const playersAfterObjectives = GameState.calculateObjectives(this.players, this.track);
-    const playersAfterMove = GameState.calculateMovements(playersAfterObjectives);
+    const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack);
+    const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
     const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
     return this.withFrameRate(this.frames + 1).withPlayers(playersAfterCollisions);
   }
 
-  private static calculateObjectives(players: Player[], track: Track): Player[] {
-    // Todo (temp: let them do laps)
-    return GameState.calculateObjectivesForJammers(players, track);
+  private static calculateGoals(players: Player[], track: Track, pack: Pack): Player[] {
+    const playersAfterNewGoals = GameState.calculateNewGoals(players, track, pack);
+    return GameState.calculateGoalTargets(playersAfterNewGoals, track, pack);
+  }
+
+  private static calculateNewGoals(players: Player[], track: Track, pack: Pack): Player[] {
+    const now = Date.now();
+    return players.map(player => {
+      // Todo: penalties?
+      if (!player.isInBounds(track)) {
+        console.log("Out of bounds!");
+        return player.addGoal(new PlayerGoalReturnInBounds(now, player, players, track));
+      } else if (player.isJammer()) {
+        // Todo: other jammer goals
+        return player.addGoal(new PlayerGoalJammerDoLaps(now));
+      } else {
+        // Todo: other blocker goals
+        return player;
+      }
+    });
+  }
+
+  private static calculateGoalTargets(players: Player[], track: Track, pack: Pack): Player[] {
+    return players.map(player => {
+      if (player.goals.length === 0) {
+        return player;
+      }
+      const goal = player.goals[0];
+      return goal.execute(Date.now(), player, players, track);
+    });
   }
 
   private static calculateMovements(players: Player[]): Player[] {
@@ -110,44 +139,6 @@ export class GameState {
           result[i] = player1;
           result[j] = player2;
         }
-      }
-    }
-    return result;
-  }
-
-  //
-  // Debug methods
-  //
-
-  private static calculateObjectsLapsForAll(players: Player[], track: Track): Player[] {
-    const result = [...players];
-    for (let i = 0; i < players.length; i++) {
-      const player = players[i];
-      const inBounds = player.isInBounds(track);
-      if (inBounds) {
-        const relativePosition = player.relativePosition(track);
-        const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
-        result[i] = player.withTargets([Target.of(targetPosition)]);
-      } else {
-        const targetPosition = track.getClosestPointOnTrackLine(player, 0.5);
-        result[i] = player.withTargets([Target.of(targetPosition)]);
-      }
-    }
-    return result;
-  }
-
-  private static calculateObjectivesForJammers(players: Player[], track: Track): Player[] {
-    const result = [...players];
-    for (let i = 0; i < players.length; i++) {
-      const player = players[i];
-      const inBounds = player.isInBounds(track);
-      if (inBounds && player.isJammer()) {
-        const relativePosition = player.relativePosition(track);
-        const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
-        result[i] = player.withTargets([Target.of(targetPosition)]);
-      } else if (!inBounds) {
-        const targetPosition = track.getClosestPointOnTrackLine(player, 0.5);
-        result[i] = player.withTargets([Target.of(targetPosition)]);
       }
     }
     return result;

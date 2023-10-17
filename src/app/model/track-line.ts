@@ -1,11 +1,11 @@
-import {Line} from "./line";
-import {Arc} from "./arc";
-import {Circle} from "./circle";
-import {Angle} from "./angle";
-import {Vector} from "./vector";
+import {Line} from "./geometry/line";
+import {Arc} from "./geometry/arc";
+import {Circle} from "./geometry/circle";
+import {Angle} from "./geometry/angle";
+import {Vector} from "./geometry/vector";
 import {GameConstants} from "../game/game-constants";
 import {TrackLineShape} from "./track-line-shape";
-import {Quad} from "./quad";
+import {Quad} from "./geometry/quad";
 import {Overflow} from "./overflow";
 
 /**

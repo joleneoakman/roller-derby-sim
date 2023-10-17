@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@an
 import {Renderer} from "./renderer/renderer";
 import {Observable} from "rxjs";
 import {GameState} from "./model/game-state";
-import {Vector} from "./model/vector";
+import {Vector} from "./model/geometry/vector";
 import {GameConstants} from "./game/game-constants";
 import {GameStateService} from "./game/game-state.service";
 

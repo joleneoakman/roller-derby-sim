@@ -3,14 +3,13 @@ import {Track} from "../model/track";
 import {Player} from "../model/player";
 import {Team} from "../model/team";
 import {PlayerType} from "../model/player-type";
-import {Vector} from "../model/vector";
-import {Velocity} from "../model/velocity";
+import {Vector} from "../model/geometry/vector";
+import {Velocity} from "../model/geometry/velocity";
 import {BehaviorSubject, Observable, Subject} from "rxjs";
 import {Injectable} from "@angular/core";
 import {Pair} from "../model/pair";
-import {GameConstants} from "./game-constants";
-import {Speed} from "../model/speed";
-import {Angle} from "../model/angle";
+import {Speed} from "../model/geometry/speed";
+import {Angle} from "../model/geometry/angle";
 import {Testing} from "../test/testing";
 import {Target} from "../model/target";
 
@@ -50,7 +49,7 @@ export class GameStateService {
 
   private static onePlayer(track: Track): Player[] {
     const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
-    const player = Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0)), velocity));
+    const player = Player.of(Team.A, "1", "Ariel", PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0)), velocity));
     return [
       player
         .addTarget(Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.1))))
@@ -69,16 +68,16 @@ export class GameStateService {
   private static initialDerbyTeams(track: Track): Player[] {
     const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
     return [
-      Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.98)), velocity)),
-      Player.of(Team.A, PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.14)), velocity)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.04)), velocity)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.02)), velocity)),
-      Player.of(Team.A, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.06)), velocity)),
-      Player.of(Team.B, PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.98)), velocity)),
-      Player.of(Team.B, PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.12)), velocity)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.05)), velocity)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.04)), velocity)),
-      Player.of(Team.B, PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.7, 0.04)), velocity)),
+      Player.of(Team.A, "1", "Ariel", PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.98)), velocity)),
+      Player.of(Team.A, "2", "Mulan", PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.14)), velocity)),
+      Player.of(Team.A, "3", "Jasmine", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.3, 0.04)), velocity)),
+      Player.of(Team.A, "4", "Belle", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.02)), velocity)),
+      Player.of(Team.A, "5", "Merida", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.06)), velocity)),
+      Player.of(Team.B, "1", "Elsa", PlayerType.JAMMER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.6, 0.98)), velocity)),
+      Player.of(Team.B, "2", "Moana", PlayerType.PIVOT, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.11)), velocity)),
+      Player.of(Team.B, "3", "Alice", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.2, 0.05)), velocity)),
+      Player.of(Team.B, "4", "Esmeralda", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.5, 0.04)), velocity)),
+      Player.of(Team.B, "5", "Megara", PlayerType.BLOCKER, 100, Target.of(track.getAbsolutePosition(Vector.of(0.7, 0.04)), velocity)),
     ];
   }
 
@@ -89,7 +88,8 @@ export class GameStateService {
     const positions = [offset, 0.05 + offset, 0.10 + offset, 0.15 + offset];
     return positions.map((p, i) => {
       const team = i % 2 === 0 ? Team.A : Team.B;
-      return Player.of(team, PlayerType.BLOCKER, 100, Target.of(track.packLine.getAbsolutePositionOf(p), Velocity.of(speed, angle)));
+      const number = '' + (i + 1);
+      return Player.of(team, number, "Player " + number, PlayerType.BLOCKER, 100, Target.of(track.packLine.getAbsolutePositionOf(p), Velocity.of(speed, angle)));
     })
   }
 
@@ -100,7 +100,8 @@ export class GameStateService {
     for (let i = 0; i < playerCount; i++) {
       const position = track.packLine.getAbsolutePositionOf(i / playerCount);
       const angle = Angle.ZERO;
-      result.push(Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(position, Velocity.of(Speed.ZERO, angle))));
+      const number = '' + (i + 1);
+      result.push(Player.of(Team.A, number, "Player " + number, PlayerType.JAMMER, 100, Target.of(position, Velocity.of(Speed.ZERO, angle))));
     }
     return result;
   }
@@ -111,7 +112,8 @@ export class GameStateService {
     for (let i = 0; i < count; i++) {
       const position = positionsAndAngles.a[i];
       const angle = positionsAndAngles.b[i];
-      result.push(Player.of(Team.A, PlayerType.JAMMER, 100, Target.of(position, Velocity.of(Speed.ofKph(1), angle))));
+      const number = '' + (i + 1);
+      result.push(Player.of(Team.A, number, "Player " + number, PlayerType.JAMMER, 100, Target.of(position, Velocity.of(Speed.ofKph(1), angle))));
     }
     return result;
   }

@@ -1,6 +1,6 @@
-import {Vector} from "../model/vector";
-import {Velocity} from "../model/velocity";
-import {Line} from "../model/line";
+import {Vector} from "../model/geometry/vector";
+import {Velocity} from "../model/geometry/velocity";
+import {Line} from "../model/geometry/line";
 
 export class MathTools {
 

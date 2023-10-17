@@ -1,4 +1,4 @@
-import {Vector} from "../model/vector";
+import {Vector} from "../model/geometry/vector";
 
 export class CircleTools {
 

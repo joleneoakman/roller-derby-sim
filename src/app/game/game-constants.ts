@@ -18,6 +18,9 @@ export class GameConstants {
   // Physics
   //
 
+  // Reaction time
+  public static readonly REACTION_TIME_MS = 1000;
+
   // Speed
   public static readonly MAX_SPEED_KPH = 30;
   public static readonly ZERO_TO_MAX_IN_SECONDS = 4;
