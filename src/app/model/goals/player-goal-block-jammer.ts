@@ -11,7 +11,28 @@ import {Overflow} from "../overflow";
 
 export class PlayerGoalBlockJammerFactory implements GoalFactory {
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
-    return player.isBlocker() && !player.hasGoal(PlayerGoalType.BLOCKER_BLOCK);
+    if (!player.isBlocker() || player.hasGoal(PlayerGoalType.BLOCKER_BLOCK)) {
+      return false;
+    }
+
+    const opposingJammer = players.find(p => p.isJammer() && p.team !== player.team);
+    if (!opposingJammer) {
+      return false;
+    }
+
+    const distance = player.distanceTo(opposingJammer);
+    if (distance > GameConstants.TWENTY_FEET) {
+      return false;
+    }
+
+    const relativePositionJammer = opposingJammer.relativePosition(track);
+    const relativePositionPlayer = player.relativePosition(track);
+    const yJammer = Overflow.of(relativePositionJammer.y);
+    const yPlayer = Overflow.of(relativePositionPlayer.y);
+    if (yJammer.isInFrontOf(yPlayer)) {
+      return false;
+    }
+    return true;
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalBlockJammer {
@@ -28,12 +49,12 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
   execute(now: number, player: Player, players: Player[], track: Track): Player {
     const opposingJammer = players.find(p => p.isJammer() && p.team !== player.team);
     if (!opposingJammer) {
-      return player;
+      return player.clearGoal(this.type);
     }
 
     const distance = player.distanceTo(opposingJammer);
     if (distance > GameConstants.TWENTY_FEET) {
-      return player;
+      return player.clearGoal(this.type);
     }
 
     const relativePositionJammer = opposingJammer.relativePosition(track);
@@ -41,7 +62,7 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
     const yJammer = Overflow.of(relativePositionJammer.y);
     const yPlayer = Overflow.of(relativePositionPlayer.y);
     if (yJammer.isInFrontOf(yPlayer)) {
-      return player;
+      return player.clearGoal(this.type);
     }
 
     const newPosition = track.getAbsolutePosition(Vector.of(relativePositionJammer.x, relativePositionPlayer.y));
