@@ -4,4 +4,5 @@ export enum PlayerGoalType {
   JAMMER_DO_LAPS,
   BLOCKER_BLOCK,
   BLOCKER_OFFENSE,
+  BLOCKER_DO_LAPS
 }

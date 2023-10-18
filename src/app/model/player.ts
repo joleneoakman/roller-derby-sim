@@ -93,16 +93,13 @@ export class Player {
     return new Player(this.id, this.massKg, this.current, this.targets, goals);
   }
 
-  public markGoalAsDone(type: PlayerGoalType): Player {
+  public clearGoal(type: PlayerGoalType): Player {
     const newGoals = this.goals.filter(g => g.type !== type);
     return this.withGoals(newGoals);
   }
 
-  public addGoal(goal: PlayerGoal, duplicate: boolean = false): Player {
-    if (duplicate || !this.hasGoal(goal.type)) {
-      return this.withGoals([goal, ...this.goals]);
-    }
-    return this;
+  public addGoal(goal: PlayerGoal): Player {
+    return this.withGoals([goal, ...this.goals]);
   }
 
   public moveTowardsTarget(): Player {

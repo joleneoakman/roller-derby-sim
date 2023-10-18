@@ -4,10 +4,15 @@ import {Vector} from "./geometry/vector";
 import {PlayerSelection} from "./player-selection";
 import {Pack} from "./pack";
 import {Target} from "./target";
-import {PlayerGoalReturnInBounds} from "./goals/player-goal-return-in-bounds";
-import {PlayerGoalJammerDoLaps} from "./goals/player-goal-jammer-do-laps";
+import {PlayerGoalReturnInBoundsFactory} from "./goals/player-goal-return-in-bounds";
+import {PlayerGoalJammerDoLapsFactory} from "./goals/player-goal-jammer-do-laps";
+import {PlayerGoalBlockJammerFactory} from "./goals/player-goal-block-jammer";
+import {GoalFactory} from "./goals/goal-factory";
+import {PlayerGoalBlockerDoLapsFactory} from "./goals/player-goal-blocker-do-laps";
 
 export class GameState {
+
+  private static readonly GOALS: GoalFactory[] = GameState.createGoalFactories();
 
   readonly frames: number;
   readonly track: Track;
@@ -23,9 +28,33 @@ export class GameState {
     this.playerSelection = selection;
   }
 
+  //
+  // Create
+  //
+
   public static of(track: Track, players: Player[]): GameState {
     return new GameState(0, track, players, Pack.create(players, track), undefined);
   }
+
+  //
+  // Getters
+  //
+
+  public findPlayerIndexAt(position: Vector): number {
+    const count = this.players.length;
+    for (let i = 0; i < count; i++) {
+      const player = this.players[i];
+      const distance = player.position.distanceTo(position);
+      if (distance <= player.radius) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  //
+  // Setters
+  //
 
   public withFrameRate(frames: number): GameState {
     return new GameState(frames, this.track, this.players, this.pack, this.playerSelection);
@@ -72,24 +101,16 @@ export class GameState {
     return new GameState(this.frames, this.track, this.players, this.pack, undefined);
   }
 
-  public findPlayerIndexAt(position: Vector): number {
-    const count = this.players.length;
-    for (let i = 0; i < count; i++) {
-      const player = this.players[i];
-      const distance = player.position.distanceTo(position);
-      if (distance <= player.radius) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
   public recalculate(): GameState {
     const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack);
     const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
     const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
     return this.withFrameRate(this.frames + 1).withPlayers(playersAfterCollisions);
   }
+
+  //
+  // Utility methods
+  //
 
   private static calculateGoals(players: Player[], track: Track, pack: Pack): Player[] {
     const playersAfterNewGoals = GameState.calculateNewGoals(players, track, pack);
@@ -99,17 +120,13 @@ export class GameState {
   private static calculateNewGoals(players: Player[], track: Track, pack: Pack): Player[] {
     const now = Date.now();
     return players.map(player => {
-      // Todo: penalties?
-      if (!player.isInBounds(track)) {
-        console.log("Out of bounds!");
-        return player.addGoal(new PlayerGoalReturnInBounds(now, player, players, track));
-      } else if (player.isJammer()) {
-        // Todo: other jammer goals
-        return player.addGoal(new PlayerGoalJammerDoLaps(now));
-      } else {
-        // Todo: other blocker goals
-        return player;
+      for (const factory of GameState.GOALS) {
+        if (factory.test(player, players, track, pack)) {
+          const goal = factory.create(now, player, players, track, pack);
+          player = player.addGoal(goal);
+        }
       }
+      return player;
     });
   }
 
@@ -142,5 +159,14 @@ export class GameState {
       }
     }
     return result;
+  }
+
+  private static createGoalFactories(): GoalFactory[] {
+    return [
+      new PlayerGoalReturnInBoundsFactory(),
+      new PlayerGoalJammerDoLapsFactory(),
+      new PlayerGoalBlockJammerFactory(),
+      new PlayerGoalBlockerDoLapsFactory()
+    ]
   }
 }
