@@ -1,0 +1,32 @@
+.overlay {
+  position: fixed;
+
+  .title {
+    position: fixed;
+    width: 400px;
+    height: 50px;
+    left: calc(50% - 200px);
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 100;
+    font-family: 'Proteron', sans-serif;
+    color: #fffc;
+    padding: 7px;
+    box-sizing: border-box;
+    background-color: rgba(26, 12, 35, 0.5);
+    border-bottom: 1px solid #000;
+    user-select: none;
+    box-shadow: 0 0 5px #0009;
+  }
+
+  .fps {
+    position: fixed;
+    right: 10px;
+    bottom: 8px;
+    font-size: 12px;
+    color: #fffa;
+  }
+}
+

@@ -3,7 +3,6 @@ import {Renderer} from "./renderer/renderer";
 import {Observable} from "rxjs";
 import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
-import {GameConstants} from "./game/game-constants";
 import {GameStateService} from "./game/game-state.service";
 
 @Component({
@@ -18,15 +17,17 @@ export class AppComponent implements AfterViewInit {
   public state$: Observable<GameState>;
 
   private renderer?: Renderer;
+  private clickPoint?: Vector;
+  private offset?: Vector;
 
   constructor(private gameStateService: GameStateService) {
     this.state$ = gameStateService.observeState();
   }
 
   ngAfterViewInit() {
-    this.resize();
+    this.onResize();
     window.addEventListener('resize', () => {
-      this.resize();
+      this.onResize();
     });
 
     const canvas = this.canvas?.nativeElement;
@@ -44,26 +45,52 @@ export class AppComponent implements AfterViewInit {
     }
   }
 
-  public onClick(event: MouseEvent) {
-    const clientPos = Vector.of(event.clientX, event.clientY);
-    const normalizedPos = this.normalizePoint(clientPos);
+  public onMouseDown(event: MouseEvent) {
+    const clientPosition = Vector.of(event.clientX, event.clientY);
+    const gamePosition = this.getRenderer().toGamePosition(clientPosition);
     if (event.button === 0) {
-      this.gameStateService.update(state => state.select(normalizedPos));
+      console.log(clientPosition.x, clientPosition.y, gamePosition.x, gamePosition.y);
+      this.gameStateService.update(state => state.select(gamePosition));
+    } else if (event.button === 1) {
+      this.clickPoint = clientPosition;
+      this.offset = this.getRenderer().getOffset();
     } else if (event.button === 2) {
-      this.gameStateService.update(state => state.withSelectedTargetPosition(normalizedPos));
+      this.gameStateService.update(state => state.withSelectedTargetPosition(gamePosition));
     }
   }
 
-  private resize() {
+  public onMouseUp(event: MouseEvent) {
+    this.clickPoint = undefined;
+    this.offset = undefined;
+  }
+
+  public onMouseMove(event: MouseEvent) {
+    if (this.clickPoint === undefined || this.offset === undefined) {
+      return;
+    }
+
+    const clientPos = Vector.of(event.clientX, event.clientY);
+    const diff = clientPos.minus(this.clickPoint);
+    console.log(this.clickPoint, clientPos, diff)
+    const delta = this.offset.plus(diff);
+    this.getRenderer().updateOffset(delta);
+  }
+
+  public onWheel(event: WheelEvent) {
+    this.getRenderer().updateZoom(event.deltaY / 100);
+  }
+
+  private onResize() {
     const canvas = this.canvas?.nativeElement;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     this.renderer?.setCanvasSize(canvas.width, canvas.height);
   }
 
-  private normalizePoint(position: Vector): Vector {
-    const canvas = this.canvas?.nativeElement;
-    const scale = canvas.width / GameConstants.CANVAS_WIDTH_IN_METERS;
-    return Vector.of(position.x / scale, position.y / scale);
+  private getRenderer(): Renderer {
+    if (this.renderer === undefined) {
+      throw new Error('Renderer not initialized');
+    }
+    return this.renderer;
   }
 }

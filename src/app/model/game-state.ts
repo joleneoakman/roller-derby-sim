@@ -52,6 +52,10 @@ export class GameState {
     return -1;
   }
 
+  public toInfo(): string {
+    return "";
+  }
+
   //
   // Setters
   //

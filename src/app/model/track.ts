@@ -60,7 +60,7 @@ export class Track {
     const rIn = 3.81;
     const rPack = GameConstants.PACK_LINE_RADIUS;
     const rOut = 8.08;
-    const centerPoint = Vector.of(GameConstants.CANVAS_WIDTH_IN_METERS / 2 - tenFeet, rOut * 1.5 - 1);
+    const centerPoint = Vector.ORIGIN;
 
     // Inner bounds
     const r = GameConstants.PLAYER_RADIUS;

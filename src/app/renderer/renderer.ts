@@ -27,28 +27,62 @@ export class Renderer {
   private readonly gameStateService: GameStateService;
   private readonly ctx: CanvasRenderingContext2D;
 
-  private scale: number;
   private width: number;
   private height: number;
+  private windowsScale: number;
+  private zoom: number;
+  private offset: Vector;
 
   private readonly interval = 1000 / GameConstants.FPS;
   private now: number = Date.now();
   private then: number = Date.now();
   private delta: number = 0;
 
+  private absolute: boolean = false;
+
   constructor(gameStateService: GameStateService, ctx: CanvasRenderingContext2D, width: number, height: number) {
     this.gameStateService = gameStateService;
     this.ctx = ctx;
-    this.scale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
+    this.width = width;
+    this.height = height;
+    this.windowsScale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
+    this.zoom = 1;
+    this.offset = Vector.of(width / 2, height / 2);
+  }
+
+  //
+  // Getters
+  //
+
+  public getOffset(): Vector {
+    return this.offset;
+  }
+
+  public toGamePosition(position: Vector): Vector {
+    return Vector.of((position.x - this.offset.x) / this.scale, (position.y - this.offset.y) / this.scale);
+  }
+
+  //
+  // Setters
+  //
+
+  public setCanvasSize(width: number, height: number): void {
+    this.windowsScale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
     this.width = width;
     this.height = height;
   }
 
-  public setCanvasSize(width: number, height: number): void {
-    this.scale = width / GameConstants.CANVAS_WIDTH_IN_METERS;
-    this.width = width;
-    this.height = height;
+  public updateZoom(delta: number): void {
+    this.zoom = Math.max(Math.min(this.zoom + delta / 10, 3), 0.5);
   }
+
+  public updateOffset(offset: Vector): void {
+    this.offset = offset;
+  }
+
+  //
+  // Rendering
+  //
 
   public start(): void {
     requestAnimationFrame(() => this.start());
@@ -63,10 +97,12 @@ export class Renderer {
     }
   }
 
-  public drawScene(state: GameState): void {
+  private drawScene(state: GameState): void {
     // Reset
     this.ctx.clearRect(Vector.ORIGIN.x, Vector.ORIGIN.y, this.width, this.height);
+    this.absolute = true;
     this.drawRect(Vector.ORIGIN, this.width, this.height, GameConstants.OUT_OF_BOUNDS_FILL);
+    this.absolute = false;
 
     // Track
     const track = state.track;
@@ -82,6 +118,7 @@ export class Renderer {
     }
 
     // Relative track
+    this.absolute = true;
     const relativeTrack = Renderer.createRelativeTrack(this.width, this.height, this.scale, track);
     this.drawRelativeTrack(relativeTrack, 0.2);
 
@@ -96,10 +133,15 @@ export class Renderer {
         this.drawRelativePlayer(relativeTrack, player, relativePosition, state.playerSelection?.index === i);
       }
     }
+    this.absolute = false;
 
     // Debug
     Renderer.debugPoints.forEach(p => this.drawCircle(Circle.of(p, 0.1), Fill.of(GameConstants.DEBUG_POINT_COLOR)));
     Renderer.debugText.forEach((text, i) => this.drawText(Vector.of(1, 1.5 + i * 0.47), text, Stroke.of('black', 1)));
+  }
+
+  private get scale(): number {
+    return this.windowsScale * this.zoom;
   }
 
   private drawRelativeTrack(relativeTrack: Rectangle, tenFeetLineWidth: number) {
@@ -341,14 +383,14 @@ export class Renderer {
     this.ctx.beginPath();
     this.ctx.font = "16px Arial";
     this.ctx.fillStyle = stroke.color;
-    this.ctx.fillText(text, position.x * this.scale, position.y * this.scale);
+    this.ctx.fillText(text, this.x(position.x), this.y(position.y));
     this.ctx.closePath();
   }
 
   private drawArc(arc: Arc, fill?: Fill, stroke?: Stroke, fillTriangle: boolean = true) {
     const { position, radius, startAngle, endAngle } = arc;
     this.ctx.beginPath();
-    this.ctx.arc(position.x * this.scale, position.y * this.scale, radius * this.scale, startAngle.radians, endAngle.radians);
+    this.ctx.arc(this.x(position.x), this.y(position.y), radius * this.scale, startAngle.radians, endAngle.radians);
     this.fill(fill);
     this.stroke(stroke);
     this.ctx.closePath();
@@ -366,7 +408,7 @@ export class Renderer {
     const pos = circle.position;
     const radius = circle.radius;
     this.ctx.beginPath();
-    this.ctx.arc(pos.x * this.scale, pos.y * this.scale, radius * this.scale, 0, Math.PI * 2);
+    this.ctx.arc(this.x(pos.x), this.y(pos.y), radius * this.scale, 0, Math.PI * 2);
     this.fill(fill);
     this.stroke(stroke);
     this.ctx.closePath();
@@ -374,10 +416,10 @@ export class Renderer {
 
   private drawQuad(pos1: Vector, pos2: Vector, pos3: Vector, pos4: Vector, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
-    this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
-    this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
-    this.ctx.lineTo(pos3.x * this.scale, pos3.y * this.scale);
-    this.ctx.lineTo(pos4.x * this.scale, pos4.y * this.scale);
+    this.ctx.moveTo(this.x(pos1.x), this.y(pos1.y));
+    this.ctx.lineTo(this.x(pos2.x), this.y(pos2.y));
+    this.ctx.lineTo(this.x(pos3.x), this.y(pos3.y));
+    this.ctx.lineTo(this.x(pos4.x), this.y(pos4.y));
     this.ctx.closePath();
     this.fill(fill);
     this.stroke(stroke);
@@ -385,7 +427,7 @@ export class Renderer {
 
   private drawRect(pos: Vector, width: number, height: number, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
-    this.ctx.rect(pos.x * this.scale, pos.y * this.scale, width * this.scale, height * this.scale);
+    this.ctx.rect(this.x(pos.x), this.y(pos.y), width * this.scale, height * this.scale);
     this.fill(fill);
     this.stroke(stroke);
     this.ctx.closePath();
@@ -393,24 +435,24 @@ export class Renderer {
 
   private drawLine(pos1: Vector, pos2: Vector, stroke: Stroke) {
     this.ctx.beginPath();
-    this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
-    this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
+    this.ctx.moveTo(this.x(pos1.x), this.y(pos1.y));
+    this.ctx.lineTo(this.x(pos2.x), this.y(pos2.y));
     this.stroke(stroke);
     this.ctx.closePath();
   }
 
   private drawTriangle(pos1: Vector, pos2: Vector, pos3: Vector, fill?: Fill, stroke?: Stroke) {
     this.ctx.beginPath();
-    this.ctx.moveTo(pos1.x * this.scale, pos1.y * this.scale);
-    this.ctx.lineTo(pos2.x * this.scale, pos2.y * this.scale);
-    this.ctx.lineTo(pos3.x * this.scale, pos3.y * this.scale);
+    this.ctx.moveTo(this.x(pos1.x), this.y(pos1.y));
+    this.ctx.lineTo(this.x(pos2.x), this.y(pos2.y));
+    this.ctx.lineTo(this.x(pos3.x), this.y(pos3.y));
     this.ctx.closePath();
     this.fill(fill);
     this.stroke(stroke);
   }
 
   private fill(fill?: Fill) {
-if (!fill) {
+    if (!fill) {
       return;
     }
     this.ctx.fillStyle = fill.color;
@@ -425,6 +467,14 @@ if (!fill) {
     this.ctx.strokeStyle = stroke.color;
     this.ctx.setLineDash([stroke.dotted ? 5 : 0]);
     this.ctx.stroke();
+  }
+
+  private x(x: number): number {
+    return x * this.scale + (this.absolute ? 0 : this.offset.x);
+  }
+
+  private y(y: number): number {
+    return y * this.scale + (this.absolute ? 0 : this.offset.y);
   }
 
   //
