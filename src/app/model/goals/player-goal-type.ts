@@ -1,8 +1,8 @@
 export enum PlayerGoalType {
-  RETURN_IN_BOUNDS,
-  JAMMER_JUKE,
-  JAMMER_DO_LAPS,
-  BLOCKER_BLOCK,
-  BLOCKER_OFFENSE,
-  BLOCKER_DO_LAPS
+  RETURN_IN_BOUNDS = 'Return in bounds',
+  JAMMER_JUKE = 'Jammer juke',
+  JAMMER_DO_LAPS = 'Jammer do laps',
+  BLOCKER_BLOCK = 'Blocker block',
+  BLOCKER_OFFENSE = 'Blocker offense',
+  BLOCKER_DO_LAPS = 'Blocker do laps'
 }

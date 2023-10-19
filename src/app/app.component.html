@@ -3,9 +3,13 @@
 <div class="overlay">
     <div class="title">Roller Derby Sim</div>
     <div class="fps">{{ (state$ | async)?.frames }}</div>
-    <div class="info">{{ (state$ | async)?.toInfo() }}</div>
+    <div class="info-panel">
+        <h2>Player Info</h2>
+        <div class="info-block">
+            <ng-container *ngFor="let info of (state$ | async)?.toInfo()">
+                <div class="info-title">{{ info.title }}</div>
+                <div class="info-value">{{ info.value }}</div>
+            </ng-container>
+        </div>
+    </div>
 </div>
-
-<!--<pre style="width:22%; height: 100%; left: 78%; position: absolute">
-  {{ (state$ | async) | json }}
-</pre>-->

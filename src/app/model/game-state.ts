@@ -9,6 +9,7 @@ import {PlayerGoalJammerDoLapsFactory} from "./goals/player-goal-jammer-do-laps"
 import {PlayerGoalBlockJammerFactory} from "./goals/player-goal-block-jammer";
 import {GoalFactory} from "./goals/goal-factory";
 import {PlayerGoalBlockerDoLapsFactory} from "./goals/player-goal-blocker-do-laps";
+import {Info} from "./info";
 
 export class GameState {
 
@@ -52,8 +53,18 @@ export class GameState {
     return -1;
   }
 
-  public toInfo(): string {
-    return "";
+  public toInfo(): Info[] {
+    const p = this.playerSelection === undefined ? undefined : this.players[this.playerSelection.index];
+    if (!p) {
+      return [];
+    }
+    return [
+      Info.of('Name', p.name),
+      Info.of('Position', p.position.x.toFixed(1) + ' ' + p.position.y.toFixed(1)),
+      Info.of('Speed (kph)', p.velocity.speed.kph.toFixed(1)),
+      Info.of('Angle', p.velocity.angle.degrees.toFixed(0)),
+      Info.of('Goal', p.goals.length > 0 ? '' + p.goals[0].type : 'None'),
+    ];
   }
 
   //

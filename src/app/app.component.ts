@@ -1,9 +1,10 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {Renderer} from "./renderer/renderer";
-import {Observable} from "rxjs";
+import {distinctUntilChanged, map, Observable} from "rxjs";
 import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
 import {GameStateService} from "./game/game-state.service";
+import {Info} from "./model/info";
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('canvas', {static: false}) canvas?: ElementRef;
 
   public state$: Observable<GameState>;
+  public info$?: Observable<Info[]>;
 
   private renderer?: Renderer;
   private clickPoint?: Vector;
@@ -22,6 +24,11 @@ export class AppComponent implements AfterViewInit {
 
   constructor(private gameStateService: GameStateService) {
     this.state$ = gameStateService.observeState();
+    this.info$ = this.state$
+      .pipe(
+        map(state => state.toInfo()),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      );
   }
 
   ngAfterViewInit() {
@@ -49,7 +56,6 @@ export class AppComponent implements AfterViewInit {
     const clientPosition = Vector.of(event.clientX, event.clientY);
     const gamePosition = this.getRenderer().toGamePosition(clientPosition);
     if (event.button === 0) {
-      console.log(clientPosition.x, clientPosition.y, gamePosition.x, gamePosition.y);
       this.gameStateService.update(state => state.select(gamePosition));
     } else if (event.button === 1) {
       this.clickPoint = clientPosition;
