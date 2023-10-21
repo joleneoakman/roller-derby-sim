@@ -85,6 +85,11 @@ export class Player {
     return this.withTargets(newTargets);
   }
 
+  public updateGoal(goal: PlayerGoal): Player {
+    const newGoals = this.goals.map(g => g.type === goal.type ? goal : g);
+    return this.withGoals(newGoals);
+  }
+
   public clearTargets(): Player {
     return this.withTargets([]);
   }
