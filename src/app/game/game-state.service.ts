@@ -27,7 +27,7 @@ export class GameStateService {
     setInterval(() => {
       this.state$.next(this.state);
       this.state = this.state.withFrameRate(0);
-    }, 1000);
+    }, 250);
   }
 
   public observeState(): Observable<GameState> {

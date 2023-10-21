@@ -4,5 +4,6 @@ export enum PlayerGoalType {
   JAMMER_DO_LAPS = 'Jammer do laps',
   BLOCKER_BLOCK = 'Blocker block',
   BLOCKER_OFFENSE = 'Blocker offense',
-  BLOCKER_DO_LAPS = 'Blocker do laps'
+  BLOCKER_DO_LAPS = 'Blocker do laps',
+  BLOCKER_RETURN_TO_PACK = 'Blocker return to pack',
 }

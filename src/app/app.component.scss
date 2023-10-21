@@ -37,7 +37,7 @@ $overlay-font-color: #ffffffcc;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 150px;
+  width: 200px;
   height: 100%;
   background-color: rgba(26, 12, 35, 0.5);
   border-right: 1px solid #000;
@@ -57,7 +57,7 @@ $overlay-font-color: #ffffffcc;
 .info-block {
   display: grid;
   gap: 8px;
-  grid-template-columns: 40% 60%;
+  grid-template-columns: 28% 72%;
   align-items: center;
 
   & > .info-title {

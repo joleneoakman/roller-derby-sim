@@ -10,10 +10,19 @@ import {PlayerGoalBlockJammerFactory} from "./goals/player-goal-block-jammer";
 import {GoalFactory} from "./goals/goal-factory";
 import {PlayerGoalBlockerDoLapsFactory} from "./goals/player-goal-blocker-do-laps";
 import {Info} from "./info";
+import {PlayerGoal} from "./goals/player-goal";
+import {PlayerGoalReturnToPackFactory} from "./goals/player-goal-return-to-pack";
 
 export class GameState {
 
-  private static readonly GOALS: GoalFactory[] = GameState.createGoalFactories();
+  private static readonly GOAL_FACTORIES: GoalFactory[] = [
+    new PlayerGoalReturnInBoundsFactory(),
+    new PlayerGoalJammerDoLapsFactory(),
+    new PlayerGoalBlockJammerFactory(),
+    new PlayerGoalReturnToPackFactory(),
+    new PlayerGoalBlockerDoLapsFactory()
+  ];
+  private static readonly GOAL_COMPARATOR = GameState.createGoalComparator(GameState.GOAL_FACTORIES);
 
   readonly frames: number;
   readonly track: Track;
@@ -58,12 +67,13 @@ export class GameState {
     if (!p) {
       return [];
     }
+    const goals = p.goals.length === 0 ? 'None' : p.goals.map(g => g.type).join('\n');
     return [
       Info.of('Name', p.name),
       Info.of('Position', p.position.x.toFixed(1) + ' ' + p.position.y.toFixed(1)),
       Info.of('Speed (kph)', p.velocity.speed.kph.toFixed(1)),
       Info.of('Angle', p.velocity.angle.degrees.toFixed(0)),
-      Info.of('Goal', p.goals.length > 0 ? '' + p.goals[0].type : 'None'),
+      Info.of('Goals', goals),
     ];
   }
 
@@ -135,11 +145,16 @@ export class GameState {
   private static calculateNewGoals(players: Player[], track: Track, pack: Pack): Player[] {
     const now = Date.now();
     return players.map(player => {
-      for (const factory of GameState.GOALS) {
+      const newGoals: PlayerGoal[] = [];
+      for (const factory of GameState.GOAL_FACTORIES) {
         if (factory.test(player, players, track, pack)) {
           const goal = factory.create(now, player, players, track, pack);
-          player = player.addGoal(goal);
+          newGoals.push(goal);
         }
+      }
+
+      if (newGoals.length > 0) {
+        return player.addGoals(newGoals, this.GOAL_COMPARATOR);
       }
       return player;
     });
@@ -151,7 +166,7 @@ export class GameState {
         return player;
       }
       const goal = player.goals[0];
-      return goal.execute(Date.now(), player, players, track);
+      return goal.execute(Date.now(), player, players, track, pack);
     });
   }
 
@@ -176,12 +191,14 @@ export class GameState {
     return result;
   }
 
-  private static createGoalFactories(): GoalFactory[] {
-    return [
-      new PlayerGoalReturnInBoundsFactory(),
-      new PlayerGoalJammerDoLapsFactory(),
-      new PlayerGoalBlockJammerFactory(),
-      new PlayerGoalBlockerDoLapsFactory()
-    ]
+  /**
+   * Create a comparator that sorts goals by the order in which the given factories array is sorted.
+   */
+  private static createGoalComparator(factories: GoalFactory[]): (a: PlayerGoal, b: PlayerGoal) => number {
+    return (a: PlayerGoal, b: PlayerGoal) => {
+      const aIndex = factories.findIndex(f => f.type === a.type);
+      const bIndex = factories.findIndex(f => f.type === b.type);
+      return aIndex - bIndex;
+    }
   }
 }

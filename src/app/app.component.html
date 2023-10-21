@@ -8,7 +8,11 @@
         <div class="info-block">
             <ng-container *ngFor="let info of (state$ | async)?.toInfo()">
                 <div class="info-title">{{ info.title }}</div>
-                <div class="info-value">{{ info.value }}</div>
+                <div class="info-value">
+                    <div *ngFor="let value of toValueLines(info.value)">
+                        {{ value }}
+                    </div>
+                </div>
             </ng-container>
         </div>
     </div>

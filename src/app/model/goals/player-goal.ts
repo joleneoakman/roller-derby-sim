@@ -1,6 +1,7 @@
 import {PlayerGoalType} from "./player-goal-type";
 import {Player} from "../player";
 import {Track} from "../track";
+import {Pack} from "../pack";
 
 export abstract class PlayerGoal {
 
@@ -12,5 +13,5 @@ export abstract class PlayerGoal {
     this.time = time;
   }
 
-  public abstract execute(now: number, player: Player, players: Player[], track: Track): Player;
+  public abstract execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player;
 }

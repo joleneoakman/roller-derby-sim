@@ -9,8 +9,13 @@ import {Target} from "../target";
 
 
 export class PlayerGoalBlockerDoLapsFactory implements GoalFactory {
+
+  public get type(): PlayerGoalType {
+    return PlayerGoalType.BLOCKER_DO_LAPS;
+  }
+
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
-    return player.isBlocker() && !player.hasGoal(PlayerGoalType.BLOCKER_DO_LAPS);
+    return player.isBlocker() && !player.hasGoal(this.type);
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalBlockerDoLaps {
@@ -24,7 +29,7 @@ export class PlayerGoalBlockerDoLaps extends PlayerGoal {
     super(PlayerGoalType.BLOCKER_DO_LAPS, time);
   }
 
-  execute(now: number, player: Player, players: Player[], track: Track): Player {
+  execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     // Todo: target with max speed
     const relativePosition = player.relativePosition(track);
     const targetPosition = track.getAbsolutePosition(Vector.of(relativePosition.x, relativePosition.y + 0.005));

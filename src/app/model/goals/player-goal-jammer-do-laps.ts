@@ -9,8 +9,12 @@ import {GoalFactory} from "./goal-factory";
 
 export class PlayerGoalJammerDoLapsFactory implements GoalFactory {
 
+  public get type(): PlayerGoalType {
+    return PlayerGoalType.JAMMER_DO_LAPS;
+  }
+
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
-    return player.isJammer() && !player.hasGoal(PlayerGoalType.JAMMER_DO_LAPS)
+    return player.isJammer() && !player.hasGoal(this.type);
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalJammerDoLaps {
@@ -24,7 +28,7 @@ export class PlayerGoalJammerDoLaps extends PlayerGoal {
     super(PlayerGoalType.JAMMER_DO_LAPS, time);
   }
 
-  execute(now: number, player: Player, players: Player[], track: Track): Player {
+  execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     const relativePosition = player.relativePosition(track);
     const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
     return player.withTarget(Target.of(targetPosition));

@@ -10,8 +10,13 @@ import {Target} from "../target";
 import {Overflow} from "../overflow";
 
 export class PlayerGoalBlockJammerFactory implements GoalFactory {
+
+  public get type(): PlayerGoalType {
+    return PlayerGoalType.BLOCKER_BLOCK;
+  }
+
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
-    if (!player.isBlocker() || player.hasGoal(PlayerGoalType.BLOCKER_BLOCK)) {
+    if (!player.isBlocker() || player.hasGoal(this.type)) {
       return false;
     }
 
@@ -22,6 +27,15 @@ export class PlayerGoalBlockJammerFactory implements GoalFactory {
 
     const distance = player.distanceTo(opposingJammer);
     if (distance > GameConstants.TWENTY_FEET) {
+      return false;
+    }
+
+    if (!opposingJammer.isInBounds(track)) {
+      return false;
+    }
+
+    const playerIndex = players.indexOf(player);
+    if (!pack.activePack || !pack.activePack.includes(playerIndex)) {
       return false;
     }
 
@@ -46,15 +60,24 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
     super(PlayerGoalType.BLOCKER_BLOCK, time);
   }
 
-  execute(now: number, player: Player, players: Player[], track: Track): Player {
+  execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     const opposingJammer = players.find(p => p.isJammer() && p.team !== player.team);
     if (!opposingJammer) {
-      return player.clearGoal(this.type);
+      return player.clearGoal(this);
     }
 
     const distance = player.distanceTo(opposingJammer);
     if (distance > GameConstants.TWENTY_FEET) {
-      return player.clearGoal(this.type);
+      return player.clearGoal(this);
+    }
+
+    if (!opposingJammer.isInBounds(track)) {
+      return player.clearGoal(this);
+    }
+
+    const playerIndex = players.indexOf(player);
+    if (!pack.activePack || !pack.activePack.includes(playerIndex)) {
+      return player.clearGoal(this);
     }
 
     const relativePositionJammer = opposingJammer.relativePosition(track);
@@ -62,7 +85,7 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
     const yJammer = Overflow.of(relativePositionJammer.y);
     const yPlayer = Overflow.of(relativePositionPlayer.y);
     if (yJammer.isInFrontOf(yPlayer)) {
-      return player.clearGoal(this.type);
+      return player.clearGoal(this);
     }
 
     const newPosition = track.getAbsolutePosition(Vector.of(relativePositionJammer.x, relativePositionPlayer.y));

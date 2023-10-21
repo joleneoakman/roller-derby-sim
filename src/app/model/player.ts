@@ -12,6 +12,7 @@ import {PlayerGoal} from "./goals/player-goal";
 import {PlayerGoalType} from "./goals/player-goal-type";
 import {PlayerId} from "./player-id";
 import {Overflow} from "./overflow";
+import {PlayerGoalReturnInBounds} from "./goals/player-goal-return-in-bounds";
 
 export class Player {
 
@@ -98,13 +99,14 @@ export class Player {
     return new Player(this.id, this.massKg, this.current, this.targets, goals);
   }
 
-  public clearGoal(type: PlayerGoalType): Player {
-    const newGoals = this.goals.filter(g => g.type !== type);
+  public addGoals(goals: PlayerGoal[], comparator: (g1: PlayerGoal, g2: PlayerGoal) => number): Player {
+    const newGoals = [...this.goals, ...goals].sort(comparator);
     return this.withGoals(newGoals);
   }
 
-  public addGoal(goal: PlayerGoal): Player {
-    return this.withGoals([goal, ...this.goals]);
+  public clearGoal(goal: PlayerGoal): Player {
+    const newGoals = this.goals.filter(g => g !== goal);
+    return this.withGoals(newGoals);
   }
 
   public moveTowardsTarget(): Player {

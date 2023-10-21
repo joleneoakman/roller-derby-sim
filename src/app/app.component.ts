@@ -77,7 +77,6 @@ export class AppComponent implements AfterViewInit {
 
     const clientPos = Vector.of(event.clientX, event.clientY);
     const diff = clientPos.minus(this.clickPoint);
-    console.log(this.clickPoint, clientPos, diff)
     const delta = this.offset.plus(diff);
     this.getRenderer().updateOffset(delta);
   }
@@ -98,5 +97,9 @@ export class AppComponent implements AfterViewInit {
       throw new Error('Renderer not initialized');
     }
     return this.renderer;
+  }
+
+  toValueLines(value: string): string[] {
+    return value.split('\n');
   }
 }

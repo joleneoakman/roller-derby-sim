@@ -12,8 +12,12 @@ import {GoalFactory} from "./goal-factory";
 
 export class PlayerGoalReturnInBoundsFactory implements GoalFactory {
 
+  public get type(): PlayerGoalType {
+    return PlayerGoalType.RETURN_IN_BOUNDS;
+  }
+
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
-    return !player.isInBounds(track) && !player.hasGoal(PlayerGoalType.RETURN_IN_BOUNDS);
+    return !player.isInBounds(track) && !player.hasGoal(this.type);
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalReturnInBounds {
@@ -53,8 +57,8 @@ export class PlayerGoalReturnInBounds extends PlayerGoal {
     return new PlayerGoalReturnInBounds(this.time, this.playersInFront, this.skatedOutRelPosition, skatedInBeforeOut);
   }
 
-  execute(now: number, player: Player, players: Player[], track: Track): Player {
-    if (now < this.time + GameConstants.REACTION_TIME_MS) {
+  execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
+    if (now < this.time + GameConstants.REACTION_TIME_MS / 3) {
         return player;
     }
 
@@ -62,7 +66,7 @@ export class PlayerGoalReturnInBounds extends PlayerGoal {
     if (!inBounds || !this.skatedInBeforeOut) {
       return this.updateGoalAndTargets(player, players, track);
     } else {
-      return player.clearTargets().clearGoal(PlayerGoalType.RETURN_IN_BOUNDS);
+      return player.clearTargets().clearGoal(this);
     }
   }
 
