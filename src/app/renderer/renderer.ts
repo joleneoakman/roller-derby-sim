@@ -505,18 +505,22 @@ export class Renderer {
 
     let color = '';
     if (team === Team.A) {
-      if (selected && !isTarget) {
+      if (!inPlay) {
+        color = GameConstants.TEAM_A_OUT_OF_PLAY_COLOR;
+      } else if (selected && !isTarget) {
         color = GameConstants.TEAM_A_SELECTED_COLOR;
       } else if (!isTarget) {
-        color = inPlay ? GameConstants.TEAM_A_COLOR : GameConstants.TEAM_A_OUT_OF_PLAY_COLOR;
+        color = GameConstants.TEAM_A_COLOR;
       } else {
         color = GameConstants.TEAM_A_TARGET_COLOR;
       }
     } else {
-      if (selected && !isTarget) {
+      if (!inPlay) {
+        color = GameConstants.TEAM_B_OUT_OF_PLAY_COLOR;
+      } else if (selected && !isTarget) {
         color = GameConstants.TEAM_B_SELECTED_COLOR;
       } else if (!isTarget) {
-        color = inPlay ? GameConstants.TEAM_B_COLOR : GameConstants.TEAM_B_OUT_OF_PLAY_COLOR;
+        color = GameConstants.TEAM_B_COLOR;
       } else {
         color = GameConstants.TEAM_B_TARGET_COLOR;
       }

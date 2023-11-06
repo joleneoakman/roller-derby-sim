@@ -18,9 +18,8 @@ export class Pack {
   readonly splitPackIndex2: number; // Pack index or -1 if no split pack
 
   readonly isSplit: boolean;
-  readonly isFront: boolean;
-  readonly isBack: boolean;
-  readonly isAll: boolean;
+  readonly playerIndicesBehindPack: number[];
+  readonly playerIndicesInFrontOfPack: number[];
 
   private constructor(players: Player[], track: Track) {
     this.players = players;
@@ -34,9 +33,8 @@ export class Pack {
     this.splitPackIndex2 = activePackIndices.b.b;
 
     this.isSplit = this.splitPackIndex1 !== -1 && this.splitPackIndex2 !== -1;
-    this.isFront = Pack.isFront(this.activePack, this.players, this.distances, track);
-    this.isBack = Pack.isBack(this.activePack, this.players, this.distances, track);
-    this.isAll = Pack.isAll(this.activePack, this.players, this.distances, track);
+    this.playerIndicesBehindPack = Pack.getPlayerIndicesBehindPack(this.activePack, this.players, track);
+    this.playerIndicesInFrontOfPack = Pack.getPlayerIndicesInFrontOfPack(this.activePack, this.players, track);
   }
 
   public static create(players: Player[], track: Track): Pack {
@@ -56,6 +54,18 @@ export class Pack {
       return undefined;
     }
     return Pair.of(this.packs[this.splitPackIndex1], this.packs[this.splitPackIndex2]);
+  }
+
+  public get isFront(): boolean {
+    return this.activePack !== undefined && this.playerIndicesInFrontOfPack.length === 0 && this.playerIndicesBehindPack.length > 0;
+  }
+
+  public get isBack(): boolean {
+    return this.activePack !== undefined && this.playerIndicesInFrontOfPack.length > 0 && this.playerIndicesBehindPack.length === 0;
+  }
+
+  public get isAll(): boolean {
+    return this.activePack !== undefined && this.playerIndicesInFrontOfPack.length === 0 && this.playerIndicesBehindPack.length === 0;
   }
 
   public isInPlay(player: Player, track: Track): boolean {
@@ -213,41 +223,43 @@ export class Pack {
     return frontIndex;
   }
 
-  private static isFront(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
+  private static getPlayerIndicesBehindPack(pack: PackCandidate | undefined, players: Player[], track: Track): number[] {
     if (pack === undefined) {
-      return false;
+      return [];
     }
 
-    // todo const backPlayerIndex = Pack.getRearMostPackPlayerIndex(pack, players, track);
-    return false;
-
-    /**
-     * if (pack === undefined) {
-     *       return false;
-     *     }
-     *
-     *     const packFront = pack.relativeBack;
-     *     let hasPlayerInBack = false;
-     *     for (let i = 0; i < players.length; i++) {
-     *       const player = players[i];
-     *       if (player.isJammer() || player.isInBounds(track) || pack.playerIndices.includes(i)) {
-     *         continue;
-     *       }
-     *       const playerPosition = player.relativePosition(track);
-     *       if (Overflow.of(playerPosition.y).isBehind(packFront)) {
-     *         return false;
-     *       }
-     *       hasPlayerInBack = true;
-     *     }
-     *     return hasPlayerInBack;
-     */
+    const relativeBack = pack.relativeBack;
+    const result: number[] = [];
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      if (player.isJammer() || !player.isInBounds(track) || pack.playerIndices.includes(i)) {
+        continue;
+      }
+      const playerPosition = player.relativePosition(track);
+      if (Overflow.of(playerPosition.y).isBehind(relativeBack)) {
+        result.push(i);
+      }
+    }
+    return result;
   }
 
-  private static isBack(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
-    return false; // Todo
-  }
+  private static getPlayerIndicesInFrontOfPack(pack: PackCandidate | undefined, players: Player[], track: Track): number[] {
+    if (pack === undefined) {
+      return [];
+    }
 
-  private static isAll(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
-    return false; // Todo
+    const relativeFront = pack.relativeFront;
+    const result: number[] = [];
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      if (player.isJammer() || !player.isInBounds(track) || pack.playerIndices.includes(i)) {
+        continue;
+      }
+      const playerPosition = player.relativePosition(track);
+      if (Overflow.of(playerPosition.y).isInFrontOf(relativeFront)) {
+        result.push(i);
+      }
+    }
+    return result;
   }
 }
