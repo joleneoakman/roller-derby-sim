@@ -114,7 +114,7 @@ export class Renderer {
 
     // Players
     for (let i = 0; i < state.players.length; i++) {
-      this.drawPlayer(state.players[i], track, state.playerSelection?.index === i);
+      this.drawPlayer(state.players[i], pack, track, state.playerSelection?.index === i);
     }
 
     // Relative track
@@ -197,7 +197,7 @@ export class Renderer {
   }
 
   private drawRelativePlayer(relativeTrack: Rectangle, player: Player, relativePosition: Vector, selected: boolean) {
-    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false);
+    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false, true);
     const relativeCircle = Circle.of(Vector.of(relativeTrack.x + relativeTrack.width * relativePosition.x, relativeTrack.y + relativeTrack.height * (1 - relativePosition.y)), player.radius / 2.5);
     this.drawCircle(relativeCircle, Fill.of(color), Stroke.of(strokeColor, GameConstants.PLAYER_OUTLINE_WIDTH));
   }
@@ -290,24 +290,25 @@ export class Renderer {
     }
   }
 
-  private drawPlayer(player: Player, track: Track, selected: boolean) {
+  private drawPlayer(player: Player, pack: Pack, track: Track, selected: boolean) {
     // Draw target lines (on select)
     const showTargets = selected;
-    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false);
+    const {color, strokeColor} = Renderer.getColorForTarget(player.team, selected, false, true);
     const lineStroke = Stroke.of(strokeColor, 0.5, true);
     for (let i = 0; showTargets && i < player.targets.length; i++) {
-      const a = i === 0 ? player.current : player.targets[i - 1];
-      const b = player.targets[i];
-      this.drawLine(a.position, b.position, lineStroke);
+      const a = i === 0 ? player.position : player.targets[i - 1].position;
+      const b = player.targets[i].position;
+      this.drawLine(a, b, lineStroke);
     }
 
     // Draw target circles (on select)
+    const inPlay = player.isInPlay(pack, track);
     for (let i = 0; showTargets && i < player.targets.length; i++) {
-      this.drawTarget(player.radius, player.targets[i], player.team, selected, true);
+      this.drawTarget(player.radius, player.targets[i].position, player.team, selected, true, inPlay);
     }
 
     // Draw player circle
-    this.drawTarget(player.radius, player.current, player.team, selected, false);
+    this.drawTarget(player.radius, player.position, player.team, selected, false, inPlay);
 
     // Draw player symbol
     const circleStroke = Stroke.of(strokeColor, 1);
@@ -323,8 +324,9 @@ export class Renderer {
     // Draw debug coordinates
     if (selected) {
       const position = player.position;
+      const relPosition = player.relativePosition(track);
       const textStroke = GameConstants.TEXT_STROKE;
-      this.drawText(position.plus(Vector.of(0, 0.8)), '' + position.x.toFixed(2) + ', ' + position.y.toFixed(2), textStroke);
+      this.drawText(position.plus(Vector.of(0, 0.8)), '' + relPosition.x.toFixed(2) + ', ' + relPosition.y.toFixed(2), textStroke);
       this.drawText(position.plus(Vector.of(0, 1.2)), '' + player.velocity.angle.degrees.toFixed(2) + ', ' + player.velocity.speed.kph.toFixed(2), textStroke);
     }
   }
@@ -368,13 +370,12 @@ export class Renderer {
     this.drawQuad(arc1.p1, arc1.p2, arc2.p1, arc2.p2, GameConstants.PLAYER_SYMBOL_FILL);
   }
 
-  private drawTarget(radius: number, target: Target, team: Team, selected: boolean, isTarget: boolean) {
-    const {color, strokeColor} = Renderer.getColorForTarget(team, selected, isTarget);
+  private drawTarget(radius: number, position: Vector, team: Team, selected: boolean, isTarget: boolean, inPlay: boolean) {
+    const {color, strokeColor} = Renderer.getColorForTarget(team, selected, isTarget, inPlay);
     const playerFill = Fill.of(color);
     const playerStroke = Stroke.of(strokeColor, selected && !isTarget ? 2 : 1);
 
     // Circle
-    const position = target.position;
     const finalRadius = isTarget ? radius / 2.5 : radius;
     this.drawCircle(Circle.of(position, finalRadius), playerFill, playerStroke);
   }
@@ -490,19 +491,40 @@ export class Renderer {
     return Rectangle.of(Vector.of(x, y), w, h);
   }
 
-  private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean): {color: string, strokeColor: string} {
-    if (team === Team.A && selected && !isTarget) {
-      return {color: GameConstants.TEAM_A_SELECTED_COLOR, strokeColor: GameConstants.TEAM_A_SELECTED_STROKE_COLOR};
-    } else if (team === Team.B && selected && !isTarget) {
-      return {color: GameConstants.TEAM_B_SELECTED_COLOR, strokeColor: GameConstants.TEAM_B_SELECTED_STROKE_COLOR};
-    } else if (team === Team.A && !isTarget) {
-      return {color: GameConstants.TEAM_A_COLOR, strokeColor: GameConstants.TEAM_A_STROKE_COLOR};
-    } else if (team === Team.B && !isTarget) {
-      return {color: GameConstants.TEAM_B_COLOR, strokeColor: GameConstants.TEAM_B_STROKE_COLOR};
-    } else if (team === Team.A && isTarget) {
-      return {color: GameConstants.TEAM_A_TARGET_COLOR, strokeColor: GameConstants.TEAM_A_STROKE_COLOR};
+  private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean, inPlay: boolean): {color: string, strokeColor: string} {
+    let strokeColor = '';
+    if (team === Team.A && selected) {
+      strokeColor = GameConstants.TEAM_A_SELECTED_STROKE_COLOR;
+    } else if (team === Team.A) {
+      strokeColor = GameConstants.TEAM_A_STROKE_COLOR;
+    } else if (team === Team.B && selected) {
+      strokeColor = GameConstants.TEAM_B_SELECTED_STROKE_COLOR;
     } else {
-      return {color: GameConstants.TEAM_B_TARGET_COLOR, strokeColor: GameConstants.TEAM_B_STROKE_COLOR};
+      strokeColor = GameConstants.TEAM_B_STROKE_COLOR;
+    }
+
+    let color = '';
+    if (team === Team.A) {
+      if (selected && !isTarget) {
+        color = GameConstants.TEAM_A_SELECTED_COLOR;
+      } else if (!isTarget) {
+        color = inPlay ? GameConstants.TEAM_A_COLOR : GameConstants.TEAM_A_OUT_OF_PLAY_COLOR;
+      } else {
+        color = GameConstants.TEAM_A_TARGET_COLOR;
+      }
+    } else {
+      if (selected && !isTarget) {
+        color = GameConstants.TEAM_B_SELECTED_COLOR;
+      } else if (!isTarget) {
+        color = inPlay ? GameConstants.TEAM_B_COLOR : GameConstants.TEAM_B_OUT_OF_PLAY_COLOR;
+      } else {
+        color = GameConstants.TEAM_B_TARGET_COLOR;
+      }
+    }
+
+    return {
+      color: color,
+      strokeColor: strokeColor
     }
   }
  }

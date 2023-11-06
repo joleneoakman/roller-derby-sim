@@ -82,18 +82,18 @@ export class PlayerGoalReturnInBounds extends PlayerGoal {
     let targetPos: Vector;
     if (rearMostRelativePosition) {
       const currentRelativePosition = player.relativePosition(track);
-      const relativePosition = Vector.of(relativeX, Overflow.of(currentRelativePosition.y - 0.1).value);
+      const relativePosition = Vector.of(relativeX, Overflow.of(currentRelativePosition.y - 0.01).value);
       targetPos = track.getAbsolutePosition(relativePosition);
     } else {
       const closestPointOnTrackLine = track.getClosestPointOnTrackLine(player, 0.5);
       if (currentYNormalized.isInFrontOf(skatedOutYNormalized)) {
-        const relativePosition1 = Vector.of(relativeX, Overflow.of(this.skatedOutRelPosition.y - 0.1).value);
+        const relativePosition1 = Vector.of(relativeX, Overflow.of(this.skatedOutRelPosition.y - 0.01).value);
         targetPos = track.getAbsolutePosition(relativePosition1);
       } else {
         targetPos = closestPointOnTrackLine;
       }
     }
-    player = player.withTarget(Target.of(targetPos));
+    player = player.withTarget(Target.stopAt(targetPos));
     if (this.skatedInBeforeOut !== skatedInBeforeOut) {
       return player.updateGoal(this.withSkatedInBeforeOut(skatedInBeforeOut));
     }

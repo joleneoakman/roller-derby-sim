@@ -62,6 +62,6 @@ export class PlayerGoalReturnToPack extends PlayerGoal {
     const isBehind = Overflow.of(curRelPos.y).isBehind(targetRelY);
     const relTargetPos = Vector.of(0.5, isBehind ? curRelPos.y + 0.1 : curRelPos.y - 0.1);
     const targetPos = track.getAbsolutePosition(relTargetPos);
-    return player.withTarget(Target.of(targetPos));
+    return player.withTarget(Target.stopAt(targetPos));
   }
 }

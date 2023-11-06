@@ -89,6 +89,6 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
     }
 
     const newPosition = track.getAbsolutePosition(Vector.of(relativePositionJammer.x, relativePositionPlayer.y));
-    return player.withTarget(Target.of(newPosition));
+    return player.withTarget(Target.stopAt(newPosition));
   }
 }

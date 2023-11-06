@@ -5,6 +5,7 @@ import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
 import {GameStateService} from "./game/game-state.service";
 import {Info} from "./model/info";
+import {GameInfo} from "./model/game-info";
 
 @Component({
   selector: 'app-root',
@@ -16,11 +17,12 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('canvas', {static: false}) canvas?: ElementRef;
 
   public state$: Observable<GameState>;
-  public info$?: Observable<Info[]>;
+  public info$?: Observable<GameInfo>;
 
   private renderer?: Renderer;
   private clickPoint?: Vector;
   private offset?: Vector;
+  private button?: number;
 
   constructor(private gameStateService: GameStateService) {
     this.state$ = gameStateService.observeState();
@@ -57,21 +59,29 @@ export class AppComponent implements AfterViewInit {
     const gamePosition = this.getRenderer().toGamePosition(clientPosition);
     if (event.button === 0) {
       this.gameStateService.update(state => state.select(gamePosition));
-    } else if (event.button === 1) {
+    } else if (event.button === 1 || event.button === 2) {
       this.clickPoint = clientPosition;
       this.offset = this.getRenderer().getOffset();
-    } else if (event.button === 2) {
-      this.gameStateService.update(state => state.withSelectedTargetPosition(gamePosition));
+      this.button = event.button;
     }
   }
 
   public onMouseUp(event: MouseEvent) {
+
+    if (event.button === 2 && this.clickPoint !== undefined) {
+      const clientPosition = Vector.of(event.clientX, event.clientY);
+      const gamePosition = this.getRenderer().toGamePosition(this.clickPoint);
+      const stop = this.clickPoint?.distanceTo(clientPosition) < 5;
+      this.gameStateService.update(state => state.withSelectedTargetPosition(gamePosition, stop));
+    }
+
     this.clickPoint = undefined;
     this.offset = undefined;
+    this.button = undefined;
   }
 
   public onMouseMove(event: MouseEvent) {
-    if (this.clickPoint === undefined || this.offset === undefined) {
+    if (this.clickPoint === undefined || this.offset === undefined || this.button !== 1) {
       return;
     }
 

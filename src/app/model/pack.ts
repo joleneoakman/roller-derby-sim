@@ -17,6 +17,11 @@ export class Pack {
   readonly splitPackIndex1: number; // Pack index or -1 if no split pack
   readonly splitPackIndex2: number; // Pack index or -1 if no split pack
 
+  readonly isSplit: boolean;
+  readonly isFront: boolean;
+  readonly isBack: boolean;
+  readonly isAll: boolean;
+
   private constructor(players: Player[], track: Track) {
     this.players = players;
     this.positions = Pack.calculatePositions(this.players, track.packLine);
@@ -27,11 +32,20 @@ export class Pack {
     this.activePackIndex = activePackIndices.a;
     this.splitPackIndex1 = activePackIndices.b.a;
     this.splitPackIndex2 = activePackIndices.b.b;
+
+    this.isSplit = this.splitPackIndex1 !== -1 && this.splitPackIndex2 !== -1;
+    this.isFront = Pack.isFront(this.activePack, this.players, this.distances, track);
+    this.isBack = Pack.isBack(this.activePack, this.players, this.distances, track);
+    this.isAll = Pack.isAll(this.activePack, this.players, this.distances, track);
   }
 
   public static create(players: Player[], track: Track): Pack {
     return new Pack(players, track);
   }
+
+  //
+  // Getters
+  //
 
   public get activePack(): PackCandidate | undefined {
     return this.activePackIndex === -1 ? undefined : this.packs[this.activePackIndex];
@@ -42,6 +56,22 @@ export class Pack {
       return undefined;
     }
     return Pair.of(this.packs[this.splitPackIndex1], this.packs[this.splitPackIndex2]);
+  }
+
+  public isInPlay(player: Player, track: Track): boolean {
+    if (!player.isInBounds(track)) {
+      return false;
+    } else if (player.isJammer()) {
+      return true;
+    } else if (!this.activePack) {
+      return false;
+    }
+
+    const pack = this.activePack;
+    const playerIndex = this.players.indexOf(player);
+    const totalDistance = track.packLine.distance;
+    const position = Overflow.of(this.positions[playerIndex], totalDistance);
+    return pack.backEngagementZone.isBehind(position) && pack.frontEngagementZone.isInFrontOf(position);
   }
 
   //
@@ -157,5 +187,67 @@ export class Pack {
     } else {
       return Pair.of(-1, Pair.of(-1, -1));
     }
+  }
+
+  private static getRearMostPackPlayerIndex(pack: PackCandidate, players: Player[], track: Track): number {
+    let backIndex = 0;
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      const backCandidate = players[backIndex];
+      if (pack.playerIndices.includes(i) && i !== backIndex && player.isBehind(backCandidate, track)) {
+        backIndex = i;
+      }
+    }
+    return backIndex;
+  }
+
+  private static getForeMostPackPlayerIndex(pack: PackCandidate, players: Player[], track: Track): number {
+    let frontIndex = 0;
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+      const frontCandidate = players[frontIndex];
+      if (pack.playerIndices.includes(i) && i !== frontIndex && player.isInFrontOf(frontCandidate, track)) {
+        frontIndex = i;
+      }
+    }
+    return frontIndex;
+  }
+
+  private static isFront(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
+    if (pack === undefined) {
+      return false;
+    }
+
+    // todo const backPlayerIndex = Pack.getRearMostPackPlayerIndex(pack, players, track);
+    return false;
+
+    /**
+     * if (pack === undefined) {
+     *       return false;
+     *     }
+     *
+     *     const packFront = pack.relativeBack;
+     *     let hasPlayerInBack = false;
+     *     for (let i = 0; i < players.length; i++) {
+     *       const player = players[i];
+     *       if (player.isJammer() || player.isInBounds(track) || pack.playerIndices.includes(i)) {
+     *         continue;
+     *       }
+     *       const playerPosition = player.relativePosition(track);
+     *       if (Overflow.of(playerPosition.y).isBehind(packFront)) {
+     *         return false;
+     *       }
+     *       hasPlayerInBack = true;
+     *     }
+     *     return hasPlayerInBack;
+     */
+  }
+
+  private static isBack(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
+    return false; // Todo
+  }
+
+  private static isAll(pack: PackCandidate | undefined, players: Player[], distances: number[][], track: Track): boolean {
+    return false; // Todo
   }
 }

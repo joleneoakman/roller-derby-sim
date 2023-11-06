@@ -30,7 +30,29 @@ export class PlayerGoalJammerDoLaps extends PlayerGoal {
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     const relativePosition = player.relativePosition(track);
-    const targetPosition = track.getAbsolutePosition(Vector.of(0.8, relativePosition.y + 0.1));
-    return player.withTarget(Target.of(targetPosition));
+    const relY = relativePosition.y + 0.01;
+    const targetX = this.calculateTargetX(relY);
+    const relX = (relativePosition.x + targetX) / 2;
+    const targetPosition = track.getAbsolutePosition(Vector.of(relX, relY));
+    return player.withTarget(Target.speedUpTo(targetPosition));
+  }
+
+  /**
+   * Calculate the best relative X for the given relative Y for the jammer:
+   *  - Outside track on straight parts
+   *  - Inside track on curves
+   */
+  private calculateTargetX(y: number): number {
+    const inputX = y - 0.06;
+    return this.calculateSinY(inputX * 2 + 0.25) * 0.9 + 0.05;
+  }
+
+  /**
+   * Method that gives a Y value for a given X value along the following sine wave:
+   *  - frequency: 1 (crosses the x-axis at 0, 0.5, 1, etc.)
+   *  - amplitude: 0.5 (y-values range from 0 to 1)
+   */
+  private calculateSinY(x: number): number {
+    return 0.5 * Math.sin(2 * Math.PI * x) + 0.5;
   }
 }

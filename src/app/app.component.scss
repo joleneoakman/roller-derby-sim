@@ -47,7 +47,7 @@ $overlay-font-color: #ffffffcc;
   & > h2 {
     font-size: 20px;
     color: $overlay-font-color;
-    border-bottom: 1px solid #fffc;
+    border-bottom: 1px solid #fff8;
     text-align: center;
     margin: 0;
     padding-bottom: 8px;
@@ -57,7 +57,7 @@ $overlay-font-color: #ffffffcc;
 .info-block {
   display: grid;
   gap: 8px;
-  grid-template-columns: 28% 72%;
+  grid-template-columns: 33% 67%;
   align-items: center;
 
   & > .info-title {

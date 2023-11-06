@@ -12,7 +12,7 @@ import {PlayerGoal} from "./goals/player-goal";
 import {PlayerGoalType} from "./goals/player-goal-type";
 import {PlayerId} from "./player-id";
 import {Overflow} from "./overflow";
-import {PlayerGoalReturnInBounds} from "./goals/player-goal-return-in-bounds";
+import {Pack} from "./pack";
 
 export class Player {
 
@@ -22,20 +22,28 @@ export class Player {
   readonly radius: number = GameConstants.PLAYER_RADIUS;
 
   // Motion data
-  readonly current: Target;
+  readonly position: Vector;
+  readonly velocity: Velocity;
   readonly targets: Target[];
 
   // Goals
   readonly goals: PlayerGoal[];
 
+  // Lazy values
+  // X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
+  // Y: Relative distance traveled along track (0 = start, 0.9999... = end)
+  private _relativePosition?: Vector;
+
   private constructor(id: PlayerId,
                       massKg: number,
-                      current: Target,
+                      position: Vector,
+                      velocity: Velocity,
                       targets: Target[],
                       goals: PlayerGoal[]) {
     this.id = id;
     this.massKg = massKg;
-    this.current = current;
+    this.position = position;
+    this.velocity = velocity;
     this.targets = targets;
     this.goals = goals;
   }
@@ -49,24 +57,21 @@ export class Player {
                    name: string,
                    type: PlayerType,
                    massKg: number,
-                   current: Target): Player {
-    return new Player(PlayerId.of(team, number, name, type), massKg, current, [], []);
+                   position: Vector,
+                   velocity: Velocity): Player {
+    return new Player(PlayerId.of(team, number, name, type), massKg, position, velocity, [], []);
   }
 
   //
   // Setters
   //
 
-  public withMotion(motion: Target): Player {
-    return new Player(this.id, this.massKg, motion, this.targets, this.goals);
-  }
-
   public withPosition(position: Vector): Player {
-    return this.withMotion(this.current.withPosition(position));
+    return new Player(this.id, this.massKg, position, this.velocity, this.targets, this.goals);
   }
 
   public withVelocity(velocity: Velocity): Player {
-    return this.withMotion(this.current.withVelocity(velocity));
+    return new Player(this.id, this.massKg, this.position, velocity, this.targets, this.goals);
   }
 
   public withTarget(target: Target): Player {
@@ -74,7 +79,7 @@ export class Player {
   }
 
   public withTargets(targets: Target[]): Player {
-    return new Player(this.id, this.massKg, this.current, targets, this.goals);
+    return new Player(this.id, this.massKg, this.position, this.velocity, targets, this.goals);
   }
 
   public addTarget(motion: Target): Player {
@@ -96,7 +101,7 @@ export class Player {
   }
 
   private withGoals(goals: PlayerGoal[]): Player {
-    return new Player(this.id, this.massKg, this.current, this.targets, goals);
+    return new Player(this.id, this.massKg, this.position, this.velocity, this.targets, goals);
   }
 
   public addGoals(goals: PlayerGoal[], comparator: (g1: PlayerGoal, g2: PlayerGoal) => number): Player {
@@ -114,16 +119,16 @@ export class Player {
     const target = this.targets.length > 0 ? this.targets[0] : undefined;
     const currentKph = this.velocity.speed.kph;
     const speedRatio = Math.min(currentKph / GameConstants.MAX_SPEED_KPH, GameConstants.MAX_SPEED_KPH);
-    const targetSize = 0.05 * (1 - speedRatio) + 1.5 * speedRatio;
+    const targetSize = !target?.stop ? 0.04 : 0.05 * (1 - speedRatio) + 1.5 * speedRatio;
     if (target && this.position.distanceTo(target.position) < targetSize) {
       return this.markTargetAsReached().moveTowardsTarget();
     }
 
     // Adjust angle
-    const newAngle = Player.calculateAdjustedAngle(this.current, target?.position);
+    const newAngle = Player.calculateAdjustedAngle(this.position, this.velocity, target?.position);
 
     // Adjust speed
-    const newSpeed = Player.calculateAdjustedSpeed(this.current, this.targets);
+    const newSpeed = Player.calculateAdjustedSpeed(this.position, this.velocity, this.targets);
     // Do move
     const newVelocity = Velocity.of(newSpeed, newAngle);
     const newPosition = this.position.plus(this.velocity.vector);
@@ -139,20 +144,15 @@ export class Player {
   // Getters
   //
 
-  public get position(): Vector {
-    return this.current.position;
-  }
-
-  public get velocity(): Velocity {
-    return this.current.velocity;
-  }
-
   public toCircle(): Circle {
     return Circle.of(this.position, this.radius);
   }
 
   public relativePosition(track: Track): Vector {
-    return this.current.relativePosition(track);
+    if (this._relativePosition === undefined) {
+      this._relativePosition = track.getRelativePosition(this.position);
+    }
+    return this._relativePosition;
   }
 
   public distanceTo(other: Player): number {
@@ -171,6 +171,10 @@ export class Player {
   public isInBounds(track: Track): boolean {
     const relativePosition = this.relativePosition(track);
     return relativePosition.x >= 0 && relativePosition.x <= 1;
+  }
+
+  public isInPlay(pack: Pack, track: Track): boolean {
+    return pack.isInPlay(this, track);
   }
 
   public get team(): Team {
@@ -219,13 +223,13 @@ export class Player {
   // Utility methods
   //
 
-  private static calculateAdjustedAngle(current: Target, targetPosition?: Vector): Angle {
+  private static calculateAdjustedAngle(position: Vector, velocity: Velocity, targetPosition?: Vector): Angle {
     if (targetPosition === undefined) {
-      return current.velocity.angle;
+      return velocity.angle;
     }
-    const currentAngle = current.velocity.angle;
-    const currentKph = current.velocity.speed.kph;
-    const normalizedTarget = targetPosition.minus(current.position);
+    const currentAngle = velocity.angle;
+    const currentKph = velocity.speed.kph;
+    const normalizedTarget = targetPosition.minus(position);
     if (normalizedTarget.isOrigin()) {
       return currentAngle;
     }
@@ -255,8 +259,8 @@ export class Player {
    * 2. Distance to n-th target is greater than stopping distance.
    * 3. Max accelerationWeight becomes 0.
    */
-  private static calculateAdjustedSpeed(current: Target, targets: Target[]): Speed {
-    const currentKph = current.velocity.speed.kph;
+  private static calculateAdjustedSpeed(position: Vector, velocity: Velocity, targets: Target[]): Speed {
+    const currentKph = velocity.speed.kph;
     let distanceToStop = Player.calculateStoppingDistance(currentKph);
     let accelerationWeight = 1;
 
@@ -265,8 +269,8 @@ export class Player {
       accelerationWeight = 0;
     } else {
       // Inversely adjust speed to let player face target before accelerating
-      const playerAngle = current.velocity.angle;
-      const playerTargetAngle = Angle.ofVector(targets[0].position.minus(current.position));
+      const playerAngle = velocity.angle;
+      const playerTargetAngle = Angle.ofVector(targets[0].position.minus(position));
       const smallestRotation = playerAngle.minus(playerTargetAngle).shortestAngle().degrees;
       if (smallestRotation > 90) {
         accelerationWeight = 0;
@@ -276,27 +280,27 @@ export class Player {
       }
 
       // Check next targets to see if we need to slow down
-      const allPositions = [current, ...targets];
-      for (let i = 1; i < allPositions.length && accelerationWeight > 0; i++) {
-        const prev = allPositions[i - 1];
-        const curr = allPositions[i];
+      const allTargets = [Target.speedUpTo(position), ...targets];
+      for (let i = 1; i < allTargets.length && accelerationWeight > 0; i++) {
+        const prev = allTargets[i - 1];
+        const curr = allTargets[i];
         const distance1 = prev.position.distanceTo(curr.position);
 
-        if (distance1 > distanceToStop) {
+        if (distance1 > distanceToStop || !curr.stop) {
           break;
-        } else if (i === allPositions.length - 1) {
+        } else if (i === allTargets.length - 1) {
           accelerationWeight = 0;
           break;
         }
 
-        const next = allPositions[i + 1];
+        const next = allTargets[i + 1];
         const angle = Angle.ofVectors(prev.position, curr.position, next.position);
         const smallestRotation = Math.abs(180 - angle.shortestAngle().degrees);
         if (smallestRotation >= 90) {
           accelerationWeight = 0;
           break;
         } else if (smallestRotation > 0) {
-          const nextTargetAngleAdjustment = Math.pow(1 - smallestRotation / 90, 1 / 3);
+          const nextTargetAngleAdjustment = Math.pow(1 - smallestRotation / 90, 1);
           accelerationWeight *= nextTargetAngleAdjustment;
         }
       }

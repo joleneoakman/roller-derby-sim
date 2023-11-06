@@ -12,10 +12,12 @@ import {PlayerGoalBlockerDoLapsFactory} from "./goals/player-goal-blocker-do-lap
 import {Info} from "./info";
 import {PlayerGoal} from "./goals/player-goal";
 import {PlayerGoalReturnToPackFactory} from "./goals/player-goal-return-to-pack";
+import {GameConstants} from "../game/game-constants";
+import {GameInfo} from "./game-info";
 
 export class GameState {
 
-  private static readonly GOAL_FACTORIES: GoalFactory[] = [
+  private static readonly GOAL_FACTORIES: GoalFactory[] = []; private static test = [
     new PlayerGoalReturnInBoundsFactory(),
     new PlayerGoalJammerDoLapsFactory(),
     new PlayerGoalBlockJammerFactory(),
@@ -43,7 +45,7 @@ export class GameState {
   //
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(0, track, players, Pack.create(players, track), undefined);
+    return new GameState(0, track, players, Pack.create(players, track), PlayerSelection.of(0));
   }
 
   //
@@ -62,7 +64,14 @@ export class GameState {
     return -1;
   }
 
-  public toInfo(): Info[] {
+  public toInfo(): GameInfo {
+    return GameInfo.of(
+      this.toPlayerInfo(),
+      this.toPackInfo()
+    );
+  }
+
+  private toPlayerInfo(): Info[] {
     const p = this.playerSelection === undefined ? undefined : this.players[this.playerSelection.index];
     if (!p) {
       return [];
@@ -70,11 +79,38 @@ export class GameState {
     const goals = p.goals.length === 0 ? 'None' : p.goals.map(g => g.type).join('\n');
     return [
       Info.of('Name', p.name),
+      Info.of('In play', p.isInPlay(this.pack, this.track) ? 'Yes' : 'No'),
       Info.of('Position', p.position.x.toFixed(1) + ' ' + p.position.y.toFixed(1)),
       Info.of('Speed (kph)', p.velocity.speed.kph.toFixed(1)),
       Info.of('Angle', p.velocity.angle.degrees.toFixed(0)),
       Info.of('Goals', goals),
     ];
+  }
+
+  private toPackInfo(): Info[] {
+    const pack = this.pack.activePack;
+    const packDefinition = Info.of('Pack', this.toPackDefinition(this.pack))
+    const size = pack?.playerIndices?.length;
+    return [
+      packDefinition,
+      Info.of('Pack size', '' + (size ? size: '0'))
+    ];
+  }
+
+  private toPackDefinition(pack: Pack): string {
+    if (pack.isSplit) {
+      return "Split pack";
+    } else if (!pack.activePack) {
+        return "No pack";
+    } else if (pack.isFront) {
+      return "Pack is front";
+    } else if (pack.isBack) {
+      return "Pack is back";
+    } else if (pack.isAll) {
+      return "Pack is all";
+    } else {
+      return "Pack is here";
+    }
   }
 
   //
@@ -94,13 +130,13 @@ export class GameState {
     return new GameState(this.frames, this.track, this.players, this.pack, PlayerSelection.of(index));
   }
 
-  public withSelectedTargetPosition(position: Vector): GameState {
+  public withSelectedTargetPosition(position: Vector, stop: boolean): GameState {
     if (this.playerSelection === undefined) {
       return this;
     }
     return this.withSelection(this.playerSelection.index).withPlayers(this.players.map((p, i) => {
       if (i === this.playerSelection?.index) {
-        return p.addTarget(Target.of(position));
+        return p.addTarget(Target.of(position, stop));
       } else {
         return p;
       }
@@ -144,6 +180,10 @@ export class GameState {
 
   private static calculateNewGoals(players: Player[], track: Track, pack: Pack): Player[] {
     const now = Date.now();
+    if (!GameConstants.PLAY) {
+      return players;
+    }
+
     return players.map(player => {
       const newGoals: PlayerGoal[] = [];
       for (const factory of GameState.GOAL_FACTORIES) {

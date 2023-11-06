@@ -8,6 +8,7 @@ export class GameConstants {
   //
   public static readonly DEBUG_BOUNDS = true;
   public static readonly DEBUG_TRACK_LINES = false;
+  public static readonly PLAY = true;
 
   //
   // Rendering
@@ -24,13 +25,13 @@ export class GameConstants {
   // Speed
   public static readonly MAX_SPEED_KPH = 30;
   public static readonly ZERO_TO_MAX_IN_SECONDS = 4;
-  public static readonly MAX_TO_ZERO_IN_SECONDS = 2;
+  public static readonly MAX_TO_ZERO_IN_SECONDS = 1.3;
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
 
   // Turning
   public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MIN = 0.2;
-  public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MAX = 7;
+  public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MAX = 2;
   public static readonly DEGREES_TURN_PER_SECONDS_AT_MIN = 180 / GameConstants.SECONDS_TO_TURN_180_DEGREES_AT_MIN;
   public static readonly DEGREES_TURN_PER_SECONDS_AT_MAX = 180 / GameConstants.SECONDS_TO_TURN_180_DEGREES_AT_MAX;
   public static readonly TURN_PER_FRAME_AT_MIN = GameConstants.DEGREES_TURN_PER_SECONDS_AT_MIN / GameConstants.FPS;
@@ -82,10 +83,12 @@ export class GameConstants {
   public static readonly TEAM_B_SELECTED_STROKE_COLOR = '#00f';
   public static readonly TEAM_A_COLOR = '#d51349';
   public static readonly TEAM_A_STROKE_COLOR = '#410516';
+  public static readonly TEAM_A_OUT_OF_PLAY_COLOR = '#c4afb5';
   public static readonly TEAM_A_SELECTED_COLOR = '#fc7a9e';
   public static readonly TEAM_A_TARGET_COLOR = 'rgba(255,19,73,0.3)';
   public static readonly TEAM_B_COLOR = '#5a06d9';
   public static readonly TEAM_B_STROKE_COLOR = '#26035d';
+  public static readonly TEAM_B_OUT_OF_PLAY_COLOR = '#d3c6e5';
   public static readonly TEAM_B_SELECTED_COLOR = '#a973fd';
   public static readonly TEAM_B_TARGET_COLOR = 'rgba(90,6,217,0.3)';
 
