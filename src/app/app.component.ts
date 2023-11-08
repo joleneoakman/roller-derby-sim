@@ -4,8 +4,8 @@ import {distinctUntilChanged, map, Observable} from "rxjs";
 import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
 import {GameStateService} from "./game/game-state.service";
-import {Info} from "./model/info";
 import {GameInfo} from "./model/game-info";
+import {PackWarning} from "./model/pack-warning";
 
 @Component({
   selector: 'app-root',
@@ -111,5 +111,13 @@ export class AppComponent implements AfterViewInit {
 
   toValueLines(value: string): string[] {
     return value.split('\n');
+  }
+
+  onPackWarning(packWarning: PackWarning): void {
+    this.gameStateService.update(state => state.givePackWarning(packWarning));
+  }
+
+  onToggleGame(): void {
+    this.gameStateService.update(state => state.toggleGame());
   }
 }

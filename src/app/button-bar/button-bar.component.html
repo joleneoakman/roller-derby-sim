@@ -1,0 +1,26 @@
+<div class="button-bar">
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.NO_PACK)" (click)="onClick(PackWarning.NO_PACK)">
+        <span class="text">No pack</span>
+        <span class="key">D</span>
+    </button>
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.SPLIT_PACK)" (click)="isClicked(PackWarning.SPLIT_PACK)">
+        <span class="text">Split pack</span>
+        <span class="key">F</span>
+    </button>
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.PACK_IS_HERE)" (click)="isClicked(PackWarning.PACK_IS_HERE)">
+        <span class="text">Pack is here</span>
+        <span class="key">G</span>
+    </button>
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.PACK_IS_ALL)" (click)="isClicked(PackWarning.PACK_IS_ALL)">
+        <span class="text">Pack is all</span>
+        <span class="key">H</span>
+    </button>
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.PACK_IS_BACK)" (click)="isClicked(PackWarning.PACK_IS_BACK)">
+        <span class="text">Pack is back</span>
+        <span class="key">J</span>
+    </button>
+    <button type="button" class="button" [class.clicked]="isClicked(PackWarning.PACK_IS_FRONT)" (click)="isClicked(PackWarning.PACK_IS_FRONT)">
+        <span class="text">Pack is front</span>
+        <span class="key">K</span>
+    </button>
+</div>

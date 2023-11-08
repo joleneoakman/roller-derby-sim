@@ -14,10 +14,11 @@ import {PlayerGoal} from "./goals/player-goal";
 import {PlayerGoalReturnToPackFactory} from "./goals/player-goal-return-to-pack";
 import {GameConstants} from "../game/game-constants";
 import {GameInfo} from "./game-info";
+import {PackWarning} from "./pack-warning";
 
 export class GameState {
 
-  private static readonly GOAL_FACTORIES: GoalFactory[] = []; private static test = [
+  private static readonly GOAL_FACTORIES: GoalFactory[] = [
     new PlayerGoalReturnInBoundsFactory(),
     new PlayerGoalJammerDoLapsFactory(),
     new PlayerGoalBlockJammerFactory(),
@@ -31,12 +32,14 @@ export class GameState {
   readonly players: Player[];
   readonly pack: Pack;
   readonly playerSelection?: PlayerSelection;
+  readonly paused: boolean;
 
-  constructor(frames: number, track: Track, players: Player[], pack: Pack, selection?: PlayerSelection) {
+  constructor(frames: number, track: Track, players: Player[], pack: Pack, paused: boolean, selection?: PlayerSelection) {
     this.frames = frames;
     this.players = players;
     this.track = track;
     this.pack = pack;
+    this.paused = paused;
     this.playerSelection = selection;
   }
 
@@ -45,7 +48,7 @@ export class GameState {
   //
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(0, track, players, Pack.create(players, track), PlayerSelection.of(0));
+    return new GameState(0, track, players, Pack.create(players, track), true, PlayerSelection.of(0));
   }
 
   //
@@ -99,17 +102,17 @@ export class GameState {
 
   private toPackDefinition(pack: Pack): string {
     if (pack.isSplit) {
-      return "Split pack";
+      return PackWarning.SPLIT_PACK;
     } else if (!pack.activePack) {
-        return "No pack";
+        return PackWarning.NO_PACK;
     } else if (pack.isFront) {
-      return "Pack is front";
+      return PackWarning.PACK_IS_FRONT;
     } else if (pack.isBack) {
-      return "Pack is back";
+      return PackWarning.PACK_IS_BACK;
     } else if (pack.isAll) {
-      return "Pack is all";
+      return PackWarning.PACK_IS_ALL;
     } else {
-      return "Pack is here";
+      return PackWarning.PACK_IS_HERE;
     }
   }
 
@@ -118,16 +121,16 @@ export class GameState {
   //
 
   public withFrameRate(frames: number): GameState {
-    return new GameState(frames, this.track, this.players, this.pack, this.playerSelection);
+    return new GameState(frames, this.track, this.players, this.pack, this.paused, this.playerSelection);
   }
 
   public withPlayers(players: Player[]): GameState {
     const pack = Pack.create(players, this.track);
-    return new GameState(this.frames, this.track, players, pack, this.playerSelection);
+    return new GameState(this.frames, this.track, players, pack, this.paused, this.playerSelection);
   }
 
   public withSelection(index: number): GameState {
-    return new GameState(this.frames, this.track, this.players, this.pack, PlayerSelection.of(index));
+    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, PlayerSelection.of(index));
   }
 
   public withSelectedTargetPosition(position: Vector, stop: boolean): GameState {
@@ -159,26 +162,40 @@ export class GameState {
   }
 
   public deselect(): GameState {
-    return new GameState(this.frames, this.track, this.players, this.pack, undefined);
+    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, undefined);
   }
 
   public recalculate(): GameState {
-    const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack);
+    const goalFactories = this.paused ? [] : GameState.GOAL_FACTORIES;
+    const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack, goalFactories);
     const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
     const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
+    // Todo: calculate relevant pack warnings (register time + check minimum duration)
     return this.withFrameRate(this.frames + 1).withPlayers(playersAfterCollisions);
+  }
+
+  public toggleGame(): GameState {
+    const paused = !this.paused;
+    const players = paused ? this.players.map(p => p.freeze()) : this.players;
+    return new GameState(this.frames, this.track, players, this.pack, paused, this.playerSelection);
+  }
+
+  public givePackWarning(packWarning: PackWarning): GameState {
+    const now = Date.now();
+    // Todo
+    return this;
   }
 
   //
   // Utility methods
   //
 
-  private static calculateGoals(players: Player[], track: Track, pack: Pack): Player[] {
-    const playersAfterNewGoals = GameState.calculateNewGoals(players, track, pack);
+  private static calculateGoals(players: Player[], track: Track, pack: Pack, goalFactories: GoalFactory[]): Player[] {
+    const playersAfterNewGoals = GameState.calculateNewGoals(players, track, pack, goalFactories);
     return GameState.calculateGoalTargets(playersAfterNewGoals, track, pack);
   }
 
-  private static calculateNewGoals(players: Player[], track: Track, pack: Pack): Player[] {
+  private static calculateNewGoals(players: Player[], track: Track, pack: Pack, goalFactories: GoalFactory[]): Player[] {
     const now = Date.now();
     if (!GameConstants.PLAY) {
       return players;
@@ -186,7 +203,7 @@ export class GameState {
 
     return players.map(player => {
       const newGoals: PlayerGoal[] = [];
-      for (const factory of GameState.GOAL_FACTORIES) {
+      for (const factory of goalFactories) {
         if (factory.test(player, players, track, pack)) {
           const goal = factory.create(now, player, players, track, pack);
           newGoals.push(goal);

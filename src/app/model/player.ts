@@ -114,6 +114,10 @@ export class Player {
     return this.withGoals(newGoals);
   }
 
+  public freeze(): Player {
+    return this.withGoals([]).withTargets([]).withVelocity(this.velocity.withKph(Speed.ZERO));
+  }
+
   public moveTowardsTarget(): Player {
     // Target reached!
     const target = this.targets.length > 0 ? this.targets[0] : undefined;
