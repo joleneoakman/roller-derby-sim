@@ -54,6 +54,17 @@ export class GameConstants {
   public static readonly PACK_LINE_RADIUS = 5.344422989025845; // Pack is calculated at this track line
 
   //
+  // Gameplay
+  //
+  public static readonly PERFECT_WARNING_TIME_MS = 1500;
+  public static readonly GOOD_WARNING_TIME_MS = 3000;
+  public static readonly OK_WARNING_TIME_MS = 5000;
+  public static readonly PERFECT_SCORE = 100;
+  public static readonly GOOD_SCORE = 50;
+  public static readonly OK_SCORE = 25;
+  public static readonly MISTAKE_SCORE = -25;
+
+  //
   // Styling
   //
 

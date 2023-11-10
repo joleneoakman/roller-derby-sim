@@ -6,6 +6,7 @@ import {Pair} from "./pair";
 import {PackPlayer} from "./pack-player";
 import {Overflow} from "./overflow";
 import {Track} from "./track";
+import {PackWarningType} from "./pack-warning-type";
 
 export class Pack {
 
@@ -82,6 +83,22 @@ export class Pack {
     const totalDistance = track.packLine.distance;
     const position = Overflow.of(this.positions[playerIndex], totalDistance);
     return pack.backEngagementZone.isBehind(position) && pack.frontEngagementZone.isInFrontOf(position);
+  }
+
+  public get warning(): PackWarningType {
+    if (this.isSplit) {
+      return PackWarningType.SPLIT_PACK;
+    } else if (!this.activePack) {
+      return PackWarningType.NO_PACK;
+    } else if (this.isFront) {
+      return PackWarningType.PACK_IS_FRONT;
+    } else if (this.isBack) {
+      return PackWarningType.PACK_IS_BACK;
+    } else if (this.isAll) {
+      return PackWarningType.PACK_IS_ALL;
+    } else {
+      return PackWarningType.PACK_IS_HERE;
+    }
   }
 
   //

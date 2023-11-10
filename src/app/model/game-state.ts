@@ -14,6 +14,8 @@ import {PlayerGoal} from "./goals/player-goal";
 import {PlayerGoalReturnToPackFactory} from "./goals/player-goal-return-to-pack";
 import {GameConstants} from "../game/game-constants";
 import {GameInfo} from "./game-info";
+import {PackWarningType} from "./pack-warning-type";
+import {PackGame} from "./pack-game";
 import {PackWarning} from "./pack-warning";
 
 export class GameState {
@@ -33,13 +35,15 @@ export class GameState {
   readonly pack: Pack;
   readonly playerSelection?: PlayerSelection;
   readonly paused: boolean;
+  readonly packGame: PackGame;
 
-  constructor(frames: number, track: Track, players: Player[], pack: Pack, paused: boolean, selection?: PlayerSelection) {
+  constructor(frames: number, track: Track, players: Player[], pack: Pack, paused: boolean, packGame: PackGame, selection: PlayerSelection | undefined) {
     this.frames = frames;
     this.players = players;
     this.track = track;
     this.pack = pack;
     this.paused = paused;
+    this.packGame = packGame;
     this.playerSelection = selection;
   }
 
@@ -48,7 +52,7 @@ export class GameState {
   //
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(0, track, players, Pack.create(players, track), true, PlayerSelection.of(0));
+    return new GameState(0, track, players, Pack.create(players, track), true, PackGame.empty(), PlayerSelection.of(0));
   }
 
   //
@@ -70,7 +74,8 @@ export class GameState {
   public toInfo(): GameInfo {
     return GameInfo.of(
       this.toPlayerInfo(),
-      this.toPackInfo()
+      this.toPackInfo(),
+      this.toScoreInfo()
     );
   }
 
@@ -92,28 +97,22 @@ export class GameState {
 
   private toPackInfo(): Info[] {
     const pack = this.pack.activePack;
-    const packDefinition = Info.of('Pack', this.toPackDefinition(this.pack))
+    const packDefinition = Info.of('Pack', this.pack.warning)
     const size = pack?.playerIndices?.length;
     return [
       packDefinition,
-      Info.of('Pack size', '' + (size ? size: '0'))
+      Info.of('Pack size', '' + (size ? size: '0')),
     ];
   }
 
-  private toPackDefinition(pack: Pack): string {
-    if (pack.isSplit) {
-      return PackWarning.SPLIT_PACK;
-    } else if (!pack.activePack) {
-        return PackWarning.NO_PACK;
-    } else if (pack.isFront) {
-      return PackWarning.PACK_IS_FRONT;
-    } else if (pack.isBack) {
-      return PackWarning.PACK_IS_BACK;
-    } else if (pack.isAll) {
-      return PackWarning.PACK_IS_ALL;
-    } else {
-      return PackWarning.PACK_IS_HERE;
-    }
+  private toScoreInfo(): Info[] {
+    return [
+      Info.of('Score', '' + this.packGame.score.score),
+      Info.of('Perfects', '' + this.packGame.score.perfects),
+      Info.of('Goods', '' + this.packGame.score.goods),
+      Info.of('OKs', '' + this.packGame.score.oks),
+      Info.of('Mistakes', '' + this.packGame.score.mistakes),
+    ]
   }
 
   //
@@ -121,16 +120,16 @@ export class GameState {
   //
 
   public withFrameRate(frames: number): GameState {
-    return new GameState(frames, this.track, this.players, this.pack, this.paused, this.playerSelection);
+    return new GameState(frames, this.track, this.players, this.pack, this.paused, this.packGame, this.playerSelection);
   }
 
   public withPlayers(players: Player[]): GameState {
     const pack = Pack.create(players, this.track);
-    return new GameState(this.frames, this.track, players, pack, this.paused, this.playerSelection);
+    return new GameState(this.frames, this.track, players, pack, this.paused, this.packGame, this.playerSelection);
   }
 
   public withSelection(index: number): GameState {
-    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, PlayerSelection.of(index));
+    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, this.packGame, PlayerSelection.of(index));
   }
 
   public withSelectedTargetPosition(position: Vector, stop: boolean): GameState {
@@ -162,7 +161,7 @@ export class GameState {
   }
 
   public deselect(): GameState {
-    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, undefined);
+    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, this.packGame, undefined);
   }
 
   public recalculate(): GameState {
@@ -170,20 +169,26 @@ export class GameState {
     const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack, goalFactories);
     const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
     const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
-    // Todo: calculate relevant pack warnings (register time + check minimum duration)
-    return this.withFrameRate(this.frames + 1).withPlayers(playersAfterCollisions);
+    const packGame = this.packGame.withNewGameWarning(PackWarning.of(this.pack.warning, Date.now()));
+    return this.withFrameRate(this.frames + 1)
+      .withPlayers(playersAfterCollisions)
+      .withPackGame(packGame);
   }
 
   public toggleGame(): GameState {
     const paused = !this.paused;
     const players = paused ? this.players.map(p => p.freeze()) : this.players;
-    return new GameState(this.frames, this.track, players, this.pack, paused, this.playerSelection);
+    return new GameState(this.frames, this.track, players, this.pack, paused, this.packGame, this.playerSelection);
   }
 
-  public givePackWarning(packWarning: PackWarning): GameState {
+  public givePackWarning(packWarning: PackWarningType): GameState {
     const now = Date.now();
-    // Todo
-    return this;
+    const packGame = this.packGame.withNewUserWarning(PackWarning.of(packWarning, now));
+    return this.withPackGame(packGame);
+  }
+
+  private withPackGame(packGame: PackGame): GameState {
+    return new GameState(this.frames, this.track, this.players, this.pack, this.paused, packGame, this.playerSelection);
   }
 
   //

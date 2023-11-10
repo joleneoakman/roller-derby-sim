@@ -54,3 +54,45 @@ $button-color: darken(#855e83, 15%);
   display: block;
   color: #fff5;
 }
+
+.score-bar {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  left: calc(50% - 100px);
+  width: 200px;
+  bottom: 60px;
+  font-weight: bold;
+  font-size: 30px;
+  animation: exampleAnimation 1s ease-in-out;
+}
+
+.score-perfect {
+  color: #8fff8f;
+}
+
+.score-good {
+  color: #ffff8f;
+}
+
+.score-ok {
+  color: #ffffd3;
+}
+
+.score-mistake {
+  color: #ff8f8f;
+}
+
+@keyframes exampleAnimation {
+  0% {
+    bottom: 60px;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    bottom: 100px;
+    opacity: 0;
+  }
+}

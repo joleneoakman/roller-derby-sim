@@ -4,7 +4,19 @@
     <div class="title">Roller Derby Sim</div>
     <div class="fps">{{ (state$ | async)?.frames }}</div>
     <div class="info-panel">
-        <h2>Pack Info</h2>
+        <h2>Score</h2>
+        <div class="info-block">
+            <ng-container *ngFor="let info of (info$ | async)?.scoreInfo">
+                <div class="info-title">{{ info.title }}</div>
+                <div class="info-value">
+                    <div *ngFor="let value of toValueLines(info.value)">
+                        {{ value }}
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <h2>Pack</h2>
         <div class="info-block">
             <ng-container *ngFor="let info of (info$ | async)?.packInfo">
                 <div class="info-title">{{ info.title }}</div>
@@ -15,7 +27,8 @@
                 </div>
             </ng-container>
         </div>
-        <h2 *ngIf="(info$ | async)?.hasPlayerInfo()">Player Info</h2>
+
+        <h2 *ngIf="(info$ | async)?.hasPlayerInfo()">Player</h2>
         <div class="info-block" *ngIf="(info$ | async)?.hasPlayerInfo()">
             <ng-container *ngFor="let info of (info$ | async)?.playerInfo">
                 <div class="info-title">{{ info.title }}</div>
@@ -27,6 +40,8 @@
             </ng-container>
         </div>
     </div>
-    <app-button-bar (toggleGame)="onToggleGame()" (packWarning)="onPackWarning($event)"
+    <app-button-bar
+            (toggleGame)="onToggleGame()"
+            (packWarning)="onPackWarning($event)"
     ></app-button-bar>
 </div>

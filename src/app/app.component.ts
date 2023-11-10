@@ -1,11 +1,14 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {Renderer} from "./renderer/renderer";
-import {distinctUntilChanged, map, Observable} from "rxjs";
+import {BehaviorSubject, distinctUntilChanged, map, Observable, Subject} from "rxjs";
 import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
 import {GameStateService} from "./game/game-state.service";
 import {GameInfo} from "./model/game-info";
-import {PackWarning} from "./model/pack-warning";
+import {PackWarningType} from "./model/pack-warning-type";
+import {PackGameScore} from "./model/pack-game-score";
+import {ScoreType} from "./model/score-type";
+import {ButtonBarComponent} from "./button-bar/button-bar.component";
 
 @Component({
   selector: 'app-root',
@@ -15,9 +18,11 @@ import {PackWarning} from "./model/pack-warning";
 export class AppComponent implements AfterViewInit {
 
   @ViewChild('canvas', {static: false}) canvas?: ElementRef;
+  @ViewChild(ButtonBarComponent, {static: false}) buttonBar?: ButtonBarComponent;
 
   public state$: Observable<GameState>;
   public info$?: Observable<GameInfo>;
+  public score$: BehaviorSubject<PackGameScore> = new BehaviorSubject(PackGameScore.empty());
 
   private renderer?: Renderer;
   private clickPoint?: Vector;
@@ -31,6 +36,9 @@ export class AppComponent implements AfterViewInit {
         map(state => state.toInfo()),
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       );
+    this.state$
+      .pipe(map(state => state.packGame.score))
+      .subscribe(score => this.updateScore(score));
   }
 
   ngAfterViewInit() {
@@ -109,11 +117,29 @@ export class AppComponent implements AfterViewInit {
     return this.renderer;
   }
 
+  private updateScore(newScore: PackGameScore): void {
+    const oldScore = this.score$.getValue();
+
+    if (oldScore.perfects < newScore.perfects) {
+      this.buttonBar?.onScored(ScoreType.PERFECT);
+    }
+    if (oldScore.goods < newScore.goods) {
+      this.buttonBar?.onScored(ScoreType.GOOD);
+    }
+    if (oldScore.oks < newScore.oks) {
+      this.buttonBar?.onScored(ScoreType.OK);
+    }
+    if (oldScore.mistakes < newScore.mistakes) {
+      this.buttonBar?.onScored(ScoreType.MISTAKE);
+    }
+    this.score$.next(newScore);
+  }
+
   toValueLines(value: string): string[] {
     return value.split('\n');
   }
 
-  onPackWarning(packWarning: PackWarning): void {
+  onPackWarning(packWarning: PackWarningType): void {
     this.gameStateService.update(state => state.givePackWarning(packWarning));
   }
 
