@@ -1,0 +1,19 @@
+
+//
+// Colors
+//
+
+$ui-base-color: #b26479;
+$overlay-background-color: rgba(darken($ui-base-color, 10%), 0.8);
+$overlay-border-color: rgba(darken($ui-base-color, 30%), 0.9);
+$overlay-font-color: lighten($ui-base-color, 40%);
+$overlay-box-shadow: 0 0 10px darken($ui-base-color, 45%);
+
+$button-background-color: rgba($ui-base-color, 0.8);
+$button-border-color: rgba(darken($ui-base-color, 20%), 0.9);
+$button-font-color: $overlay-font-color;
+
+$score-perfect: #8fff8f;
+$score-good: #ffff8f;
+$score-ok: #ffffd3;
+$score-mistake: #ff8f8f;

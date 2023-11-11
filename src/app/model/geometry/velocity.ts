@@ -76,7 +76,7 @@ export class Velocity {
     return Angle.ofVector(targetPoint.minus(currentPosition));
   }
 
-    /**
+  /**
    * Calculate the new velocity based on this velocity and the given target velocity.
    */
   public recalculate(targetVelocity: Velocity): Velocity {

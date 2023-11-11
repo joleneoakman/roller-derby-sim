@@ -1,4 +1,4 @@
-$overlay-font-color: #ffffffcc;
+@import 'src/styles/variables.scss';
 
 .overlay {
   position: fixed;
@@ -18,8 +18,8 @@ $overlay-font-color: #ffffffcc;
   color: $overlay-font-color;
   padding: 7px;
   box-sizing: border-box;
-  background-color: rgba(26, 12, 35, 0.5);
-  border-bottom: 1px solid #000;
+  background-color: $overlay-background-color;
+  border-bottom: 1px solid $overlay-border-color;
   user-select: none;
   box-shadow: 0 0 5px #0009;
 }
@@ -39,15 +39,15 @@ $overlay-font-color: #ffffffcc;
   gap: 16px;
   width: 200px;
   height: 100%;
-  background-color: rgba(26, 12, 35, 0.5);
-  border-right: 1px solid #000;
+  background-color: $overlay-background-color;
+  border-right: 1px solid $overlay-border-color;
   box-shadow: 0 0 5px #0009;
   padding: 16px;
 
   & > h2 {
     font-size: 20px;
     color: $overlay-font-color;
-    border-bottom: 1px solid #fff8;
+    border-bottom: 1px solid $overlay-font-color;
     text-align: center;
     margin: 0;
     padding-bottom: 8px;

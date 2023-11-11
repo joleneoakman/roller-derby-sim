@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {Renderer} from "./renderer/renderer";
-import {BehaviorSubject, distinctUntilChanged, map, Observable, Subject} from "rxjs";
+import {BehaviorSubject, distinctUntilChanged, map, Observable} from "rxjs";
 import {GameState} from "./model/game-state";
 import {Vector} from "./model/geometry/vector";
 import {GameStateService} from "./game/game-state.service";
@@ -23,6 +23,7 @@ export class AppComponent implements AfterViewInit {
   public state$: Observable<GameState>;
   public info$?: Observable<GameInfo>;
   public score$: BehaviorSubject<PackGameScore> = new BehaviorSubject(PackGameScore.empty());
+  public buttonsEnabled$: Observable<boolean>;
 
   private renderer?: Renderer;
   private clickPoint?: Vector;
@@ -39,6 +40,7 @@ export class AppComponent implements AfterViewInit {
     this.state$
       .pipe(map(state => state.packGame.score))
       .subscribe(score => this.updateScore(score));
+    this.buttonsEnabled$ = this.state$.pipe(map(state => state.packGame.newGameWarning !== undefined));
   }
 
   ngAfterViewInit() {

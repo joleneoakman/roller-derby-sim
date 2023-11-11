@@ -1,5 +1,6 @@
 import {Fill} from "../renderer/fill";
 import {Stroke} from "../renderer/stroke";
+import {ColorTools} from "../util/color-tools";
 
 export class GameConstants {
 
@@ -9,6 +10,7 @@ export class GameConstants {
   public static readonly DEBUG_BOUNDS = true;
   public static readonly DEBUG_TRACK_LINES = false;
   public static readonly PLAY = true;
+  public static readonly DEBUG_COORDINATES = false;
 
   //
   // Rendering
@@ -58,7 +60,7 @@ export class GameConstants {
   //
   public static readonly PERFECT_WARNING_TIME_MS = 1500;
   public static readonly GOOD_WARNING_TIME_MS = 3000;
-  public static readonly OK_WARNING_TIME_MS = 5000;
+  public static readonly OK_WARNING_TIME_MS = 10000;
   public static readonly PERFECT_SCORE = 100;
   public static readonly GOOD_SCORE = 50;
   public static readonly OK_SCORE = 25;
@@ -69,39 +71,42 @@ export class GameConstants {
   //
 
   // Track colors
-  public static readonly OUT_OF_BOUNDS_COLOR = '#855e83'; // '#e3aee1';
+  public static readonly OUT_OF_BOUNDS_COLOR = '#3f515d';
   public static readonly OUT_OF_BOUNDS_FILL = Fill.of(GameConstants.OUT_OF_BOUNDS_COLOR);
 
-  public static readonly INBOUNDS_COLOR = '#a1e1df'; // '#bafefc';
+  public static readonly INBOUNDS_COLOR = '#c4baa8';
   public static readonly INBOUNDS_FILL = Fill.of(GameConstants.INBOUNDS_COLOR);
 
-  public static readonly TRACK_STROKE_COLOR = '#50004b';
+  public static readonly TRACK_STROKE_COLOR = ColorTools.darken(GameConstants.INBOUNDS_COLOR, 0.5);
   public static readonly TRACK_STROKE = Stroke.of(GameConstants.TRACK_STROKE_COLOR, 1);
 
-  public static readonly TRACK_DEBUG_COLOR = '#50004b1f';
+  public static readonly TRACK_DEBUG_COLOR = ColorTools.darken(GameConstants.INBOUNDS_COLOR, 0.1);
   public static readonly TRACK_DEBUG_STROKE = Stroke.of(GameConstants.TRACK_DEBUG_COLOR, 1);
 
-  public static readonly TRACK_LANE_COLOR = '#50004b2f';
+  public static readonly TRACK_LANE_COLOR = GameConstants.TRACK_DEBUG_COLOR;
 
-  public static readonly PACK_COLOR = '#ffff005f';
-  public static readonly PACK_FILL = Fill.of(GameConstants.PACK_COLOR);
+  public static readonly PACK_COLOR = ColorTools.darken(GameConstants.INBOUNDS_COLOR, 0.7);
+  public static readonly PACK_FILL = Fill.of(GameConstants.PACK_COLOR + '55');
 
-  public static readonly PACK_POINT_COLOR = '#ffff00';
+  public static readonly PACK_POINT_COLOR = ColorTools.lighten(GameConstants.INBOUNDS_COLOR, 0.1);
   public static readonly PACK_POINT_FILL = Fill.of(GameConstants.PACK_POINT_COLOR);
 
   // Player colors
-  public static readonly TEAM_A_SELECTED_STROKE_COLOR = '#f00';
-  public static readonly TEAM_B_SELECTED_STROKE_COLOR = '#00f';
-  public static readonly TEAM_A_COLOR = '#d51349';
-  public static readonly TEAM_A_STROKE_COLOR = '#410516';
-  public static readonly TEAM_A_OUT_OF_PLAY_COLOR = '#c4afb5';
-  public static readonly TEAM_A_SELECTED_COLOR = '#fc7a9e';
-  public static readonly TEAM_A_TARGET_COLOR = 'rgba(255,19,73,0.3)';
-  public static readonly TEAM_B_COLOR = '#5a06d9';
-  public static readonly TEAM_B_STROKE_COLOR = '#26035d';
-  public static readonly TEAM_B_OUT_OF_PLAY_COLOR = '#d3c6e5';
-  public static readonly TEAM_B_SELECTED_COLOR = '#a973fd';
-  public static readonly TEAM_B_TARGET_COLOR = 'rgba(90,6,217,0.3)';
+  public static readonly TEAM_A_BASE_COLOR = '#C1495F';
+  public static readonly TEAM_B_BASE_COLOR = '#324376';
+
+  public static readonly TEAM_A_SELECTED_STROKE_COLOR = ColorTools.lighten(GameConstants.TEAM_A_BASE_COLOR, 0.2);
+  public static readonly TEAM_B_SELECTED_STROKE_COLOR = ColorTools.lighten(GameConstants.TEAM_B_BASE_COLOR, 0.2);
+  public static readonly TEAM_A_COLOR = GameConstants.TEAM_A_BASE_COLOR;
+  public static readonly TEAM_A_STROKE_COLOR = ColorTools.darken(GameConstants.TEAM_A_BASE_COLOR, 0.5);
+  public static readonly TEAM_A_OUT_OF_PLAY_COLOR = ColorTools.average(GameConstants.TEAM_A_BASE_COLOR, '#cccccc', 0.8);
+  public static readonly TEAM_A_SELECTED_COLOR = ColorTools.average(GameConstants.TEAM_A_BASE_COLOR, '#ffffff', 0.5);
+  public static readonly TEAM_A_TARGET_COLOR = GameConstants.TEAM_A_BASE_COLOR + '99';
+  public static readonly TEAM_B_COLOR = GameConstants.TEAM_B_BASE_COLOR;
+  public static readonly TEAM_B_STROKE_COLOR = ColorTools.darken(GameConstants.TEAM_B_BASE_COLOR, 0.5);
+  public static readonly TEAM_B_OUT_OF_PLAY_COLOR = ColorTools.average(GameConstants.TEAM_B_BASE_COLOR, '#cccccc', 0.8);
+  public static readonly TEAM_B_SELECTED_COLOR = ColorTools.average(GameConstants.TEAM_B_BASE_COLOR, '#ffffff', 0.5);
+  public static readonly TEAM_B_TARGET_COLOR = GameConstants.TEAM_A_BASE_COLOR + '99';
 
   public static readonly PLAYER_SYMBOL_COLOR = '#fff';
   public static readonly PLAYER_SYMBOL_FILL = Fill.of(GameConstants.PLAYER_SYMBOL_COLOR);
@@ -111,7 +116,7 @@ export class GameConstants {
   public static readonly TEXT_STROKE = Stroke.of(GameConstants.TEXT_COLOR, 1);
 
   // Debug colors
-  public static readonly DEBUG_POINT_COLOR = '#f00';
+  public static readonly DEBUG_POINT_COLOR = ColorTools.average(GameConstants.TEAM_A_BASE_COLOR, '#ff0000', 0.4);
   public static readonly DEBUG_POINT_FILL = Fill.of(GameConstants.DEBUG_POINT_COLOR);
 
   // Widths

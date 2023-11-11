@@ -130,7 +130,7 @@ export class Track {
       Vector.of(centerPoint.x - w, centerPoint.y + (h + rOut + oneFoot) / 2),
       Vector.of(centerPoint.x + w, centerPoint.y + (h + rOut - oneFoot) / 2));
     const bottomX1 = centerPoint.x + w - tenFeet;
-    const bottomY1 = centerLineBottom.resolveY( bottomX1);
+    const bottomY1 = centerLineBottom.resolveY(bottomX1);
     const bottomX2 = centerPoint.x + w - tenFeet * 2;
     const bottomY2 = centerLineBottom.resolveY(bottomX2);
     result.push(Track.createLine(Vector.of(bottomX1, bottomY1), length));

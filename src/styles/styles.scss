@@ -1,7 +1,15 @@
+//
+// Fonts
+//
+
 @font-face {
   font-family: 'Proteron';
-  src: url('assets/fonts/Proteron.ttf');
+  src: url('/assets/fonts/proteron.ttf');
 }
+
+//
+// Global changes
+//
 
 html, body, canvas {
   margin: 0;

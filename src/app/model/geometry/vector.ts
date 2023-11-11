@@ -1,4 +1,3 @@
-
 export class Vector {
 
   public static readonly ORIGIN = Vector.of(0, 0);

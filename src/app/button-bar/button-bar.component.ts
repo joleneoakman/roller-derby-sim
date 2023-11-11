@@ -1,4 +1,4 @@
-import {Component, EventEmitter, HostListener, Output} from "@angular/core";
+import {Component, EventEmitter, HostListener, Input, Output} from "@angular/core";
 import {PackWarningType} from "../model/pack-warning-type";
 import {ScoreType} from "../model/score-type";
 
@@ -9,6 +9,9 @@ import {ScoreType} from "../model/score-type";
 })
 export class ButtonBarComponent {
 
+  @Input()
+  enabled: boolean = false;
+
   @Output()
   packWarning: EventEmitter<PackWarningType> = new EventEmitter<PackWarningType>();
 
@@ -18,14 +21,22 @@ export class ButtonBarComponent {
   protected readonly PackWarning = PackWarningType;
   protected readonly ScoreType = ScoreType;
 
-  private scoreTypes: ScoreType[] = [];
+  scoreTypes: ScoreType[] = [];
+  scoreTimes: number[] = [];
   private clickedButtons: PackWarningType[] = [];
 
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     if (event.code === 'Space') {
-      this.toggleGame.emit()
-    } else if (event.key === 'd' || event.key === 'D') {
+      this.toggleGame.emit();
+      return;
+    }
+
+    if (!this.enabled) {
+      return;
+    }
+
+    if (event.key === 'd' || event.key === 'D') {
       this.onClick(PackWarningType.NO_PACK);
     } else if (event.key === 'f' || event.key === 'F') {
       this.onClick(PackWarningType.SPLIT_PACK);
@@ -50,20 +61,35 @@ export class ButtonBarComponent {
     setTimeout(() => this.resetClicked(packWarning), 200);
   }
 
-  hasScored(scoreType: ScoreType): boolean {
-    return this.scoreTypes.includes(scoreType);
+  onScored(scoreType: ScoreType): void {
+    const time = Date.now();
+    this.scoreTypes.push(scoreType);
+    this.scoreTimes.push(time);
+    setTimeout(() => this.resetScored(time), 1000);
+  }
+
+  toName(scoreType: ScoreType): string {
+    switch (scoreType) {
+      case ScoreType.PERFECT:
+        return 'Perfect';
+      case ScoreType.GOOD:
+        return 'Good';
+      case ScoreType.OK:
+        return 'Ok';
+      case ScoreType.MISTAKE:
+        return 'Oops';
+    }
   }
 
   private resetClicked(packWarning: PackWarningType): void {
     this.clickedButtons = this.clickedButtons.filter(b => b !== packWarning)
   }
 
-  onScored(scoreType: ScoreType): void {
-    this.scoreTypes.push(scoreType);
-    setTimeout(() => this.resetScored(scoreType), 1000);
-  }
-
-  private resetScored(scoreType: ScoreType): void {
-    this.scoreTypes = this.scoreTypes.filter(s => s !== scoreType);
+  private resetScored(time: number): void {
+    const index = this.scoreTimes.findIndex(t => t !== time);
+    if (index === this.scoreTimes.length - 1) {
+      this.scoreTimes = [];
+      this.scoreTimes = [];
+    }
   }
 }

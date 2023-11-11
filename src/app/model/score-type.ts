@@ -1,6 +1,6 @@
 export enum ScoreType {
-  PERFECT = 'Perfect!',
-  GOOD = 'Good!',
-  OK = 'Ok!',
-  MISTAKE = 'Oops ...'
+  PERFECT = 'perfect',
+  GOOD = 'good',
+  OK = 'ok',
+  MISTAKE = 'mistake'
 }

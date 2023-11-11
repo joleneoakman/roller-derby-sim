@@ -121,7 +121,7 @@ export class Angle {
     const angleDiffAbs = Math.abs(angleDiff);
     let newAngle: number;
     if (angleDiffAbs > 180) {
-      const step = Math.min(maxDiffPerFrame, - angleDiffAbs + 360);
+      const step = Math.min(maxDiffPerFrame, -angleDiffAbs + 360);
       newAngle = angleDiff > 0 ? this.degrees - step : this.degrees + step;
     } else {
       const step = Math.min(maxDiffPerFrame, angleDiffAbs);

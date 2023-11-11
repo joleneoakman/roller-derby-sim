@@ -1,6 +1,5 @@
 import {GameConstants} from "../game/game-constants";
 import {PackWarning} from "./pack-warning";
-import {PackWarningType} from "./pack-warning-type";
 
 export class PackGameScore {
   readonly perfects: number;
@@ -49,7 +48,6 @@ export class PackGameScore {
       mistakesDelta += 1;
     } else {
       const diffMs = userWarning.time - gameWarning.time;
-      console.warn("diffMs", gameWarning, userWarning, diffMs);
       if (diffMs > 0) {
         if (diffMs <= GameConstants.PERFECT_WARNING_TIME_MS) {
           perfectsDelta += 1;

@@ -1,4 +1,5 @@
-<canvas #canvas (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)" (wheel)="onWheel($event)" (contextmenu)="$event.preventDefault()"></canvas>
+<canvas #canvas (mousedown)="onMouseDown($event)" (mouseup)="onMouseUp($event)" (mousemove)="onMouseMove($event)"
+        (wheel)="onWheel($event)" (contextmenu)="$event.preventDefault()"></canvas>
 
 <div class="overlay">
     <div class="title">Roller Derby Sim</div>
@@ -43,5 +44,6 @@
     <app-button-bar
             (toggleGame)="onToggleGame()"
             (packWarning)="onPackWarning($event)"
+            [enabled]="(buttonsEnabled$ | async)!"
     ></app-button-bar>
 </div>

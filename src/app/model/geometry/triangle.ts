@@ -17,7 +17,7 @@ export class Triangle implements Shape {
   }
 
   public containsPoint(point: Vector): boolean {
-    const { p1, p2, p3 } = this;
+    const {p1, p2, p3} = this;
     const areaOrig = Triangle.of(p1, p2, p3).area;
     const area1 = Triangle.of(point, p2, p3).area;
     const area2 = Triangle.of(p1, point, p3).area;
@@ -26,7 +26,7 @@ export class Triangle implements Shape {
   }
 
   public get area(): number {
-    const { p1, p2, p3 } = this;
-    return Math.abs((p1.x*(p2.y-p3.y) + p2.x*(p3.y-p1.y) + p3.x*(p1.y-p2.y)) / 2);
+    const {p1, p2, p3} = this;
+    return Math.abs((p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2);
   }
 }

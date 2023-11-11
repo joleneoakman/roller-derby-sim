@@ -150,7 +150,7 @@ export class TrackLine implements TrackLineShape {
 
     // Point lies on the right arc
     if ((accumulatedLength + dRight) > targetLength) {
-      return this.rightArc.getAbsolutePositionOf(- (targetLength - accumulatedLength - dRight) / dRight);
+      return this.rightArc.getAbsolutePositionOf(-(targetLength - accumulatedLength - dRight) / dRight);
     }
     accumulatedLength += dRight;
 
@@ -162,7 +162,7 @@ export class TrackLine implements TrackLineShape {
 
     // Point lies on the left arc
     if (accumulatedLength + dLeft > targetLength) {
-      return this.leftArc.getAbsolutePositionOf(- (targetLength - accumulatedLength - dLeft) / dLeft);
+      return this.leftArc.getAbsolutePositionOf(-(targetLength - accumulatedLength - dLeft) / dLeft);
     }
     accumulatedLength += dLeft;
 

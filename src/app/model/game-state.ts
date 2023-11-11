@@ -52,7 +52,7 @@ export class GameState {
   //
 
   public static of(track: Track, players: Player[]): GameState {
-    return new GameState(0, track, players, Pack.create(players, track), true, PackGame.empty(), PlayerSelection.of(0));
+    return new GameState(0, track, players, Pack.create(players, track), true, PackGame.empty(), undefined);
   }
 
   //
@@ -101,7 +101,7 @@ export class GameState {
     const size = pack?.playerIndices?.length;
     return [
       packDefinition,
-      Info.of('Pack size', '' + (size ? size: '0')),
+      Info.of('Pack size', '' + (size ? size : '0')),
     ];
   }
 
@@ -156,8 +156,8 @@ export class GameState {
   }
 
   public select(position: Vector): GameState {
-     const index = this.findPlayerIndexAt(position);
-     return this.withSelection(index);
+    const index = this.findPlayerIndexAt(position);
+    return this.withSelection(index);
   }
 
   public deselect(): GameState {

@@ -1,6 +1,4 @@
 import {Vector} from "./geometry/vector";
-import {Velocity} from "./geometry/velocity";
-import {Track} from "./track";
 
 export class Target {
   readonly position: Vector;

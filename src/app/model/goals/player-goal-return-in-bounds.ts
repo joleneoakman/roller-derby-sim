@@ -59,7 +59,7 @@ export class PlayerGoalReturnInBounds extends PlayerGoal {
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     if (now < this.time + GameConstants.REACTION_TIME_MS / 3) {
-        return player;
+      return player;
     }
 
     const inBounds = player.isInBounds(track);

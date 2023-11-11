@@ -1,4 +1,4 @@
-$button-color: darken(#855e83, 15%);
+@import 'src/styles/variables.scss';
 
 .button-bar {
   position: fixed;
@@ -8,8 +8,16 @@ $button-color: darken(#855e83, 15%);
   width: calc(6 * 100px + 5 * 8px);
   height: 50px;
   left: calc(50% - (6 * 100px + 5 * 8px) / 2);
-  bottom: 8px;
+  bottom: 0;
+  padding: 8px;
   user-select: none;
+
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+
+  background-color: $overlay-background-color;
+  border-bottom: 1px solid $overlay-border-color;
+  box-shadow: $overlay-box-shadow;
 }
 
 .button {
@@ -18,41 +26,56 @@ $button-color: darken(#855e83, 15%);
 }
 
 .button {
-  background-color: $button-color;
-  border: 1px solid darken($button-color, 100%);
+  background-color: $button-background-color;
+  border: 1px solid $button-border-color;
   border-radius: 4px;
   padding: 4px;
-  color: #fff;
   cursor: pointer;
-  transition: background-color 0.3s, border-color 0.3s;
+  transition: all 0.5s;
   display: flex;
   flex-direction: column;
   gap: 4px;
   justify-content: center;
   align-items: center;
   user-select: none;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
 
   &:hover {
-    background-color: lighten($button-color, 10%);
+    background-color: lighten($button-background-color, 10%);
   }
 
   &:focus {
     outline: none;
   }
+
+  &:disabled {
+    background-color: #0000;
+    cursor: default;
+    box-shadow: none;
+
+    & .text {
+      color: darken($button-font-color, 30%);
+    }
+
+    & .key {
+      color: darken($button-font-color, 30%);
+    }
+  }
 }
 
 .clicked {
-  background-color: lighten($button-color, 15%);
+  background-color: lighten($button-background-color, 15%);
 }
 
 .text {
   display: block;
+  color: $button-font-color;
+  transition: all 0.5s;
 }
 
 .key {
   display: block;
-  color: #fff5;
+  color: darken($button-font-color, 20%);
+  transition: all 0.5s;
 }
 
 .score-bar {
@@ -64,23 +87,24 @@ $button-color: darken(#855e83, 15%);
   bottom: 60px;
   font-weight: bold;
   font-size: 30px;
+  opacity: 0;
   animation: exampleAnimation 1s ease-in-out;
 }
 
 .score-perfect {
-  color: #8fff8f;
+  color: $score-perfect;
 }
 
 .score-good {
-  color: #ffff8f;
+  color: $score-good;
 }
 
 .score-ok {
-  color: #ffffd3;
+  color: $score-ok;
 }
 
 .score-mistake {
-  color: #ff8f8f;
+  color: $score-mistake;
 }
 
 @keyframes exampleAnimation {

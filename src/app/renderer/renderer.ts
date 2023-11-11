@@ -14,7 +14,6 @@ import {Fill} from "./fill";
 import {Quad} from "../model/geometry/quad";
 import {Triangle} from "../model/geometry/triangle";
 import {Line} from "../model/geometry/line";
-import {Target} from "../model/target";
 import {GameStateService} from "../game/game-state.service";
 import {PlayerType} from "../model/player-type";
 import {Angle} from "../model/geometry/angle";
@@ -188,7 +187,7 @@ export class Renderer {
       Vector.of(relativeTrack.x, relativeTrack.y + relativeTrack.height * (1 - end)),
       relativeTrack.width,
       relativeTrack.height * (end - start));
-    this.drawRect(rect.position, rect.width, rect.height, Fill.of(GameConstants.PACK_COLOR));
+    this.drawRect(rect.position, rect.width, rect.height, GameConstants.PACK_FILL);
   }
 
   private drawRelativeTrackLine(percentage: number, rect: Rectangle) {
@@ -223,7 +222,7 @@ export class Renderer {
       this.drawTrackLine(track.innerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.trackLineAt(0.5), undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
       this.drawTrackLine(track.outerBounds, undefined, debugStroke, GameConstants.DEBUG_TRACK_LINES);
-      this.drawTrackLine(track.packLine, undefined, Stroke.of("#ff000055", 1), GameConstants.DEBUG_TRACK_LINES);
+      // this.drawTrackLine(track.packLine, undefined, Stroke.of("#ff000055", 1), GameConstants.DEBUG_TRACK_LINES);
 
       const laneOutline = Stroke.of(GameConstants.TRACK_LANE_COLOR, 1);
       for (let i = 1; i < 4; i++) {
@@ -322,7 +321,7 @@ export class Renderer {
     this.drawPlayerAngle(angleCircle, player.toCircle(), angle);
 
     // Draw debug coordinates
-    if (selected) {
+    if (selected && GameConstants.DEBUG_COORDINATES) {
       const position = player.position;
       const relPosition = player.relativePosition(track);
       const textStroke = GameConstants.TEXT_STROKE;
@@ -389,7 +388,7 @@ export class Renderer {
   }
 
   private drawArc(arc: Arc, fill?: Fill, stroke?: Stroke, fillTriangle: boolean = true) {
-    const { position, radius, startAngle, endAngle } = arc;
+    const {position, radius, startAngle, endAngle} = arc;
     this.ctx.beginPath();
     this.ctx.arc(this.x(position.x), this.y(position.y), radius * this.scale, startAngle.radians, endAngle.radians);
     this.fill(fill);
@@ -491,7 +490,10 @@ export class Renderer {
     return Rectangle.of(Vector.of(x, y), w, h);
   }
 
-  private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean, inPlay: boolean): {color: string, strokeColor: string} {
+  private static getColorForTarget(team: Team, selected: boolean, isTarget: boolean, inPlay: boolean): {
+    color: string,
+    strokeColor: string
+  } {
     let strokeColor = '';
     if (team === Team.A && selected) {
       strokeColor = GameConstants.TEAM_A_SELECTED_STROKE_COLOR;
@@ -531,4 +533,4 @@ export class Renderer {
       strokeColor: strokeColor
     }
   }
- }
+}

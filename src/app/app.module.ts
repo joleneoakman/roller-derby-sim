@@ -15,4 +15,5 @@ import {ButtonBarComponent} from "./button-bar/button-bar.component";
   providers: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}
