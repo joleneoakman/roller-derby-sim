@@ -1,14 +1,14 @@
-import {PlayerGoalType} from "./player-goal-type";
+import {GoalType} from "./goal-type";
 import {Player} from "../player";
 import {Track} from "../track";
 import {Pack} from "../pack";
 
-export abstract class PlayerGoal {
+export abstract class Goal {
 
-  readonly type: PlayerGoalType;
+  readonly type: GoalType;
   readonly time: number;
 
-  protected constructor(type: PlayerGoalType, time: number) {
+  protected constructor(type: GoalType, time: number) {
     this.type = type;
     this.time = time;
   }

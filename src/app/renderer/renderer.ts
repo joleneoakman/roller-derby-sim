@@ -117,22 +117,24 @@ export class Renderer {
     }
 
     // Relative track
-    this.absolute = true;
-    const relativeTrack = Renderer.createRelativeTrack(this.width, this.height, this.scale, track);
-    this.drawRelativeTrack(relativeTrack, 0.2);
+    if (GameConstants.DEBUG_RELATIVE_TRACK) {
+      this.absolute = true;
+      const relativeTrack = Renderer.createRelativeTrack(this.width, this.height, this.scale, track);
+      this.drawRelativeTrack(relativeTrack, 0.2);
 
-    // Relative pack
-    this.drawRelativePack(relativeTrack, pack);
+      // Relative pack
+      this.drawRelativePack(relativeTrack, pack);
 
-    // Relative players
-    for (let i = 0; i < state.players.length; i++) {
-      const player = state.players[i];
-      const relativePosition = player.relativePosition(track);
-      if (relativePosition.x >= -1 && relativePosition.x <= 2) {
-        this.drawRelativePlayer(relativeTrack, player, relativePosition, state.playerSelection?.index === i);
+      // Relative players
+      for (let i = 0; i < state.players.length; i++) {
+        const player = state.players[i];
+        const relativePosition = player.relativePosition(track);
+        if (relativePosition.x >= -1 && relativePosition.x <= 2) {
+          this.drawRelativePlayer(relativeTrack, player, relativePosition, state.playerSelection?.index === i);
+        }
       }
+      this.absolute = false;
     }
-    this.absolute = false;
 
     // Debug
     Renderer.debugPoints.forEach(p => this.drawCircle(Circle.of(p, 0.1), Fill.of(GameConstants.DEBUG_POINT_COLOR)));

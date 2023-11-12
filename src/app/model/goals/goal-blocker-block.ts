@@ -1,5 +1,5 @@
-import {PlayerGoal} from "./player-goal";
-import {PlayerGoalType} from "./player-goal-type";
+import {Goal} from "./goal";
+import {GoalType} from "./goal-type";
 import {Player} from "../player";
 import {Track} from "../track";
 import {Pack} from "../pack";
@@ -9,10 +9,10 @@ import {Vector} from "../geometry/vector";
 import {Target} from "../target";
 import {Overflow} from "../overflow";
 
-export class PlayerGoalBlockJammerFactory implements GoalFactory {
+export class GoalBlockerBlockFactory implements GoalFactory {
 
-  public get type(): PlayerGoalType {
-    return PlayerGoalType.BLOCKER_BLOCK;
+  public get type(): GoalType {
+    return GoalType.BLOCKER_BLOCK;
   }
 
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
@@ -30,12 +30,7 @@ export class PlayerGoalBlockJammerFactory implements GoalFactory {
       return false;
     }
 
-    if (!opposingJammer.isInBounds(track)) {
-      return false;
-    }
-
-    const playerIndex = players.indexOf(player);
-    if (!pack.activePack || !pack.activePack.includes(playerIndex)) {
+    if (!player.isInPlay(pack, track)) {
       return false;
     }
 
@@ -49,15 +44,15 @@ export class PlayerGoalBlockJammerFactory implements GoalFactory {
     return true;
   }
 
-  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalBlockJammer {
-    return new PlayerGoalBlockJammer(now);
+  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalBlockerBlock {
+    return new GoalBlockerBlock(now);
   }
 }
 
-export class PlayerGoalBlockJammer extends PlayerGoal {
+export class GoalBlockerBlock extends Goal {
 
   constructor(time: number) {
-    super(PlayerGoalType.BLOCKER_BLOCK, time);
+    super(GoalType.BLOCKER_BLOCK, time);
   }
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
@@ -71,12 +66,7 @@ export class PlayerGoalBlockJammer extends PlayerGoal {
       return player.clearGoal(this);
     }
 
-    if (!opposingJammer.isInBounds(track)) {
-      return player.clearGoal(this);
-    }
-
-    const playerIndex = players.indexOf(player);
-    if (!pack.activePack || !pack.activePack.includes(playerIndex)) {
+    if (!player.isInPlay(pack, track)) {
       return player.clearGoal(this);
     }
 

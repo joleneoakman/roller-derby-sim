@@ -9,6 +9,7 @@ export class GameConstants {
   //
   public static readonly DEBUG_BOUNDS = true;
   public static readonly DEBUG_TRACK_LINES = false;
+  public static readonly DEBUG_RELATIVE_TRACK = false;
   public static readonly PLAY = true;
   public static readonly DEBUG_COORDINATES = false;
 

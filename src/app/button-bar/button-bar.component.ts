@@ -36,17 +36,17 @@ export class ButtonBarComponent {
       return;
     }
 
-    if (event.key === 'd' || event.key === 'D') {
+    if (event.key === 'n' || event.key === 'N') {
       this.onClick(PackWarningType.NO_PACK);
-    } else if (event.key === 'f' || event.key === 'F') {
+    } else if (event.key === 's' || event.key === 'S') {
       this.onClick(PackWarningType.SPLIT_PACK);
-    } else if (event.key === 'g' || event.key === 'G') {
-      this.onClick(PackWarningType.PACK_IS_HERE);
     } else if (event.key === 'h' || event.key === 'H') {
+      this.onClick(PackWarningType.PACK_IS_HERE);
+    } else if (event.key === 'a' || event.key === 'A') {
       this.onClick(PackWarningType.PACK_IS_ALL);
-    } else if (event.key === 'j' || event.key === 'J') {
+    } else if (event.key === 'b' || event.key === 'B') {
       this.onClick(PackWarningType.PACK_IS_BACK);
-    } else if (event.key === 'k' || event.key === 'K') {
+    } else if (event.key === 'f' || event.key === 'F') {
       this.onClick(PackWarningType.PACK_IS_FRONT);
     }
   }

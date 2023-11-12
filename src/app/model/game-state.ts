@@ -4,28 +4,32 @@ import {Vector} from "./geometry/vector";
 import {PlayerSelection} from "./player-selection";
 import {Pack} from "./pack";
 import {Target} from "./target";
-import {PlayerGoalReturnInBoundsFactory} from "./goals/player-goal-return-in-bounds";
-import {PlayerGoalJammerDoLapsFactory} from "./goals/player-goal-jammer-do-laps";
-import {PlayerGoalBlockJammerFactory} from "./goals/player-goal-block-jammer";
+import {GoalReturnInBoundsFactory} from "./goals/goal-return-in-bounds";
+import {GoalJammerDoLapsFactory} from "./goals/goal-jammer-do-laps";
+import {GoalBlockerBlockFactory} from "./goals/goal-blocker-block";
 import {GoalFactory} from "./goals/goal-factory";
-import {PlayerGoalBlockerDoLapsFactory} from "./goals/player-goal-blocker-do-laps";
+import {GoalBlockerDoLapsFactory} from "./goals/goal-blocker-do-laps";
 import {Info} from "./info";
-import {PlayerGoal} from "./goals/player-goal";
-import {PlayerGoalReturnToPackFactory} from "./goals/player-goal-return-to-pack";
+import {Goal} from "./goals/goal";
+import {GoalReturnToPackFactory} from "./goals/goal-return-to-pack";
 import {GameConstants} from "../game/game-constants";
 import {GameInfo} from "./game-info";
 import {PackWarningType} from "./pack-warning-type";
 import {PackGame} from "./pack-game";
 import {PackWarning} from "./pack-warning";
+import {GoalJammerEvade, GoalJammerEvadeFactory} from "./goals/goal-jammer-evade";
+import {GoalStayInBounds, GoalStayInBoundsFactory} from "./goals/goal-stay-in-bounds";
 
 export class GameState {
 
   private static readonly GOAL_FACTORIES: GoalFactory[] = [
-    new PlayerGoalReturnInBoundsFactory(),
-    new PlayerGoalJammerDoLapsFactory(),
-    new PlayerGoalBlockJammerFactory(),
-    new PlayerGoalReturnToPackFactory(),
-    new PlayerGoalBlockerDoLapsFactory()
+    new GoalReturnInBoundsFactory(),
+    new GoalStayInBoundsFactory(),
+    new GoalJammerEvadeFactory(),
+    new GoalJammerDoLapsFactory(),
+    new GoalReturnToPackFactory(),
+    new GoalBlockerBlockFactory(),
+    new GoalBlockerDoLapsFactory()
   ];
   private static readonly GOAL_COMPARATOR = GameState.createGoalComparator(GameState.GOAL_FACTORIES);
 
@@ -85,10 +89,12 @@ export class GameState {
       return [];
     }
     const goals = p.goals.length === 0 ? 'None' : p.goals.map(g => g.type).join('\n');
+    const relativePosition = p.relativePosition(this.track);
     return [
       Info.of('Name', p.name),
       Info.of('In play', p.isInPlay(this.pack, this.track) ? 'Yes' : 'No'),
-      Info.of('Position', p.position.x.toFixed(1) + ' ' + p.position.y.toFixed(1)),
+      Info.of('X (%)', relativePosition.x.toFixed(3)),
+      Info.of('Y (%)', relativePosition.y.toFixed(3)),
       Info.of('Speed (kph)', p.velocity.speed.kph.toFixed(1)),
       Info.of('Angle', p.velocity.angle.degrees.toFixed(0)),
       Info.of('Goals', goals),
@@ -207,7 +213,7 @@ export class GameState {
     }
 
     return players.map(player => {
-      const newGoals: PlayerGoal[] = [];
+      const newGoals: Goal[] = [];
       for (const factory of goalFactories) {
         if (factory.test(player, players, track, pack)) {
           const goal = factory.create(now, player, players, track, pack);
@@ -227,8 +233,13 @@ export class GameState {
       if (player.goals.length === 0) {
         return player;
       }
-      const goal = player.goals[0];
-      return goal.execute(Date.now(), player, players, track, pack);
+
+      let goal = player.goals[0];
+      do {
+        goal = player.goals[0];
+        player = goal.execute(Date.now(), player, players, track, pack);
+      } while (!player.hasGoal(goal.type));
+      return player;
     });
   }
 
@@ -256,8 +267,8 @@ export class GameState {
   /**
    * Create a comparator that sorts goals by the order in which the given factories array is sorted.
    */
-  private static createGoalComparator(factories: GoalFactory[]): (a: PlayerGoal, b: PlayerGoal) => number {
-    return (a: PlayerGoal, b: PlayerGoal) => {
+  private static createGoalComparator(factories: GoalFactory[]): (a: Goal, b: Goal) => number {
+    return (a: Goal, b: Goal) => {
       const aIndex = factories.findIndex(f => f.type === a.type);
       const bIndex = factories.findIndex(f => f.type === b.type);
       return aIndex - bIndex;

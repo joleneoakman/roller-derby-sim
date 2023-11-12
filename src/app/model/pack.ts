@@ -79,9 +79,10 @@ export class Pack {
     }
 
     const pack = this.activePack;
-    const playerIndex = this.players.indexOf(player);
+    const playerIndex = this.players.findIndex(candidate => candidate.id === player.id);
     const totalDistance = track.packLine.distance;
-    const position = Overflow.of(this.positions[playerIndex], totalDistance);
+    const playerPosition = this.positions[playerIndex];
+    const position = Overflow.of(playerPosition, totalDistance);
     return pack.backEngagementZone.isBehind(position) && pack.frontEngagementZone.isInFrontOf(position);
   }
 

@@ -1,15 +1,15 @@
 import {Track} from "../track";
 import {Player} from "../player";
 import {Pack} from "../pack";
-import {PlayerGoal} from "./player-goal";
-import {PlayerGoalType} from "./player-goal-type";
+import {Goal} from "./goal";
+import {GoalType} from "./goal-type";
 
 export interface GoalFactory {
 
   /**
    * The type of goal this factory creates.
    */
-  get type(): PlayerGoalType;
+  get type(): GoalType;
 
   /**
    * Test if the player is eligible for this goal.
@@ -19,5 +19,5 @@ export interface GoalFactory {
   /**
    * Create a new goal for the player.
    */
-  create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoal;
+  create(now: number, player: Player, players: Player[], track: Track, pack: Pack): Goal;
 }

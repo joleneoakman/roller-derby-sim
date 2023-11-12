@@ -1,5 +1,5 @@
-import {PlayerGoal} from "./player-goal";
-import {PlayerGoalType} from "./player-goal-type";
+import {Goal} from "./goal";
+import {GoalType} from "./goal-type";
 import {Player} from "../player";
 import {Track} from "../track";
 import {Vector} from "../geometry/vector";
@@ -7,25 +7,25 @@ import {Target} from "../target";
 import {Pack} from "../pack";
 import {GoalFactory} from "./goal-factory";
 
-export class PlayerGoalJammerDoLapsFactory implements GoalFactory {
+export class GoalJammerDoLapsFactory implements GoalFactory {
 
-  public get type(): PlayerGoalType {
-    return PlayerGoalType.JAMMER_DO_LAPS;
+  public get type(): GoalType {
+    return GoalType.JAMMER_DO_LAPS;
   }
 
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
     return player.isJammer() && !player.hasGoal(this.type);
   }
 
-  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalJammerDoLaps {
-    return new PlayerGoalJammerDoLaps(now);
+  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalJammerDoLaps {
+    return new GoalJammerDoLaps(now);
   }
 }
 
-export class PlayerGoalJammerDoLaps extends PlayerGoal {
+export class GoalJammerDoLaps extends Goal {
 
   constructor(time: number) {
-    super(PlayerGoalType.JAMMER_DO_LAPS, time);
+    super(GoalType.JAMMER_DO_LAPS, time);
   }
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {

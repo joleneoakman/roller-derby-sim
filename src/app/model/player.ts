@@ -8,8 +8,8 @@ import {Track} from "./track";
 import {Target} from "./target";
 import {Angle} from "./geometry/angle";
 import {Speed} from "./geometry/speed";
-import {PlayerGoal} from "./goals/player-goal";
-import {PlayerGoalType} from "./goals/player-goal-type";
+import {Goal} from "./goals/goal";
+import {GoalType} from "./goals/goal-type";
 import {PlayerId} from "./player-id";
 import {Overflow} from "./overflow";
 import {Pack} from "./pack";
@@ -27,7 +27,7 @@ export class Player {
   readonly targets: Target[];
 
   // Goals
-  readonly goals: PlayerGoal[];
+  readonly goals: Goal[];
 
   // Lazy values
   // X: Relative lane position (<0 = out of bounds (inner), 0..1 = in bounds, 1 = outside, >1 = out of bounds (outer))
@@ -39,7 +39,7 @@ export class Player {
                       position: Vector,
                       velocity: Velocity,
                       targets: Target[],
-                      goals: PlayerGoal[]) {
+                      goals: Goal[]) {
     this.id = id;
     this.massKg = massKg;
     this.position = position;
@@ -91,7 +91,7 @@ export class Player {
     return this.withTargets(newTargets);
   }
 
-  public updateGoal(goal: PlayerGoal): Player {
+  public updateGoal(goal: Goal): Player {
     const newGoals = this.goals.map(g => g.type === goal.type ? goal : g);
     return this.withGoals(newGoals);
   }
@@ -100,16 +100,16 @@ export class Player {
     return this.withTargets([]);
   }
 
-  private withGoals(goals: PlayerGoal[]): Player {
+  private withGoals(goals: Goal[]): Player {
     return new Player(this.id, this.massKg, this.position, this.velocity, this.targets, goals);
   }
 
-  public addGoals(goals: PlayerGoal[], comparator: (g1: PlayerGoal, g2: PlayerGoal) => number): Player {
+  public addGoals(goals: Goal[], comparator: (g1: Goal, g2: Goal) => number): Player {
     const newGoals = [...this.goals, ...goals].sort(comparator);
     return this.withGoals(newGoals);
   }
 
-  public clearGoal(goal: PlayerGoal): Player {
+  public clearGoal(goal: Goal): Player {
     const newGoals = this.goals.filter(g => g !== goal);
     return this.withGoals(newGoals);
   }
@@ -209,7 +209,7 @@ export class Player {
     return this.id.type === PlayerType.PIVOT;
   }
 
-  public hasGoal(type: PlayerGoalType): boolean {
+  public hasGoal(type: GoalType): boolean {
     return this.goals.some(g => g.type === type);
   }
 

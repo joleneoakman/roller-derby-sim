@@ -1,5 +1,5 @@
-import {PlayerGoal} from "./player-goal";
-import {PlayerGoalType} from "./player-goal-type";
+import {Goal} from "./goal";
+import {GoalType} from "./goal-type";
 import {Player} from "../player";
 import {Track} from "../track";
 import {Target} from "../target";
@@ -10,20 +10,20 @@ import {GameConstants} from "../../game/game-constants";
 import {Pack} from "../pack";
 import {GoalFactory} from "./goal-factory";
 
-export class PlayerGoalReturnInBoundsFactory implements GoalFactory {
+export class GoalReturnInBoundsFactory implements GoalFactory {
 
-  public get type(): PlayerGoalType {
-    return PlayerGoalType.RETURN_IN_BOUNDS;
+  public get type(): GoalType {
+    return GoalType.RETURN_IN_BOUNDS;
   }
 
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
     return !player.isInBounds(track) && !player.hasGoal(this.type);
   }
 
-  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalReturnInBounds {
-    const playersInFront = PlayerGoalReturnInBoundsFactory.calculatePlayersInFront(player, players, track);
+  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalReturnInBounds {
+    const playersInFront = GoalReturnInBoundsFactory.calculatePlayersInFront(player, players, track);
     const skatedOutRelPosition = player.relativePosition(track);
-    return new PlayerGoalReturnInBounds(now, playersInFront, skatedOutRelPosition, false);
+    return new GoalReturnInBounds(now, playersInFront, skatedOutRelPosition, false);
   }
 
   private static calculatePlayersInFront(player: Player, players: Player[], track: Track): PlayerId[] {
@@ -40,21 +40,21 @@ export class PlayerGoalReturnInBoundsFactory implements GoalFactory {
   }
 }
 
-export class PlayerGoalReturnInBounds extends PlayerGoal {
+export class GoalReturnInBounds extends Goal {
 
   readonly playersInFront: PlayerId[];
   readonly skatedOutRelPosition: Vector;
   readonly skatedInBeforeOut: boolean;
 
   constructor(time: number, playersInFront: PlayerId[], skatedOutRelPosition: Vector, skatedInBeforeOut: boolean) {
-    super(PlayerGoalType.RETURN_IN_BOUNDS, time);
+    super(GoalType.RETURN_IN_BOUNDS, time);
     this.playersInFront = playersInFront;
     this.skatedOutRelPosition = skatedOutRelPosition;
     this.skatedInBeforeOut = skatedInBeforeOut;
   }
 
-  withSkatedInBeforeOut(skatedInBeforeOut: boolean): PlayerGoalReturnInBounds {
-    return new PlayerGoalReturnInBounds(this.time, this.playersInFront, this.skatedOutRelPosition, skatedInBeforeOut);
+  withSkatedInBeforeOut(skatedInBeforeOut: boolean): GoalReturnInBounds {
+    return new GoalReturnInBounds(this.time, this.playersInFront, this.skatedOutRelPosition, skatedInBeforeOut);
   }
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
@@ -71,7 +71,7 @@ export class PlayerGoalReturnInBounds extends PlayerGoal {
   }
 
   private updateGoalAndTargets(player: Player, players: Player[], track: Track): Player {
-    const rearMostRelativePosition = PlayerGoalReturnInBounds.calculateRelativePositionToSkateBackTo(this.playersInFront, player, players, track);
+    const rearMostRelativePosition = GoalReturnInBounds.calculateRelativePositionToSkateBackTo(this.playersInFront, player, players, track);
     const currentRelativePosition = player.relativePosition(track);
     const isOnInsideTrack = this.skatedOutRelPosition.x < 0.5;
     const relativeX = isOnInsideTrack ? -0.3 : 1.3;

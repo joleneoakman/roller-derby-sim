@@ -2,31 +2,31 @@ import {GoalFactory} from "./goal-factory";
 import {Player} from "../player";
 import {Track} from "../track";
 import {Pack} from "../pack";
-import {PlayerGoalType} from "./player-goal-type";
-import {PlayerGoal} from "./player-goal";
+import {GoalType} from "./goal-type";
+import {Goal} from "./goal";
 import {Vector} from "../geometry/vector";
 import {Target} from "../target";
 
 
-export class PlayerGoalBlockerDoLapsFactory implements GoalFactory {
+export class GoalBlockerDoLapsFactory implements GoalFactory {
 
-  public get type(): PlayerGoalType {
-    return PlayerGoalType.BLOCKER_DO_LAPS;
+  public get type(): GoalType {
+    return GoalType.BLOCKER_DO_LAPS;
   }
 
   public test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
     return player.isBlocker() && !player.hasGoal(this.type);
   }
 
-  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): PlayerGoalBlockerDoLaps {
-    return new PlayerGoalBlockerDoLaps(now);
+  public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalBlockerDoLaps {
+    return new GoalBlockerDoLaps(now);
   }
 }
 
-export class PlayerGoalBlockerDoLaps extends PlayerGoal {
+export class GoalBlockerDoLaps extends Goal {
 
   constructor(time: number) {
-    super(PlayerGoalType.BLOCKER_DO_LAPS, time);
+    super(GoalType.BLOCKER_DO_LAPS, time);
   }
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
