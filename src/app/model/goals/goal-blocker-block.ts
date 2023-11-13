@@ -36,9 +36,7 @@ export class GoalBlockerBlockFactory implements GoalFactory {
 
     const relativePositionJammer = opposingJammer.relativePosition(track);
     const relativePositionPlayer = player.relativePosition(track);
-    const yJammer = Overflow.of(relativePositionJammer.y);
-    const yPlayer = Overflow.of(relativePositionPlayer.y);
-    if (yJammer.isInFrontOf(yPlayer)) {
+    if (GoalBlockerBlock.hasJammerPassedBlocker(relativePositionJammer, relativePositionPlayer)) {
       return false;
     }
     return true;
@@ -72,13 +70,22 @@ export class GoalBlockerBlock extends Goal {
 
     const relativePositionJammer = opposingJammer.relativePosition(track);
     const relativePositionPlayer = player.relativePosition(track);
-    const yJammer = Overflow.of(relativePositionJammer.y);
-    const yPlayer = Overflow.of(relativePositionPlayer.y);
-    if (yJammer.isInFrontOf(yPlayer)) {
+    if (GoalBlockerBlock.hasJammerPassedBlocker(relativePositionJammer, relativePositionPlayer)) {
       return player.clearGoal(this);
     }
 
-    const newPosition = track.getAbsolutePosition(Vector.of(relativePositionJammer.x, relativePositionPlayer.y));
+    const xJammer = relativePositionJammer.x;
+    const newX = Math.max(Math.min(0.9, xJammer), 0.1);
+    const distanceToTargetXRatio = Math.abs(relativePositionPlayer.x - newX) / 0.8;
+    const distanceToJammerRatio = Math.min(distance, GameConstants.TEN_FEET) / GameConstants.TEN_FEET;
+    const newY = relativePositionPlayer.y + 0.05 * distanceToTargetXRatio * distanceToJammerRatio;
+    const newPosition = track.getAbsolutePosition(Vector.of(newX, newY));
     return player.withTarget(Target.stopAt(newPosition));
+  }
+
+  public static hasJammerPassedBlocker(relativePositionJammer: Vector, relativePositionPlayer: Vector): boolean {
+    const yJammer = Overflow.of(relativePositionJammer.y);
+    const yPlayer = Overflow.of(relativePositionPlayer.y + 0.01);
+    return yJammer.isInFrontOf(yPlayer);
   }
 }

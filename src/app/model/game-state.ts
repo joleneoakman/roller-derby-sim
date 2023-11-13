@@ -11,14 +11,15 @@ import {GoalFactory} from "./goals/goal-factory";
 import {GoalBlockerDoLapsFactory} from "./goals/goal-blocker-do-laps";
 import {Info} from "./info";
 import {Goal} from "./goals/goal";
-import {GoalReturnToPackFactory} from "./goals/goal-return-to-pack";
+import {GoalBlockerReturnToPackFactory} from "./goals/goal-blocker-return-to-pack";
 import {GameConstants} from "../game/game-constants";
 import {GameInfo} from "./game-info";
 import {PackWarningType} from "./pack-warning-type";
 import {PackGame} from "./pack-game";
 import {PackWarning} from "./pack-warning";
-import {GoalJammerEvade, GoalJammerEvadeFactory} from "./goals/goal-jammer-evade";
-import {GoalStayInBounds, GoalStayInBoundsFactory} from "./goals/goal-stay-in-bounds";
+import {GoalJammerEvadeFactory} from "./goals/goal-jammer-evade";
+import {GoalStayInBoundsFactory} from "./goals/goal-stay-in-bounds";
+import {GoalBlockerReformPackFactory} from "./goals/goal-blocker-reform-pack";
 
 export class GameState {
 
@@ -27,7 +28,8 @@ export class GameState {
     new GoalStayInBoundsFactory(),
     new GoalJammerEvadeFactory(),
     new GoalJammerDoLapsFactory(),
-    new GoalReturnToPackFactory(),
+    new GoalBlockerReformPackFactory(),
+    new GoalBlockerReturnToPackFactory(),
     new GoalBlockerBlockFactory(),
     new GoalBlockerDoLapsFactory()
   ];
@@ -174,7 +176,7 @@ export class GameState {
     const goalFactories = this.paused ? [] : GameState.GOAL_FACTORIES;
     const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack, goalFactories);
     const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
-    const playersAfterCollisions = GameState.calculateCollisions(playersAfterMove);
+    const playersAfterCollisions = GameState.calculateCollisions(this.players, playersAfterMove);
     const packGame = this.packGame.withNewGameWarning(PackWarning.of(this.pack.warning, Date.now()));
     return this.withFrameRate(this.frames + 1)
       .withPlayers(playersAfterCollisions)
@@ -247,17 +249,19 @@ export class GameState {
     return players.map(player => player.moveTowardsTarget());
   }
 
-  private static calculateCollisions(players: Player[]): Player[] {
+  private static calculateCollisions(oldPlayers: Player[], players: Player[]): Player[] {
     const result: Player[] = [...players];
     const count = players.length;
     for (let i = 0; i < count; i++) {
-      const player = result[i];
+      const player1 = result[i];
+      const oldPosition1 = oldPlayers[i].position;
       for (let j = 0; j < count; j++) {
-        const other = result[j];
-        if (i !== j && player.collidesWith(other)) {
-          const [player1, player2] = player.collideWith(other);
-          result[i] = player1;
-          result[j] = player2;
+        const player2 = result[j];
+        const oldPosition2 = oldPlayers[i].position;
+        if (i !== j && player1.collidesWith(player2)) {
+          const [player1New, player2New] = player1.collideWith(player2, oldPosition1, oldPosition2);
+          result[i] = player1New;
+          result[j] = player2New;
         }
       }
     }

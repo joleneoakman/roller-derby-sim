@@ -38,13 +38,14 @@ export class PackGameScore {
   // Setters
   //
 
-  public recalculate(gameWarning: PackWarning | undefined, userWarning: PackWarning): PackGameScore {
+  public recalculate(gameWarnings: PackWarning[], userWarning: PackWarning): PackGameScore {
     let perfectsDelta = 0;
     let goodsDelta = 0;
     let oksDelta = 0;
     let mistakesDelta = 0;
 
-    if (gameWarning === undefined || gameWarning.type !== userWarning.type) {
+    const gameWarning = gameWarnings.find(w => w.type === userWarning.type);
+    if (gameWarning === undefined) {
       mistakesDelta += 1;
     } else {
       const diffMs = userWarning.time - gameWarning.time;

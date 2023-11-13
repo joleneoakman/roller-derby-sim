@@ -40,7 +40,7 @@ export class AppComponent implements AfterViewInit {
     this.state$
       .pipe(map(state => state.packGame.score))
       .subscribe(score => this.updateScore(score));
-    this.buttonsEnabled$ = this.state$.pipe(map(state => state.packGame.newGameWarning !== undefined));
+    this.buttonsEnabled$ = this.state$.pipe(map(state => state.packGame.newGameWarnings.length > 0));
   }
 
   ngAfterViewInit() {

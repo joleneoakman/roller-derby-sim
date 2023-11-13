@@ -37,6 +37,10 @@ export class Velocity {
 
   public static ofXY(x: number, y: number): Velocity {
     const vector = Vector.of(x, y);
+    return Velocity.ofVector(vector);
+  }
+
+  public static ofVector(vector: Vector): Velocity {
     const speed = Speed.ofVector(vector);
     const angle = Angle.ofVector(vector);
     return Velocity.of(speed, angle);
@@ -102,7 +106,7 @@ export class Velocity {
     return Vector.of(x, y);
   }
 
-  public withKph(speed: Speed): Velocity {
+  public withSpeed(speed: Speed): Velocity {
     return Velocity.of(speed, this.angle);
   }
 

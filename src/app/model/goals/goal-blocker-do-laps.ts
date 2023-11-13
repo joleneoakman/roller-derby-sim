@@ -32,7 +32,7 @@ export class GoalBlockerDoLaps extends Goal {
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     // Todo: target with max speed
     const relativePosition = player.relativePosition(track);
-    const targetPosition = track.getAbsolutePosition(Vector.of(relativePosition.x, relativePosition.y + 0.005));
+    const targetPosition = track.getAbsolutePosition(Vector.of(relativePosition.x, relativePosition.y + 0.004));
     return player.withTarget(Target.stopAt(targetPosition));
   }
 }

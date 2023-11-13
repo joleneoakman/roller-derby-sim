@@ -115,7 +115,7 @@ export class Player {
   }
 
   public freeze(): Player {
-    return this.withGoals([]).withTargets([]).withVelocity(this.velocity.withKph(Speed.ZERO));
+    return this.withGoals([]).withTargets([]).withVelocity(this.velocity.withSpeed(Speed.ZERO));
   }
 
   public moveTowardsTarget(): Player {
@@ -139,9 +139,9 @@ export class Player {
     return this.withVelocity(newVelocity).withPosition(newPosition);
   }
 
-  public collideWith(other: Player): [Player, Player] {
-    const updatedPlayers = Player.calculateStaticCollision(this, other);
-    return Player.calculateDynamicCollision(updatedPlayers[0], updatedPlayers[1]);
+  public collideWith(player2: Player, oldPosition1: Vector, oldPosition2: Vector): [Player, Player] {
+    const updatedPlayers = Player.calculateStaticCollision(this, player2);
+    return Player.calculateDynamicCollision(updatedPlayers[0], updatedPlayers[1], oldPosition1, oldPosition2);
   }
 
   //
@@ -343,8 +343,11 @@ export class Player {
     const direction = player2.position.minus(player1.position).normalize();
 
     // Adjust positions
-    const player1NewPosition = player1.position.minus(direction.scale(overlap / 2));
-    const player2NewPosition = player2.position.plus(direction.scale(overlap / 2));
+    const totalMass = player1.massKg + player2.massKg;
+    const mass1Ratio = player1.massKg / totalMass;
+    const mass2Ratio = player2.massKg / totalMass;
+    const player1NewPosition = player1.position.minus(direction.scale(overlap * mass2Ratio));
+    const player2NewPosition = player2.position.plus(direction.scale(overlap * mass1Ratio));
 
     const updatedPlayer1 = player1.withPosition(player1NewPosition);
     const updatedPlayer2 = player2.withPosition(player2NewPosition);
@@ -355,8 +358,30 @@ export class Player {
   /**
    * This method will adjust the velocity of the players to simulate impact, based on speed, angle and mass.
    */
-  private static calculateDynamicCollision(player1: Player, player2: Player): [Player, Player] {
-    // Todo 2
-    return [player1, player2];
+  private static calculateDynamicCollision(player1: Player, player2: Player, oldPosition1: Vector, oldPosition2: Vector): [Player, Player] {
+    const velocity1 = Player.calculateDynamicCollisionVelocity(player1, player2);
+    const velocity2 = Player.calculateDynamicCollisionVelocity(player2, player1);
+    return [player1.withVelocity(velocity1), player2.withVelocity(velocity2)];
+  }
+
+  private static calculateDynamicCollisionVelocity(player1: Player, player2: Player): Velocity {
+    // Todo: take angle between players into account (head-on vs sideways vs rear-end)
+    // Todo: adjust angle slightly at high speed
+
+    // Are they moving towards each other?
+    const angle1 = player1.velocity.angle;
+    const angle2 = player2.velocity.angle;
+    const weight = angle1.minus(angle2).shortestAngle().degrees / 180;
+
+    // Take mass into account
+    const totalMass = player1.massKg + player2.massKg;
+    const mass1Ratio = player1.massKg / totalMass;
+    const mass2Ratio = player2.massKg / totalMass;
+
+    // Calculate new speed
+    const currentKph = player1.velocity.speed.kph;
+    const maxDecelerationKph = Math.max(currentKph - GameConstants.COLLISION_DECELERATION_STEP, 0);
+    const newKph = currentKph * mass1Ratio + (currentKph * (1 - weight) + maxDecelerationKph * weight) * mass2Ratio;
+    return player1.velocity.withSpeed(Speed.ofKph(newKph));
   }
 }

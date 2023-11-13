@@ -9,13 +9,13 @@ import {Target} from "../target";
 import {Overflow} from "../overflow";
 
 
-export class GoalReturnToPackFactory implements GoalFactory {
+export class GoalBlockerReturnToPackFactory implements GoalFactory {
   get type(): GoalType {
     return GoalType.BLOCKER_RETURN_TO_PACK;
   }
 
   create(now: number, player: Player, players: Player[], track: Track, pack: Pack): Goal {
-    return new GoalReturnToPack(now, player.relativePosition(track));
+    return new GoalBlockerReturnToPack(now, player.relativePosition(track));
   }
 
   test(player: Player, players: Player[], track: Track, pack: Pack): boolean {
@@ -33,7 +33,7 @@ export class GoalReturnToPackFactory implements GoalFactory {
   }
 }
 
-export class GoalReturnToPack extends Goal {
+export class GoalBlockerReturnToPack extends Goal {
 
   exitRelPos: Vector;
 

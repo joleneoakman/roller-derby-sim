@@ -44,7 +44,62 @@ export class GameStateService {
     // const players = GameStateService.initialSomePlayerAtPackLine(track);
     // const players = GameStateService.onePlayer(track);
     const players = GameStateService.initialDerbyTeams(track);
+    // const players = GameStateService.collisionPlayers();
     return GameState.of(track, players);
+  }
+
+  private static collisionPlayers(): Player[] {
+    const result: Player[] = [];
+    let x = 0;
+    let y;
+
+    x = -10;
+    y = -5;
+    result.push(Player.of(Team.A, "1", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "2", "Player", PlayerType.JAMMER, 100, Vector.of(x + 5, y), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180)))
+      .addTarget(Target.speedUpTo(Vector.of(x - 5, y))));
+
+    y = -3;
+    result.push(Player.of(Team.A, "3", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "4", "Player", PlayerType.JAMMER, 100, Vector.of(x, y), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180))));
+
+    y = -1;
+    result.push(Player.of(Team.A, "5", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "6", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 0.1), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180))));
+
+    y = 1;
+    result.push(Player.of(Team.A, "7", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "8", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 0.3), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180))));
+
+    y = 3;
+    result.push(Player.of(Team.A, "7", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "8", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 0.5), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180))));
+
+    y = 5;
+    result.push(Player.of(Team.A, "7", "Player", PlayerType.JAMMER, 100, Vector.of(x - 5, y), Velocity.of(Speed.ofKph(20), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 5, y))));
+    result.push(Player.of(Team.B, "8", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 0.7), Velocity.of(Speed.ZERO, Angle.ofDegrees(-180))));
+
+    x = 10;
+    y = -5;
+    result.push(Player.of(Team.A, "7", "Player", PlayerType.JAMMER, 100, Vector.of(x - 2, y), Velocity.of(Speed.ofKph(5), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 2, y))));
+    result.push(Player.of(Team.B, "8", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 2), Velocity.of(Speed.ofKph(5), Angle.ofDegrees(-90)))
+      .addTarget(Target.speedUpTo(Vector.of(x, y - 2))));
+
+    x = 10;
+    y = 1;
+    result.push(Player.of(Team.A, "7", "Player", PlayerType.JAMMER, 100, Vector.of(x - 2, y), Velocity.of(Speed.ofKph(5), Angle.ofDegrees(0)))
+      .addTarget(Target.speedUpTo(Vector.of(x + 2, y))));
+    result.push(Player.of(Team.B, "8", "Player", PlayerType.JAMMER, 100, Vector.of(x, y + 1.9), Velocity.of(Speed.ofKph(5), Angle.ofDegrees(-90)))
+      .addTarget(Target.speedUpTo(Vector.of(x, y - 2))));
+
+    return result;
   }
 
   private static onePlayer(track: Track): Player[] {
@@ -72,10 +127,10 @@ export class GameStateService {
       Player.of(Team.A, "2", "Mulan", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.2, 0.14)), velocity),
       Player.of(Team.A, "3", "Jasmine", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.3, 0.04)), velocity),
       Player.of(Team.A, "4", "Belle", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.6, 0.02)), velocity),
-      Player.of(Team.A, "5", "Merida", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.5, 0.06)), velocity),
+      Player.of(Team.A, "5", "Merida", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.82, 0.13)), velocity),
       Player.of(Team.B, "1", "Elsa", PlayerType.JAMMER, 100, track.getAbsolutePosition(Vector.of(0.6, 0.98)), velocity),
-      Player.of(Team.B, "2", "Moana", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.5, 0.11)), velocity),
-      Player.of(Team.B, "3", "Alice", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.2, 0.05)), velocity),
+      Player.of(Team.B, "2", "Moana", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.52, 0.13)), velocity),
+      Player.of(Team.B, "3", "Alice", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.22, 0.12)), velocity),
       Player.of(Team.B, "4", "Esmeralda", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.5, 0.04)), velocity),
       Player.of(Team.B, "5", "Megara", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.7, 0.04)), velocity),
     ];

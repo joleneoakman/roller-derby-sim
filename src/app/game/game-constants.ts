@@ -27,10 +27,11 @@ export class GameConstants {
 
   // Speed
   public static readonly MAX_SPEED_KPH = 30;
-  public static readonly ZERO_TO_MAX_IN_SECONDS = 4;
-  public static readonly MAX_TO_ZERO_IN_SECONDS = 1.3;
+  public static readonly ZERO_TO_MAX_IN_SECONDS = 3;
+  public static readonly MAX_TO_ZERO_IN_SECONDS = 0.8;
   public static readonly ACCELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.ZERO_TO_MAX_IN_SECONDS * GameConstants.FPS);
   public static readonly DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
+  public static readonly COLLISION_DECELERATION_STEP = GameConstants.MAX_SPEED_KPH / (GameConstants.MAX_TO_ZERO_IN_SECONDS * GameConstants.FPS);
 
   // Turning
   public static readonly SECONDS_TO_TURN_180_DEGREES_AT_MIN = 0.2;
@@ -61,7 +62,7 @@ export class GameConstants {
   //
   public static readonly PERFECT_WARNING_TIME_MS = 1500;
   public static readonly GOOD_WARNING_TIME_MS = 3000;
-  public static readonly OK_WARNING_TIME_MS = 10000;
+  public static readonly OK_WARNING_TIME_MS = 5000;
   public static readonly PERFECT_SCORE = 100;
   public static readonly GOOD_SCORE = 50;
   public static readonly OK_SCORE = 25;

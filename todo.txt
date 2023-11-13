@@ -1,0 +1,46 @@
+Situations
+==========
+[ ] Jammer
+    [ ] Stuck in 3-wall
+    [ ] Evade 3-wall
+    [ ] Break up / push through 3-wall
+    [ ]
+[ ] Blockers
+    [ ] Offense to other 3-wall
+    [ ] form 3-wall
+    [ ] form 2-wall
+    [ ] Bridge
+    [ ] Block until bridge
+    [ ] Block until out of play
+[ ] Pack situations
+    [ ] Split pack (skate too far apart)
+    [ ] Pack is front
+    [ ] Pack is front + out of play
+    [ ] Pack is back
+    [ ] Pack is back + out of play
+    [ ] No pack
+    [ ] Reform pack
+    [ ]
+
+
+
+Flow chart (example)
+==========
+1. Start
+    - 3-wall team A
+    - 3-wall team B
+    - Pack is all
+    - Pivot A offense
+    - Pivot B offense
+    - Jammer A in wall B
+    - Jammer B in wall A
+2. Jammer A breaks through
+    - 3-wall team A
+    - 3-wall team B
+    - Pack is all
+    - Pivot A offense
+    - Pivot B offense
+    - Jammer A in wall B
+    - Jammer B in wall A
+
+

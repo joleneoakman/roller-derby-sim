@@ -55,8 +55,12 @@ export class GoalJammerEvade extends Goal {
     const jammerRelPosition = jammer.relativePosition(track);
     const relX = this.calculateOptimalX(jammerRelPosition, blockerRelPositions);
     const relY = jammerRelPosition.y + 0.01;
-    const targetPosition = track.getAbsolutePosition(Vector.of(relX, relY));
-    return jammer.withTarget(Target.speedUpTo(targetPosition));
+    const target1Position = track.getAbsolutePosition(Vector.of(relX, relY));
+    const target2Position = track.getAbsolutePosition(Vector.of(0.5, relY + 0.1));
+    return jammer.withTargets([
+      Target.speedUpTo(target1Position),
+      Target.speedUpTo(target2Position)
+    ]);  
   }
 
   private calculateOptimalX(jammerRelPosition: Vector, blockerRelPositions: Vector[]): number {
@@ -86,7 +90,6 @@ export class GoalJammerEvade extends Goal {
   private static isApplicableAndInFrontOf(jammer: Player, candidate: Player, track: Track, pack: Pack) {
     return jammer !== candidate
       && candidate.isBlocker()
-      && candidate.team !== jammer.team
       && candidate.isInPlay(pack, track)
       && candidate.isInFrontOf(jammer, track)
       && candidate.distanceTo(jammer) < GameConstants.TEN_FEET;
