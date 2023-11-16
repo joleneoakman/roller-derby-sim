@@ -115,7 +115,7 @@ export class Player {
   }
 
   public freeze(): Player {
-    return this.withGoals([]).withTargets([]).withVelocity(this.velocity.withSpeed(Speed.ZERO));
+    return this.withTargets([]).withVelocity(this.velocity.withSpeed(Speed.ZERO));
   }
 
   public moveTowardsTarget(): Player {

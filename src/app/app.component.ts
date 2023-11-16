@@ -61,6 +61,26 @@ export class AppComponent implements AfterViewInit {
       this.gameStateService.update(state => state.clearTargets());
     } else if (event.key === 'Escape') {
       this.gameStateService.update(state => state.deselect());
+    } else if (event.key === '1' || event.key === '&') {
+      this.gameStateService.update(state => state.withSelection(0));
+    } else if (event.key === '2' || event.key === 'é') {
+      this.gameStateService.update(state => state.withSelection(1));
+    } else if (event.key === '3' || event.key === '"') {
+      this.gameStateService.update(state => state.withSelection(2));
+    } else if (event.key === '4' || event.key === '\'') {
+      this.gameStateService.update(state => state.withSelection(3));
+    } else if (event.key === '5' || event.key === '(') {
+      this.gameStateService.update(state => state.withSelection(4));
+    } else if (event.key === '6' || event.key === '§') {
+      this.gameStateService.update(state => state.withSelection(5));
+    } else if (event.key === '7' || event.key === 'è') {
+      this.gameStateService.update(state => state.withSelection(6));
+    } else if (event.key === '8' || event.key === '!') {
+      this.gameStateService.update(state => state.withSelection(7));
+    } else if (event.key === '9' || event.key === 'ç') {
+      this.gameStateService.update(state => state.withSelection(8));
+    } else if (event.key === '0' || event.key === 'à') {
+      this.gameStateService.update(state => state.withSelection(9));
     }
   }
 

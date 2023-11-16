@@ -70,10 +70,15 @@ export class Pack {
   }
 
   public isInPlay(player: Player, track: Track): boolean {
+    if (player.isJammer()) {
+      return true;
+    }
+    return this.isInEngagementZone(player, track);
+  }
+
+  public isInEngagementZone(player: Player, track: Track): boolean {
     if (!player.isInBounds(track)) {
       return false;
-    } else if (player.isJammer()) {
-      return true;
     } else if (!this.activePack) {
       return false;
     }

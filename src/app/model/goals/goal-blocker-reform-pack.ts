@@ -50,13 +50,16 @@ export class GoalBlockerReformPack extends Goal {
 
     const playerIndex = players.findIndex(p => p.id === player.id);
     const indexToReform = GoalBlockerReformPack.calculatePlayerIndexToReform(track, pack);
-    if (playerIndex !== indexToReform) {
-      return player.clearGoal(this);
+    let skateForward = false;
+    if (playerIndex === indexToReform) {
+      // Player in rear with greatest distance speeds up to front to close the gap
+      skateForward = true;
+    } else {
+      skateForward = GoalBlockerReformPack.calculateMostBlockersAreBehindPlayer(player, players, track);
     }
 
-    // Player in rear with greatest distance speeds up to front to close the gap
     const curRelPos = player.relativePosition(track);
-    const relTargetPos = Vector.of(0.5, curRelPos.y + 0.05);
+    const relTargetPos = Vector.of(0.5, curRelPos.y + (skateForward ? 0.05 : - 0.05));
     const targetPos = track.getAbsolutePosition(relTargetPos);
     return player.withTarget(Target.speedUpTo(targetPos));
   }
@@ -84,5 +87,28 @@ export class GoalBlockerReformPack extends Goal {
       }
     }
     return index;
+  }
+
+  public static calculateMostBlockersAreBehindPlayer(player: Player, players: Player[], track: Track): boolean {
+    const playerRelPos = player.relativePosition(track);
+    const playerY = Overflow.of(playerRelPos.y, track.packLine.distance);
+
+    let blockersBehind = 0;
+    let blockersInFront = 0;
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      if (p.isJammer() || !p.isInBounds(track)) {
+        continue;
+      }
+
+      const pRelPos = p.relativePosition(track);
+      const pY = Overflow.of(pRelPos.y, track.packLine.distance);
+      if (pY.isBehind(playerY)) {
+        blockersBehind++;
+      } else {
+        blockersInFront++;
+      }
+    }
+    return blockersInFront < blockersBehind;
   }
 }

@@ -6,7 +6,7 @@ export enum GoalType {
   BLOCKER_REFORM_PACK = 'Reform pack',
   BLOCKER_RETURN_TO_PACK = 'Return to pack',
   BLOCKER_FORM_WALL = 'Form wall',
-  BLOCKER_BLOCK = 'Block jammer',
   BLOCKER_OFFENSE = 'Blocker offense',
+  BLOCKER_BLOCK = 'Block jammer',
   BLOCKER_DO_LAPS = 'Blocker do laps',
 }

@@ -124,15 +124,15 @@ export class GameStateService {
     const velocity = Velocity.of(Speed.ZERO, Angle.ZERO);
     return [
       Player.of(Team.A, "1", "Ariel", PlayerType.JAMMER, 100, track.getAbsolutePosition(Vector.of(0.3, 0.98)), velocity),
-      Player.of(Team.A, "2", "Mulan", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.2, 0.14)), velocity),
-      Player.of(Team.A, "3", "Jasmine", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.3, 0.04)), velocity),
-      Player.of(Team.A, "4", "Belle", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.6, 0.02)), velocity),
-      Player.of(Team.A, "5", "Merida", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.82, 0.13)), velocity),
+      Player.of(Team.A, "2", "Mulan", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.163, 0.036)), velocity),
+      Player.of(Team.A, "3", "Jasmine", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.07, 0.015)), velocity),
+      Player.of(Team.A, "4", "Belle", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.44, 0.01)), velocity),
+      Player.of(Team.A, "5", "Merida", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.89, 0.013)), velocity),
       Player.of(Team.B, "1", "Elsa", PlayerType.JAMMER, 100, track.getAbsolutePosition(Vector.of(0.6, 0.98)), velocity),
-      Player.of(Team.B, "2", "Moana", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.52, 0.13)), velocity),
-      Player.of(Team.B, "3", "Alice", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.22, 0.12)), velocity),
-      Player.of(Team.B, "4", "Esmeralda", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.5, 0.04)), velocity),
-      Player.of(Team.B, "5", "Megara", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.7, 0.04)), velocity),
+      Player.of(Team.B, "2", "Moana", PlayerType.PIVOT, 100, track.getAbsolutePosition(Vector.of(0.8, 0.031)), velocity),
+      Player.of(Team.B, "3", "Alice", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.44, 0.033)), velocity),
+      Player.of(Team.B, "4", "Esmeralda", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.27, 0.02)), velocity),
+      Player.of(Team.B, "5", "Megara", PlayerType.BLOCKER, 100, track.getAbsolutePosition(Vector.of(0.65, 0.02)), velocity),
     ];
   }
 

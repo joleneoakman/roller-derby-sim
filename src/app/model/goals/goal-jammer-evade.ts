@@ -54,11 +54,11 @@ export class GoalJammerEvade extends Goal {
     const blockerRelPositions = blockersInFront.map(blocker => blocker.relativePosition(track));
     const jammerRelPosition = jammer.relativePosition(track);
     const relX = this.calculateOptimalX(jammerRelPosition, blockerRelPositions);
-    const relY = jammerRelPosition.y + 0.01;
+    const relY = jammerRelPosition.y + 0.02;
     const target1Position = track.getAbsolutePosition(Vector.of(relX, relY));
     const target2Position = track.getAbsolutePosition(Vector.of(0.5, relY + 0.1));
     return jammer.withTargets([
-      Target.speedUpTo(target1Position),
+      relX > 0.7 ? Target.stopAt(target1Position) : Target.speedUpTo(target1Position),
       Target.speedUpTo(target2Position)
     ]);  
   }
@@ -78,7 +78,7 @@ export class GoalJammerEvade extends Goal {
         optimalX = xCandidate;
       }
     }
-    const averageOptimalX = (optimalX + jammerRelPosition.x) / 2;
+    const averageOptimalX = optimalX * 3/4 + jammerRelPosition.x / 4;
     return Math.max(0.05, Math.min(averageOptimalX, 0.95));
   }
 
@@ -92,7 +92,7 @@ export class GoalJammerEvade extends Goal {
       && candidate.isBlocker()
       && candidate.isInPlay(pack, track)
       && candidate.isInFrontOf(jammer, track)
-      && candidate.distanceTo(jammer) < GameConstants.TEN_FEET;
+      && candidate.distanceTo(jammer) < GameConstants.TEN_FEET / 2;
   }
 
   private static calculateXCandidates(blockerXsSorted: number[]): number[] {

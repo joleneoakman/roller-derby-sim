@@ -20,6 +20,8 @@ import {PackWarning} from "./pack-warning";
 import {GoalJammerEvadeFactory} from "./goals/goal-jammer-evade";
 import {GoalStayInBoundsFactory} from "./goals/goal-stay-in-bounds";
 import {GoalBlockerReformPackFactory} from "./goals/goal-blocker-reform-pack";
+import {GoalBlockerFormWallFactory} from "./goals/goal-blocker-form-wall";
+import {GoalBlockerOffenseFactory} from "./goals/goal-blocker-offense";
 
 export class GameState {
 
@@ -31,6 +33,8 @@ export class GameState {
     new GoalBlockerReformPackFactory(),
     new GoalBlockerReturnToPackFactory(),
     new GoalBlockerBlockFactory(),
+    new GoalBlockerOffenseFactory(),
+    new GoalBlockerFormWallFactory(),
     new GoalBlockerDoLapsFactory()
   ];
   private static readonly GOAL_COMPARATOR = GameState.createGoalComparator(GameState.GOAL_FACTORIES);
@@ -174,7 +178,7 @@ export class GameState {
 
   public recalculate(): GameState {
     const goalFactories = this.paused ? [] : GameState.GOAL_FACTORIES;
-    const playersAfterGoals = GameState.calculateGoals(this.players, this.track, this.pack, goalFactories);
+    const playersAfterGoals = this.paused ? this.players : GameState.calculateGoals(this.players, this.track, this.pack, goalFactories);
     const playersAfterMove = GameState.calculateMovements(playersAfterGoals);
     const playersAfterCollisions = GameState.calculateCollisions(this.players, playersAfterMove);
     const packGame = this.packGame.withNewGameWarning(PackWarning.of(this.pack.warning, Date.now()));

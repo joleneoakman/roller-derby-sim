@@ -28,8 +28,7 @@ export class GoalBlockerReturnToPackFactory implements GoalFactory {
       return false;
     }
 
-    const playerIndex = players.indexOf(player);
-    return !activePack.includes(playerIndex);
+    return !pack.isInEngagementZone(player, track);
   }
 }
 
@@ -48,8 +47,7 @@ export class GoalBlockerReturnToPack extends Goal {
       return player.clearGoal(this);
     }
 
-    const playerIndex = players.indexOf(player);
-    if (activePack.includes(playerIndex)) {
+    if (pack.isInEngagementZone(player, track)) {
       return player.clearGoal(this);
     }
 
@@ -60,8 +58,8 @@ export class GoalBlockerReturnToPack extends Goal {
     const targetRelY = distanceToFront < distanceToBack ? activePack.relativeFront : activePack.relativeBack;
     const curRelPos = player.relativePosition(track);
     const isBehind = Overflow.of(curRelPos.y).isBehind(targetRelY);
-    const relTargetPos = Vector.of(0.5, isBehind ? curRelPos.y + 0.1 : curRelPos.y - 0.1);
+    const relTargetPos = Vector.of(0.5, isBehind ? curRelPos.y + 0.05 : curRelPos.y - 0.05);
     const targetPos = track.getAbsolutePosition(relTargetPos);
-    return player.withTarget(Target.stopAt(targetPos));
+    return player.withTarget(Target.speedUpTo(targetPos));
   }
 }

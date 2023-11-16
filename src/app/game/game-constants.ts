@@ -16,7 +16,7 @@ export class GameConstants {
   //
   // Rendering
   //
-  public static readonly FPS = 120;
+  public static readonly FPS = 60;
 
   //
   // Physics
