@@ -30,7 +30,7 @@ export class GoalJammerDoLaps extends Goal {
 
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     const relativePosition = player.relativePosition(track);
-    const relY = relativePosition.y + 0.01;
+    const relY = relativePosition.y + 0.02;
     const targetX = this.calculateTargetX(relY);
     const relX = (relativePosition.x + targetX) / 2;
     const targetPosition = track.getAbsolutePosition(Vector.of(relX, relY));

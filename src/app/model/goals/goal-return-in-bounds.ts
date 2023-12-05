@@ -95,7 +95,8 @@ export class GoalReturnInBounds extends Goal {
     }
     player = player.withTarget(Target.stopAt(targetPos));
     if (this.skatedInBeforeOut !== skatedInBeforeOut) {
-      return player.updateGoal(this.withSkatedInBeforeOut(skatedInBeforeOut));
+      const updatedGoal = this.withSkatedInBeforeOut(skatedInBeforeOut);
+      return player.updateGoal(updatedGoal);
     }
     return player;
   }

@@ -40,7 +40,7 @@ export class GoalStayInBounds extends Goal {
     this.exitRelPos = exitRelPos;
   }
 
-  override execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
+  execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     if (!player.isInBounds(track)) {
       return player.clearGoal(this);
     }

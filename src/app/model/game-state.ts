@@ -244,7 +244,7 @@ export class GameState {
       do {
         goal = player.goals[0];
         player = goal.execute(Date.now(), player, players, track, pack);
-      } while (!player.hasGoal(goal.type));
+      } while (player.goals.length > 0 && !player.hasGoal(goal.type));
       return player;
     });
   }

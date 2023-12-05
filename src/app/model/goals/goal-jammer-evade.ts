@@ -52,13 +52,15 @@ export class GoalJammerEvade extends Goal {
     }
 
     const blockerRelPositions = blockersInFront.map(blocker => blocker.relativePosition(track));
+    const closestBlocker = blockersInFront.reduce((a, b) => a.distanceTo(jammer) < b.distanceTo(jammer) ? a : b);
+    const closestBlockerRelPosition = closestBlocker.relativePosition(track);
     const jammerRelPosition = jammer.relativePosition(track);
     const relX = this.calculateOptimalX(jammerRelPosition, blockerRelPositions);
-    const relY = jammerRelPosition.y + 0.02;
+    const relY = closestBlockerRelPosition.y + 0.01;
     const target1Position = track.getAbsolutePosition(Vector.of(relX, relY));
     const target2Position = track.getAbsolutePosition(Vector.of(0.5, relY + 0.1));
     return jammer.withTargets([
-      relX > 0.7 ? Target.stopAt(target1Position) : Target.speedUpTo(target1Position),
+      relX > 0.8 || relX < 0.2 ? Target.stopAt(target1Position) : Target.speedUpTo(target1Position),
       Target.speedUpTo(target2Position)
     ]);  
   }
@@ -79,7 +81,7 @@ export class GoalJammerEvade extends Goal {
       }
     }
     const averageOptimalX = optimalX * 3/4 + jammerRelPosition.x / 4;
-    return Math.max(0.05, Math.min(averageOptimalX, 0.95));
+    return Math.max(0.1, Math.min(averageOptimalX, 0.9));
   }
 
   public static calculateBlockersInFront(jammer: Player, players: Player[], track: Track, pack: Pack): Player[] {
@@ -92,7 +94,7 @@ export class GoalJammerEvade extends Goal {
       && candidate.isBlocker()
       && candidate.isInPlay(pack, track)
       && candidate.isInFrontOf(jammer, track)
-      && candidate.distanceTo(jammer) < GameConstants.TEN_FEET / 2;
+      && candidate.distanceTo(jammer) < GameConstants.TEN_FEET;
   }
 
   private static calculateXCandidates(blockerXsSorted: number[]): number[] {

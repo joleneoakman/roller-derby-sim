@@ -65,7 +65,7 @@ export class GoalBlockerFormWall extends Goal {
     const targetY = (candidate1.position.y + candidate2.position.y + candidate3.position.y) / 3;
     const ownJammer = players.find(p => p.isJammer() && p.team === player.team);
 
-    let targetX = (candidate1.position.x + candidate2.position.x + candidate3.position.x) / 3;
+    let targetX = this.calculateWallX(candidate1, candidate2, candidate3);
     if (!!ownJammer && pack.isInEngagementZone(ownJammer, track)) {
       const jammerX = Overflow.of(ownJammer.relativePosition(track).x, track.packLine.distance);
       targetX = jammerX.isBehind(Overflow.of(targetX, track.packLine.distance)) ? targetX - 0.06 : targetX;
@@ -73,6 +73,11 @@ export class GoalBlockerFormWall extends Goal {
 
     const targetPosition = Vector.of(targetX, targetY);
     return player.withTarget(Target.stopAt(targetPosition));
+  }
+
+  private calculateWallX(candidate1: Player, candidate2: Player, candidate3: Player): number {
+    const averagePlayerX = (candidate1.position.x + candidate2.position.x + candidate3.position.x) / 3;
+    return Math.min(0.8, Math.max(0.2, averagePlayerX));
   }
 
   public static isWallFormed(players: Player[], wallCandidates: number[]): boolean {
