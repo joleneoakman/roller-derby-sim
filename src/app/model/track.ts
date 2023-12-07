@@ -291,6 +291,11 @@ export class Track {
     return shapes;
   }
 
+  public isInBounds(position: Vector): boolean {
+    const relativePosition = this.getRelativePosition(position);
+    return relativePosition.x >= 0 && relativePosition.x <= 1;
+  }
+
   //
   // Utility methods
   //

@@ -318,7 +318,7 @@ export class Player {
     return Speed.ofKph(newKph);
   }
 
-  private static calculateStoppingDistance(currentSpeed: number): number {
+  public static calculateStoppingDistance(currentSpeed: number): number {
     let speed = currentSpeed;
     let distanceToStop = 0;
     while (speed > 0) {
