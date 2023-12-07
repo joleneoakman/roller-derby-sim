@@ -48,7 +48,7 @@ export class GameConstants {
   // Measurements
   //
   public static readonly LANE_COUNT = 4;
-  public static readonly PLAYER_RADIUS = 0.4;
+  public static readonly PLAYER_RADIUS = 0.38;
   public static readonly CANVAS_WIDTH_IN_METERS = (5.33 + 8.08) * 3;
   public static readonly ONE_FOOT = 0.305;
   public static readonly TEN_FEET = 3.05;

@@ -8,7 +8,6 @@ import {Team} from "../team";
 import {GameConstants} from "../../game/game-constants";
 import {Vector} from "../geometry/vector";
 import {Target} from "../target";
-import {Overflow} from "../overflow";
 
 export class GoalBlockerFormWallFactory implements GoalFactory {
 
@@ -25,13 +24,14 @@ export class GoalBlockerFormWallFactory implements GoalFactory {
       return false;
     }
 
-    const wallCandidates = GoalBlockerFormWall.calculateWallCandidates(player.team, players, track, pack);
-    const playerIndex = players.findIndex(p => p.id === player.id);
-    if (!wallCandidates.includes(playerIndex)) {
+    const opposingJammer = players.find(p => p.isJammer() && p.team === player.team);
+    if (!opposingJammer || !pack.isInEngagementZone(opposingJammer, track)) {
       return false;
     }
 
-    return !GoalBlockerFormWall.isWallFormed(players, wallCandidates);
+    const wallCandidates = GoalBlockerFormWall.calculateWallCandidates(player.team, players, track, pack);
+    const playerIndex = players.findIndex(p => p.id === player.id);
+    return wallCandidates.includes(playerIndex);
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalBlockerFormWall {
@@ -50,84 +50,109 @@ export class GoalBlockerFormWall extends Goal {
   execute(now: number, player: Player, players: Player[], track: Track, pack: Pack): Player {
     const wallCandidates = GoalBlockerFormWall.calculateWallCandidates(player.team, players, track, pack);
     const playerIndex = players.findIndex(p => p.id === player.id);
+
+    // Not part of wall? Clear goal
     if (!wallCandidates.includes(playerIndex)) {
       return player.clearGoal(this);
     }
 
-    const wallFormed = GoalBlockerFormWall.isWallFormed(players, wallCandidates);
-    if (wallFormed) {
+    // No opposing jammer? Clear goal
+    const opposingJammer = players.find(p => p.isJammer() && p.team === player.team);
+    if (!opposingJammer || !pack.isInEngagementZone(opposingJammer, track)) {
       return player.clearGoal(this);
     }
 
-    const candidate1 = players[wallCandidates[0]];
-    const candidate2 = players[wallCandidates[1]];
-    const candidate3 = players[wallCandidates[2]];
-    const targetY = (candidate1.position.y + candidate2.position.y + candidate3.position.y) / 3;
-    const ownJammer = players.find(p => p.isJammer() && p.team === player.team);
-
-    let targetX = this.calculateWallX(candidate1, candidate2, candidate3);
-    if (!!ownJammer && pack.isInEngagementZone(ownJammer, track)) {
-      const jammerX = Overflow.of(ownJammer.relativePosition(track).x, track.packLine.distance);
-      targetX = jammerX.isBehind(Overflow.of(targetX, track.packLine.distance)) ? targetX - 0.06 : targetX;
+    // Not in play? Clear goal
+    if (!player.isInPlay(pack, track)) {
+      return player.clearGoal(this);
     }
 
-    const targetPosition = Vector.of(targetX, targetY);
-    return player.withTarget(Target.stopAt(targetPosition));
+    // Wall formed? Noop
+    /*const wallFormed = GoalBlockerFormWall.isWallFormed(players, wallCandidates);
+    if (wallFormed) {
+      return player; //.clearGoal(this);
+    }*/
+
+    const relX = this.calculateWallX(player, players, wallCandidates, track);
+    const relY = wallCandidates.reduce((sum, i) => sum + players[i].relativePosition(track).y, 0) / wallCandidates.length;
+    const relPos = this.offsetPerPlayer(player, players, wallCandidates, track, Vector.of(relX, relY));
+    const absPos = track.getAbsolutePosition(relPos);
+    return player.withTarget(Target.stopAt(absPos));
   }
 
-  private calculateWallX(candidate1: Player, candidate2: Player, candidate3: Player): number {
-    const averagePlayerX = (candidate1.position.x + candidate2.position.x + candidate3.position.x) / 3;
+  private calculateWallX(player: Player, players: Player[], wallCandidates: number[], track: Track): number {
+    // Opposing jammer incoming? Move wall in front of them
+    const opposingJammer = players.find(p => p.isJammer() && p.team !== player.team);
+    if (opposingJammer && opposingJammer.isInBounds(track) && opposingJammer.isBehind(player, track)) {
+      return opposingJammer.relativePosition(track).x;
+    }
+
+    // Otherwise, move wall to average of all players
+    const averagePlayerX = wallCandidates.reduce((sum, i) => sum + players[i].relativePosition(track).x, 0) / wallCandidates.length;
     return Math.min(0.8, Math.max(0.2, averagePlayerX));
   }
 
   public static isWallFormed(players: Player[], wallCandidates: number[]): boolean {
-    if (wallCandidates.length !== 3) {
-      return false;
+    for (let i = 0; i < wallCandidates.length; i++) {
+      for (let j = i + 1; j < wallCandidates.length; j++) {
+        const candidate1 = players[wallCandidates[i]];
+        const candidate2 = players[wallCandidates[j]];
+        const distance = candidate1.position.distanceTo(candidate2.position);
+        if (distance > GoalBlockerFormWall.MIN_WALL_DISTANCE) {
+          return false;
+        }
+      }
     }
-
-    const candidate1 = players[wallCandidates[0]];
-    const candidate2 = players[wallCandidates[1]];
-    const candidate3 = players[wallCandidates[2]];
-    const distance1 = candidate1.position.distanceTo(candidate2.position);
-    const distance2 = candidate2.position.distanceTo(candidate3.position);
-    const distance3 = candidate3.position.distanceTo(candidate1.position);
-    return distance1 <= GoalBlockerFormWall.MIN_WALL_DISTANCE
-      && distance2 <= GoalBlockerFormWall.MIN_WALL_DISTANCE
-      && distance3 <= GoalBlockerFormWall.MIN_WALL_DISTANCE;
+    return true;
   }
 
   public static calculateWallCandidates(team: Team, players: Player[], track: Track, pack: Pack): number[] {
     const validIndices = players.map((p, i) => p.isBlocker() && p.team === team && p.isInBounds(track) ? i : -1).filter(i => i >= 0);
+    const fixedPlayers = players
+      .map((p, i) => validIndices.includes(i) && p.hasGoal(GoalType.BLOCKER_FORM_WALL) ? i : -1)
+      .filter(i => i >= 0);
 
+    // Already (more than) 3 players in wall? Return 3 indices
+    if (fixedPlayers.length >= 3) {
+      console.log(fixedPlayers, fixedPlayers.slice(0, 3));
+      return fixedPlayers.slice(0, 3);
+    }
+
+    // All players applicable? Return all
+    if (validIndices.length <= 3) {
+      return validIndices;
+    }
+
+    // Find the 3 players that are closest to each other, but always including fixedPlayers as candidates if they exist
     let minDistance = Number.MAX_VALUE;
     let closestPlayers: number[] = [];
-    for (let i = 0; i < players.length; i++) {
-
-      if (!validIndices.includes(i)) {
-        continue;
-      }
-
-      for (let j = i + 1; j < players.length; j++) {
-
-        if (!validIndices.includes(j)) {
-          continue;
-        }
-
-        for (let k = j + 1; k < players.length; k++) {
-
-          if (!validIndices.includes(k)) {
-            continue;
-          }
-
-          const distanceSum = pack.distances[i][j] + pack.distances[j][k] + pack.distances[k][i];
+    for (let i = 0; i < validIndices.length; i++) {
+      const a = validIndices[i];
+      for (let j = i + 1; j < validIndices.length; j++) {
+        const b = validIndices[j];
+        for (let k = j + 1; k < validIndices.length; k++) {
+          const c = validIndices[k];
+          const distanceSum = pack.distances[a][b] + pack.distances[b][c] + pack.distances[c][a];
           if (distanceSum < minDistance) {
             minDistance = distanceSum;
-            closestPlayers = [i, j, k];
+            closestPlayers = [a, b, c];
           }
         }
       }
     }
-
     return closestPlayers;
+  }
+
+  private offsetPerPlayer(player: Player, players: Player[], wallCandidates: number[], track: Track, wallCenter: Vector): Vector {
+    const playerX = player.relativePosition(track).x;
+    const minX = wallCandidates.reduce((min, i) => Math.min(min, players[i].relativePosition(track).x), Number.MAX_VALUE);
+    const maxX = wallCandidates.reduce((max, i) => Math.max(max, players[i].relativePosition(track).x), Number.MIN_VALUE);
+    if (playerX === minX) {
+      return Vector.of(wallCenter.x - 0.1, wallCenter.y - 0.001);
+    } else if (playerX === maxX) {
+      return Vector.of(wallCenter.x + 0.1, wallCenter.y - 0.001);
+    } else {
+      return Vector.of(wallCenter.x, wallCenter.y + 0.001);
+    }
   }
 }

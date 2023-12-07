@@ -122,7 +122,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   public onWheel(event: WheelEvent) {
-    this.getRenderer().updateZoom(event.deltaY / 100);
+    this.getRenderer().updateZoom(-event.deltaY / 100);
   }
 
   private onResize() {

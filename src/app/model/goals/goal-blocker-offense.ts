@@ -7,6 +7,7 @@ import {GoalFactory} from "./goal-factory";
 import {Target} from "../target";
 import {GoalBlockerBlock} from "./goal-blocker-block";
 import {GameConstants} from "../../game/game-constants";
+import {GoalBlockerFormWall} from "./goal-blocker-form-wall";
 
 export class GoalBlockerOffenseFactory implements GoalFactory {
 
@@ -39,7 +40,7 @@ export class GoalBlockerOffenseFactory implements GoalFactory {
       return true;
     }
 
-    return GoalBlockerBlock.isWorstPositionBlocker(player, opposingJammer, players, track);
+    return GoalBlockerOffense.canDoOffense(players, player, track, pack);
   }
 
   public create(now: number, player: Player, players: Player[], track: Track, pack: Pack): GoalBlockerOffense {
@@ -70,8 +71,8 @@ export class GoalBlockerOffense extends Goal {
 
     const opposingJammer = players.find(p => p.isJammer() && p.team === player.team);
     if (opposingJammer && pack.isInEngagementZone(opposingJammer, track)) {
-      const worstPositionBlocker = GoalBlockerBlock.isWorstPositionBlocker(player, opposingJammer, players, track);
-      if (!worstPositionBlocker) {
+      const canDoOffense = GoalBlockerOffense.canDoOffense(players, player, track, pack);
+      if (!canDoOffense) {
         return player.clearGoal(this);
       }
     }
@@ -104,5 +105,11 @@ export class GoalBlockerOffense extends Goal {
     }
 
     return index === -1 ? undefined : players[index];
+  }
+
+  public static canDoOffense(players: Player[], player: Player, track: Track, pack: Pack) {
+    const playerIndex = players.findIndex(p => p.id === player.id);
+    const wallCandidates = GoalBlockerFormWall.calculateWallCandidates(player.team, players, track, pack);
+    return !wallCandidates.includes(playerIndex);
   }
 }

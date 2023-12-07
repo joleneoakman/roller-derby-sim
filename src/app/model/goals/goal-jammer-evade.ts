@@ -56,7 +56,7 @@ export class GoalJammerEvade extends Goal {
     const closestBlockerRelPosition = closestBlocker.relativePosition(track);
     const jammerRelPosition = jammer.relativePosition(track);
     const relX = this.calculateOptimalX(jammerRelPosition, blockerRelPositions);
-    const relY = closestBlockerRelPosition.y + 0.01;
+    const relY = closestBlockerRelPosition.y;
     const target1Position = track.getAbsolutePosition(Vector.of(relX, relY));
     const target2Position = track.getAbsolutePosition(Vector.of(0.5, relY + 0.1));
     return jammer.withTargets([

@@ -50,7 +50,7 @@ export class GoalBlockerReformPack extends Goal {
 
     const playerIndex = players.findIndex(p => p.id === player.id);
     const indexToReform = GoalBlockerReformPack.calculatePlayerIndexToReform(track, pack);
-    let skateForward = false;
+    let skateForward;
     if (playerIndex === indexToReform) {
       // Player in rear with greatest distance speeds up to front to close the gap
       skateForward = true;
@@ -59,16 +59,16 @@ export class GoalBlockerReformPack extends Goal {
     }
 
     const curRelPos = player.relativePosition(track);
-    const relTargetPos = Vector.of(0.5, curRelPos.y + (skateForward ? 0.05 : - 0.05));
+    const relTargetPos = Vector.of(curRelPos.x, curRelPos.y + (skateForward ? 0.01 : - 0.01));
     const targetPos = track.getAbsolutePosition(relTargetPos);
     return player.withTarget(Target.speedUpTo(targetPos));
   }
 
   public static calculatePlayerIndexToReform(track: Track, pack: Pack) {
     const positionsAndIndices = pack.positions
-      .map((p, i) => ({position: p, index: i}))
+      .map((p, i) => ({position: Overflow.of(p, track.packLine.distance), index: i}))
       .filter(p => !pack.players[p.index].isJammer() && pack.players[p.index].isInBounds(track));
-    positionsAndIndices.sort((a, b) => a.position - b.position);
+    positionsAndIndices.sort((a, b) => a.position.compareInFrontOf(b.position));
 
     let maxDistance = 0;
     let index = -1;
@@ -77,8 +77,8 @@ export class GoalBlockerReformPack extends Goal {
     for (let i = 0; i < positionsAndIndices.length - 1; i++) {
       const p1 = positionsAndIndices[i];
       const p2 = positionsAndIndices[i + 1];
-      const o1 = Overflow.of(p1.position, totalDistance);
-      const o2 = Overflow.of(p2.position, totalDistance);
+      const o1 = Overflow.of(p1.position.value, totalDistance);
+      const o2 = Overflow.of(p2.position.value, totalDistance);
       const candidateDistance = o1.distanceTo(o2);
       distances.push(candidateDistance);
       if (candidateDistance > maxDistance && candidateDistance < totalDistance / 2) {

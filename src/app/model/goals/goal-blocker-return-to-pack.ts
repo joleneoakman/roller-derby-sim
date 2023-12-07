@@ -58,7 +58,7 @@ export class GoalBlockerReturnToPack extends Goal {
     const targetRelY = distanceToFront < distanceToBack ? activePack.relativeFront : activePack.relativeBack;
     const curRelPos = player.relativePosition(track);
     const isBehind = Overflow.of(curRelPos.y).isBehind(targetRelY);
-    const relTargetPos = Vector.of(0.5, isBehind ? curRelPos.y + 0.05 : curRelPos.y - 0.05);
+    const relTargetPos = Vector.of(curRelPos.x, isBehind ? curRelPos.y + 0.01 : curRelPos.y - 0.01);
     const targetPos = track.getAbsolutePosition(relTargetPos);
     return player.withTarget(Target.speedUpTo(targetPos));
   }
